@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.next/
+.expo/
+.turbo/
+coverage/
+*.log
+.DS_Store
+
+# env files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# mobile
+apps/mobile/ios/
+apps/mobile/android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.tsbuildinfo
