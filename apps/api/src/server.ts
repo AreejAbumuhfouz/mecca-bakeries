@@ -1,0 +1,28 @@
+import { loadEnv } from './config/env.js';
+import { createApp } from './app.js';
+import { logger } from './lib/logger.js';
+import { createDb } from './db/client.js';
+
+const env = loadEnv();
+process.env.TZ = env.TZ;
+
+const database = createDb(env.DATABASE_URL);
+
+const app = createApp({
+  env,
+  version: process.env.npm_package_version ?? '0.1.0',
+  pingDb: database.ping,
+});
+
+const server = app.listen(env.PORT, () => {
+  logger.info(`API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
+});
+
+async function shutdown(signal: string) {
+  logger.info(`${signal} received, shutting down`);
+  server.close();
+  await database.close();
+  process.exit(0);
+}
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));

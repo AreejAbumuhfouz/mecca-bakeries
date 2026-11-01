@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "مخابز مكة",
+    "slug": "mecca-bakeries",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "extra": { "supportsRTL": true },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.meccabakeries.app"
+    },
+    "android": {
+      "package": "com.meccabakeries.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FBF7F0",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    }
+  }
+}

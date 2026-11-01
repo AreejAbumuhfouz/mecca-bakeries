@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@import '@fontsource/cairo/arabic-400.css';
+@import '@fontsource/cairo/arabic-700.css';
+@import '@fontsource/cairo/latin-400.css';
+@import '@fontsource/cairo/latin-700.css';
+
+/* Mecca Bakeries brand tokens (taken from the logo) */
+@theme {
+  --font-sans: 'Cairo', system-ui, sans-serif;
+  --color-brand-brown: #3e2a1c;
+  --color-brand-brown-2: #5c3f28;
+  --color-brand-gold: #c8862a;
+  --color-brand-gold-light: #f7ead0;
+  --color-brand-cream: #fbf7f0;
+  --color-brand-line: #e3d8c6;
+  --color-brand-muted: #7a6e62;
+}
+
+html,
+body {
+  background: var(--color-brand-cream);
+  color: #2b2118;
+}
