@@ -2,20 +2,47 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { pinoHttp } from 'pino-http';
 import type { Env } from './config/env.js';
+import type { Db } from './db/client.js';
 import { logger } from './lib/logger.js';
+import type { Mailer } from './lib/mailer.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { auditContext, authenticate } from './middleware/auth.js';
 import { healthRouter, type DbPing } from './routes/health.js';
+import { createTokenService } from './modules/auth/tokens.js';
+import { createAuthService } from './modules/auth/auth.service.js';
+import { authRouter } from './modules/auth/auth.routes.js';
+import type { GoogleVerifier } from './modules/auth/google.js';
+import { createUsersService } from './modules/users/users.service.js';
+import { usersRouter } from './modules/users/users.routes.js';
+import { auditRouter } from './modules/audit/audit.routes.js';
 
 export type AppDeps = {
-  env: Pick<Env, 'CORS_ORIGINS' | 'NODE_ENV'>;
+  env: Env;
+  db: Db;
   pingDb: DbPing;
+  mailer: Mailer;
+  google: GoogleVerifier | null;
   version: string;
+  now?: () => Date;
 };
 
 /** Builds the Express app. Kept separate from server.ts so tests can create it without listening. */
-export function createApp({ env, pingDb, version }: AppDeps) {
+export function createApp(deps: AppDeps) {
+  const { env, db } = deps;
+  const tokens = createTokenService(env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_MIN);
+  const auth = createAuthService({
+    db,
+    env,
+    mailer: deps.mailer,
+    tokens,
+    google: deps.google,
+    now: deps.now,
+  });
+  const requireAuth = authenticate(tokens, auth);
+
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -23,9 +50,23 @@ export function createApp({ env, pingDb, version }: AppDeps) {
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
   app.use(compression());
   app.use(express.json({ limit: '1mb' }));
+  app.use(cookieParser());
+  app.use(auditContext);
   if (env.NODE_ENV !== 'test') app.use(pinoHttp({ logger }));
 
-  app.use('/api/health', healthRouter(pingDb, version));
+  app.use('/api/health', healthRouter(deps.pingDb, deps.version));
+  app.use(
+    '/api/auth',
+    authRouter({
+      auth,
+      authenticate: requireAuth,
+      secureCookies: env.NODE_ENV === 'production',
+      refreshTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
+      rateLimitEnabled: env.NODE_ENV !== 'test',
+    }),
+  );
+  app.use('/api/users', usersRouter(createUsersService(db), requireAuth));
+  app.use('/api/audit', auditRouter(db, requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

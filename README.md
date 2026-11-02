@@ -19,6 +19,7 @@ brew install node@22 pnpm git postgresql@16 redis
 brew services start postgresql@16
 brew services start redis
 createdb mecca_bakeries
+createdb mecca_bakeries_test   # used by the API tests
 
 # 2) Install
 pnpm install
@@ -28,9 +29,27 @@ cp apps/api/.env.example apps/api/.env        # put your Mac username in DATABAS
 cp apps/web/.env.example apps/web/.env.local
 cp apps/mobile/.env.example apps/mobile/.env  # put your Mac Wi-Fi IP
 
+#    In apps/api/.env generate the two secrets:
+#    openssl rand -hex 32   -> JWT_ACCESS_SECRET
+#    openssl rand -hex 16   -> OTP_PEPPER
+#    and set SEED_ADMIN_EMAIL / SEED_ADMIN_NAME to your own account.
+
 # 4) Build shared types once
 pnpm --filter @mecca/shared build
+
+# 5) Create tables and the first super admin
+pnpm --filter @mecca/api db:migrate
+pnpm --filter @mecca/api db:seed
 ```
+
+## First login
+
+1. Run `pnpm dev:api` and `pnpm dev:web`, then open http://localhost:3000.
+2. Enter the `SEED_ADMIN_EMAIL` address.
+3. In development no email is sent: the 6-digit code is printed in the API terminal.
+4. After login, add staff accounts from **المستخدمون والصلاحيات**. Only accounts added by an admin can log in.
+
+In production set `SMTP_*` and `MAIL_FROM` so codes are emailed.
 
 ## Run
 
@@ -47,7 +66,7 @@ The phone and the Mac must be on the same Wi-Fi network.
 ```bash
 pnpm typecheck
 pnpm lint
-pnpm --filter @mecca/api test
+pnpm --filter @mecca/api test   # needs the mecca_bakeries_test database
 pnpm format
 ```
 
