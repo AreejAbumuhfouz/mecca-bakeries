@@ -64,16 +64,18 @@ export function ordersRouter(
       res.json({ ok: true, data: scheduler ? await scheduler.recentRuns() : [] });
     },
   );
+  router.get('/catalog', manage, async (req, res) => {
+    const q = z.object({ branchId: z.string().uuid(), date: isoDate.optional() }).parse(req.query);
+    res.json({ ok: true, data: await svc.catalog(req.auth!, q.branchId, q.date) });
+  });
   router.get('/:id', view, async (req, res) => {
     res.json({ ok: true, data: await svc.get(req.auth!, Id.parse(req.params).id) });
   });
   router.post('/', manage, async (req, res) => {
-    res
-      .status(201)
-      .json({
-        ok: true,
-        data: await svc.place(req.auth!, Place.parse(req.body), 'dashboard', req.audit),
-      });
+    res.status(201).json({
+      ok: true,
+      data: await svc.place(req.auth!, Place.parse(req.body), 'dashboard', req.audit),
+    });
   });
   router.patch('/:id', manage, async (req, res) => {
     const { id } = Id.parse(req.params);
@@ -141,12 +143,10 @@ export function appRouter(
     res.json({ ok: true, data: await svc.get(req.auth!, Id.parse(req.params).id) });
   });
   router.post('/orders', async (req, res) => {
-    res
-      .status(201)
-      .json({
-        ok: true,
-        data: await svc.place(req.auth!, Place.parse(req.body), 'app', req.audit),
-      });
+    res.status(201).json({
+      ok: true,
+      data: await svc.place(req.auth!, Place.parse(req.body), 'app', req.audit),
+    });
   });
   router.post('/orders/repeat', async (req, res) => {
     const { branchId } = z.object({ branchId: z.string().uuid() }).parse(req.body);
