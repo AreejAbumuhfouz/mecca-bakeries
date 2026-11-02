@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "rootDir": ".", "noEmit": true },
+  "include": ["src", "test", "vitest.config.ts", "drizzle.config.ts"],
+  "exclude": []
+}
