@@ -1,4 +1,5 @@
 export type Category = { id: string; name: string; nameEn: string | null; isActive: boolean };
+export type TradeNameOption = { id: string; name: string; isActive: boolean };
 
 export type CustomerRow = {
   id: string;
@@ -7,6 +8,8 @@ export type CustomerRow = {
   nameEn: string | null;
   categoryId: string | null;
   categoryName: string | null;
+  tradeNameId: string | null;
+  tradeName: string | null;
   contactName: string | null;
   phone: string | null;
   city: string | null;
@@ -32,6 +35,7 @@ export type Customer = {
   name: string;
   nameEn: string | null;
   categoryId: string | null;
+  tradeNameId: string | null;
   contactName: string | null;
   phone: string | null;
   email: string | null;
@@ -40,6 +44,7 @@ export type Customer = {
   notes: string | null;
   isActive: boolean;
   category: Category | null;
+  tradeName: TradeNameOption | null;
   branches: Branch[];
 };
 
@@ -48,6 +53,7 @@ export type CustomerForm = {
   name: string;
   nameEn: string;
   categoryId: string;
+  tradeNameId: string;
   contactName: string;
   phone: string;
   email: string;
@@ -61,6 +67,7 @@ export const emptyCustomerForm: CustomerForm = {
   name: '',
   nameEn: '',
   categoryId: '',
+  tradeNameId: '',
   contactName: '',
   phone: '',
   email: '',

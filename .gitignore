@@ -21,3 +21,6 @@ apps/mobile/android/
 *.key
 *.mobileprovision
 *.tsbuildinfo
+
+# uploaded files (logos, contract attachments)
+apps/api/uploads/

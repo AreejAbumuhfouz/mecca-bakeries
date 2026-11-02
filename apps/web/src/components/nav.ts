@@ -8,7 +8,12 @@ export const NAV: NavItem[] = [
   { href: '/orders', label: 'الطلبات', permission: 'orders.view' },
   { href: '/customers', label: 'المطاعم', permission: 'customers.view', ready: true },
   { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view' },
-  { href: '/trade-names', label: 'الأسماء التجارية', permission: 'trade_names.manage' },
+  {
+    href: '/trade-names',
+    label: 'الأسماء التجارية',
+    permission: 'trade_names.manage',
+    ready: true,
+  },
   { href: '/items', label: 'الأصناف والأسعار', permission: 'items.view' },
   { href: '/production', label: 'الإنتاج والمخزون', permission: 'production.view' },
   { href: '/deliveries', label: 'التوزيع والسائقون', permission: 'deliveries.view' },

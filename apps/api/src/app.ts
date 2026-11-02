@@ -19,6 +19,10 @@ import { createUsersService } from './modules/users/users.service.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { auditRouter } from './modules/audit/audit.routes.js';
 import { createCustomersService } from './modules/customers/customers.service.js';
+import { createFilesService } from './modules/files/files.service.js';
+import { filesRouter } from './modules/files/files.routes.js';
+import { createTradeNamesService } from './modules/trade-names/trade-names.service.js';
+import { tradeNamesRouter } from './modules/trade-names/trade-names.routes.js';
 import { customersRouter } from './modules/customers/customers.routes.js';
 
 export type AppDeps = {
@@ -69,6 +73,9 @@ export function createApp(deps: AppDeps) {
   );
   app.use('/api/users', usersRouter(createUsersService(db), requireAuth));
   app.use('/api/audit', auditRouter(db, requireAuth));
+  const files = createFilesService(db, env.UPLOAD_DIR);
+  app.use('/api/files', filesRouter(files, requireAuth, env.UPLOAD_MAX_MB));
+  app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
   app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
 
   app.use(notFoundHandler);

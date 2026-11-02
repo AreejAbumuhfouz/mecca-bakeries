@@ -9,6 +9,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { timestamps } from './users.js';
+import { tradeNames } from './trade-names.js';
 
 /** Feeds automatic customer codes (C0001, C0002 …) when no code is entered. */
 export const customerCodeSeq = pgSequence('customer_code_seq', { startWith: 1 });
@@ -37,6 +38,8 @@ export const customers = pgTable(
     categoryId: uuid('category_id').references(() => customerCategories.id, {
       onDelete: 'set null',
     }),
+    /** The trade name this customer is invoiced under. */
+    tradeNameId: uuid('trade_name_id').references(() => tradeNames.id, { onDelete: 'restrict' }),
     contactName: text('contact_name'),
     phone: text('phone'),
     email: text('email'),
@@ -52,6 +55,7 @@ export const customers = pgTable(
     uniqueIndex('customers_code_unique').on(t.code),
     index('customers_name_idx').on(t.name),
     index('customers_category_idx').on(t.categoryId),
+    index('customers_trade_name_idx').on(t.tradeNameId),
   ],
 );
 

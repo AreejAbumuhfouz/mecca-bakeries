@@ -1,17 +1,19 @@
 'use client';
 
 import { Input, Select, Textarea } from '@/components/ui';
-import type { Category, CustomerForm } from '@/lib/customers';
+import type { Category, CustomerForm, TradeNameOption } from '@/lib/customers';
 
 export function CustomerFields({
   form,
   setForm,
   categories,
+  tradeNames,
   codeHint,
 }: {
   form: CustomerForm;
   setForm: (f: CustomerForm) => void;
   categories: Category[];
+  tradeNames: TradeNameOption[];
   codeHint?: string;
 }) {
   const set = (key: keyof CustomerForm) => (e: { target: { value: string } }) =>
@@ -34,6 +36,20 @@ export function CustomerFields({
           .map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+            </option>
+          ))}
+      </Select>
+      <Select
+        label="الاسم التجاري (للفواتير)"
+        value={form.tradeNameId}
+        onChange={set('tradeNameId')}
+      >
+        <option value="">— اختر —</option>
+        {tradeNames
+          .filter((t) => t.isActive || t.id === form.tradeNameId)
+          .map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
             </option>
           ))}
       </Select>

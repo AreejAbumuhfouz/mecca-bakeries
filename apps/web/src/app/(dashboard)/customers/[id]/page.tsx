@@ -14,6 +14,7 @@ import {
   type Category,
   type Customer,
   type CustomerForm,
+  type TradeNameOption,
 } from '@/lib/customers';
 import { CustomerFields } from '../customer-fields';
 
@@ -25,6 +26,7 @@ const customerToForm = (c: Customer): CustomerForm => ({
   name: c.name,
   nameEn: c.nameEn ?? '',
   categoryId: c.categoryId ?? '',
+  tradeNameId: c.tradeNameId ?? '',
   contactName: c.contactName ?? '',
   phone: c.phone ?? '',
   email: c.email ?? '',
@@ -60,6 +62,7 @@ export default function CustomerPage() {
   const canManage = can('customers.manage');
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tradeNames, setTradeNames] = useState<TradeNameOption[]>([]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<CustomerForm | null>(null);
   /** null = closed, 'new' = add form, otherwise the branch id being edited. */
@@ -74,6 +77,9 @@ export default function CustomerPage() {
 
   useEffect(() => {
     void load().catch((err) => setError(errMsg(err, 'تعذّر تحميل العميل')));
+    void api<TradeNameOption[]>('/api/trade-names')
+      .then(setTradeNames)
+      .catch(() => undefined);
     void api<Category[]>('/api/customers/categories')
       .then(setCategories)
       .catch(() => undefined);
@@ -193,7 +199,12 @@ export default function CustomerPage() {
       <Card title="بيانات العميل">
         {editing && form ? (
           <form onSubmit={saveCustomer} className="space-y-4">
-            <CustomerFields form={form} setForm={setForm} categories={categories} />
+            <CustomerFields
+              form={form}
+              setForm={setForm}
+              categories={categories}
+              tradeNames={tradeNames}
+            />
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
                 {busy ? 'جارٍ الحفظ…' : 'حفظ'}
@@ -207,6 +218,7 @@ export default function CustomerPage() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Info label="الاسم بالإنجليزية" value={customer.nameEn} ltr />
             <Info label="الفئة" value={customer.category?.name ?? null} />
+            <Info label="الاسم التجاري" value={customer.tradeName?.name ?? null} />
             <Info label="الشخص المسؤول" value={customer.contactName} />
             <Info label="الهاتف" value={customer.phone} ltr />
             <Info label="البريد الإلكتروني" value={customer.email} ltr />

@@ -1,20 +1,8 @@
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { requirePermission } from '../../middleware/auth.js';
+import { code, optionalText, phone } from '../../lib/validation.js';
 import type { CustomersService } from './customers.service.js';
-
-const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
-const phone = z
-  .string()
-  .trim()
-  .regex(/^(\+?[0-9\s-]{7,20})?$/, 'رقم هاتف غير صالح')
-  .nullable()
-  .optional();
-const code = z
-  .string()
-  .trim()
-  .regex(/^[A-Za-z0-9-]{1,20}$/, 'الكود يقبل أحرفاً إنجليزية وأرقاماً و - فقط')
-  .optional();
 
 const Category = z.object({
   name: z.string().trim().min(2).max(80),
@@ -27,6 +15,7 @@ const CustomerFields = z.object({
   name: z.string().trim().min(2).max(150),
   nameEn: optionalText(150),
   categoryId: z.string().uuid().nullable().optional(),
+  tradeNameId: z.string().uuid().nullable().optional(),
   contactName: optionalText(120),
   phone,
   email: z
@@ -54,6 +43,7 @@ const Branch = z.object({
 const ListQuery = z.object({
   search: z.string().trim().max(100).optional(),
   categoryId: z.string().uuid().optional(),
+  tradeNameId: z.string().uuid().optional(),
   isActive: z
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
