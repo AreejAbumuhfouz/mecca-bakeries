@@ -25,6 +25,8 @@ import { createTradeNamesService } from './modules/trade-names/trade-names.servi
 import { tradeNamesRouter } from './modules/trade-names/trade-names.routes.js';
 import { createItemsService } from './modules/items/items.service.js';
 import { itemsRouter } from './modules/items/items.routes.js';
+import { createContractsService } from './modules/contracts/contracts.service.js';
+import { contractsRouter } from './modules/contracts/contracts.routes.js';
 import { customersRouter } from './modules/customers/customers.routes.js';
 
 export type AppDeps = {
@@ -80,6 +82,10 @@ export function createApp(deps: AppDeps) {
   app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
   app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
   app.use('/api/items', itemsRouter(createItemsService(db, files), requireAuth));
+  app.use(
+    '/api/contracts',
+    contractsRouter(createContractsService({ db, files, now: deps.now }), requireAuth),
+  );
 
   app.use(notFoundHandler);
   app.use(errorHandler);

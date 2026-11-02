@@ -7,7 +7,7 @@ export const NAV: NavItem[] = [
   { href: '/', label: 'لوحة التحكم', ready: true },
   { href: '/orders', label: 'الطلبات', permission: 'orders.view' },
   { href: '/customers', label: 'المطاعم', permission: 'customers.view', ready: true },
-  { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view' },
+  { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view', ready: true },
   {
     href: '/trade-names',
     label: 'الأسماء التجارية',

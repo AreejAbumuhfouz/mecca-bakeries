@@ -16,6 +16,8 @@ import {
   type CustomerForm,
   type TradeNameOption,
 } from '@/lib/customers';
+import { CONTRACT_STATE_LABELS_AR, formatJod } from '@mecca/shared';
+import { STATE_TONE, type ContractRow } from '@/lib/contracts';
 import { CustomerFields } from '../customer-fields';
 
 const errMsg = (err: unknown, fallback: string) =>
@@ -71,9 +73,16 @@ export default function CustomerPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [contracts, setContracts] = useState<ContractRow[] | null>(null);
+  const canContracts = can('contracts.view');
+
   const load = useCallback(async () => {
     setCustomer(await api<Customer>(`/api/customers/${id}`));
-  }, [id]);
+    if (canContracts)
+      setContracts(
+        (await api<{ items: ContractRow[] }>(`/api/contracts?customerId=${id}&pageSize=50`)).items,
+      );
+  }, [id, canContracts]);
 
   useEffect(() => {
     void load().catch((err) => setError(errMsg(err, 'تعذّر تحميل العميل')));
@@ -228,6 +237,41 @@ export default function CustomerPage() {
           </div>
         )}
       </Card>
+
+      {contracts && (
+        <Card
+          title={`العقود (${contracts.length})`}
+          actions={
+            can('contracts.manage') && (
+              <Link href={`/contracts/new?customerId=${customer.id}`}>
+                <Button variant="gold">+ عقد جديد</Button>
+              </Link>
+            )
+          }
+        >
+          <ul className="divide-y divide-stone-100 text-sm">
+            {contracts.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-4 py-2">
+                <Link href={`/contracts/${c.id}`} className="font-mono font-bold underline">
+                  {c.number}
+                </Link>
+                <span className="font-mono text-brand-muted">
+                  {c.startDate} ← {c.endDate}
+                </span>
+                <span>
+                  {c.paymentType === 'credit' ? `سقف ${formatJod(c.creditLimit)}` : 'نقدي'}
+                </span>
+                <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+              </li>
+            ))}
+            {contracts.length === 0 && (
+              <li className="py-3 text-brand-muted">
+                لا يوجد عقد — لا يستطيع العميل الطلب حتى يُضاف له عقد.
+              </li>
+            )}
+          </ul>
+        </Card>
+      )}
 
       <Card
         title={`الفروع (${customer.branches.length})`}
