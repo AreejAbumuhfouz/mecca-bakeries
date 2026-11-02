@@ -16,7 +16,7 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
-  CORS_ORIGINS: csv('http://localhost:3000'),
+  CORS_ORIGINS: csv('http://localhost:3000,http://localhost:8081'),
   TZ: z.string().default('Asia/Amman'),
 
   // Auth
