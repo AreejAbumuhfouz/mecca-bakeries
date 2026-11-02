@@ -23,4 +23,6 @@ The developer (Areej) reviews and runs every change on her Mac before it goes to
 
 ## Before finishing a change
 
+Update `docs/PROGRESS.md`: task status, what is done / remaining, and the manual QA checklist for the task.
+
 Run `pnpm typecheck`, `pnpm lint`, `pnpm --filter @mecca/api test`, `pnpm format:check`.
