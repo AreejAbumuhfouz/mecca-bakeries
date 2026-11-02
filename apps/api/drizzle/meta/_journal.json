@@ -8,6 +8,13 @@
       "when": 1793648656851,
       "tag": "0000_init_users_auth_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793650747848,
+      "tag": "0001_customers_branches",
+      "breakpoints": true
     }
   ]
 }

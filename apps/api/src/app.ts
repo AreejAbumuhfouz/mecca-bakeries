@@ -18,6 +18,8 @@ import type { GoogleVerifier } from './modules/auth/google.js';
 import { createUsersService } from './modules/users/users.service.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { auditRouter } from './modules/audit/audit.routes.js';
+import { createCustomersService } from './modules/customers/customers.service.js';
+import { customersRouter } from './modules/customers/customers.routes.js';
 
 export type AppDeps = {
   env: Env;
@@ -67,6 +69,7 @@ export function createApp(deps: AppDeps) {
   );
   app.use('/api/users', usersRouter(createUsersService(db), requireAuth));
   app.use('/api/audit', auditRouter(db, requireAuth));
+  app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

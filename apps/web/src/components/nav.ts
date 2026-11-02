@@ -6,7 +6,7 @@ export type NavItem = { href: string; label: string; permission?: Permission; re
 export const NAV: NavItem[] = [
   { href: '/', label: 'لوحة التحكم', ready: true },
   { href: '/orders', label: 'الطلبات', permission: 'orders.view' },
-  { href: '/customers', label: 'المطاعم', permission: 'customers.view' },
+  { href: '/customers', label: 'المطاعم', permission: 'customers.view', ready: true },
   { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view' },
   { href: '/trade-names', label: 'الأسماء التجارية', permission: 'trade_names.manage' },
   { href: '/items', label: 'الأصناف والأسعار', permission: 'items.view' },

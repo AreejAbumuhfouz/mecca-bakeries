@@ -57,8 +57,9 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
     advance: (ms: number) => (clock = new Date(clock.getTime() + ms)),
     async reset() {
       await database.db.execute(
-        sql`TRUNCATE audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
+        sql`TRUNCATE branches, customers, customer_categories, audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
       );
+      await database.db.execute(sql`ALTER SEQUENCE customer_code_seq RESTART WITH 1`);
       sent.length = 0;
       googleIdentities.clear();
       clock = new Date();
