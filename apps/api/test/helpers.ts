@@ -39,6 +39,8 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
   const googleIdentities = new Map<string, GoogleIdentity>();
   let clock = new Date();
 
+  const whatsappSent: { path: string; body: unknown }[] = [];
+  const pushSent: { to: string; title: string; body: string }[] = [];
   const app = createApp({
     env,
     db: database.db,
@@ -51,6 +53,11 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
       return id;
     },
     now: () => clock,
+    whatsappTransport: async (path, body) => {
+      whatsappSent.push({ path, body });
+      return { ok: true, messageId: `wamid.${whatsappSent.length}` };
+    },
+    pushTransport: async (messages) => void pushSent.push(...messages),
   });
 
   return {
@@ -58,14 +65,21 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
     db: database.db,
     sent,
     googleIdentities,
+    whatsappSent,
+    pushSent,
     advance: (ms: number) => (clock = new Date(clock.getTime() + ms)),
+    /** Sets the clock to an instant, e.g. "2026-11-10T18:00:00Z" (= 21:00 in Amman). */
+    setClock: (iso: string) => (clock = new Date(iso)),
     async reset() {
       await database.db.execute(
-        sql`TRUNCATE contract_attachments, contract_prices, contracts, items, item_sections, branches, customers, customer_categories, trade_names, files, audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
+        sql`TRUNCATE whatsapp_messages, order_events, order_items, orders, push_tokens, scheduler_runs, app_settings, contract_attachments, contract_prices, contracts, items, item_sections, branches, customers, customer_categories, trade_names, files, audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
       );
       await database.db.execute(sql`ALTER SEQUENCE customer_code_seq RESTART WITH 1`);
       await database.db.execute(sql`ALTER SEQUENCE item_code_seq RESTART WITH 1`);
       await database.db.execute(sql`ALTER SEQUENCE contract_number_seq RESTART WITH 1`);
+      await database.db.execute(sql`ALTER SEQUENCE order_number_seq RESTART WITH 1`);
+      whatsappSent.length = 0;
+      pushSent.length = 0;
       sent.length = 0;
       googleIdentities.clear();
       clock = new Date();

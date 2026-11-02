@@ -8,6 +8,8 @@ declare global {
       auth?: AuthUser;
       /** Who/where for audit log rows. Always set (userId is null for anonymous requests). */
       audit: AuditContext;
+      /** Raw JSON body bytes (for webhook signatures). */
+      rawBody?: Buffer;
     }
   }
 }

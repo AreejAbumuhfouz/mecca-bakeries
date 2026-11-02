@@ -18,7 +18,8 @@ type UserRow = {
 };
 type Page = { items: UserRow[]; total: number };
 
-const emptyForm = { name: '', email: '', phone: '', role: 'orders' as Role };
+const emptyForm = { name: '', email: '', phone: '', role: 'orders' as Role, customerId: '' };
+type CustomerOption = { id: string; code: string; name: string };
 
 export default function UsersPage() {
   const { can, user: me } = useAuth();
@@ -29,12 +30,20 @@ export default function UsersPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const canManage = can('users.manage');
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams({ pageSize: '100', ...(search ? { search } : {}) });
     setData(await api<Page>(`/api/users?${qs}`));
   }, [search]);
+
+  useEffect(() => {
+    if (form.role !== 'restaurant' || customers.length) return;
+    void api<{ items: CustomerOption[] }>('/api/customers?pageSize=100&isActive=true')
+      .then((r) => setCustomers(r.items))
+      .catch(() => undefined);
+  }, [form.role, customers.length]);
 
   useEffect(() => {
     const id = setTimeout(() => void load().catch(() => setError('تعذّر تحميل المستخدمين')), 250);
@@ -48,7 +57,11 @@ export default function UsersPage() {
     try {
       await api('/api/users', {
         method: 'POST',
-        body: JSON.stringify({ ...form, phone: form.phone || null }),
+        body: JSON.stringify({
+          ...form,
+          phone: form.phone || null,
+          customerId: form.role === 'restaurant' ? form.customerId || null : null,
+        }),
       });
       setForm(emptyForm);
       setShowForm(false);
@@ -140,6 +153,26 @@ export default function UsersPage() {
                 ))}
               </select>
             </label>
+            {form.role === 'restaurant' && (
+              <label className="block md:col-span-2">
+                <span className="mb-1 block text-sm font-bold text-brand-brown">
+                  العميل (حساب المطعم يطلب لكل فروعه)
+                </span>
+                <select
+                  required
+                  className="w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm"
+                  value={form.customerId}
+                  onChange={(e) => setForm({ ...form, customerId: e.target.value })}
+                >
+                  <option value="">— اختر العميل —</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div className="md:col-span-4">
               <Button type="submit" disabled={busy}>
                 {busy ? 'جارٍ الحفظ…' : 'حفظ'}

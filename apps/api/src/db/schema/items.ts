@@ -9,7 +9,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { ITEM_UNITS } from '@mecca/shared';
-import { timestamps } from './users.js';
+import { timestamps } from './common.js';
 import { files } from './files.js';
 
 /** Feeds automatic item codes (I0001 …) when no code is entered. */

@@ -12,7 +12,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { CONTRACT_STATUSES, PAYMENT_TYPES } from '@mecca/shared';
-import { timestamps } from './users.js';
+import { timestamps } from './common.js';
 import { customers } from './customers.js';
 import { items } from './items.js';
 import { files } from './files.js';

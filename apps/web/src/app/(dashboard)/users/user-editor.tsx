@@ -19,6 +19,7 @@ type UserDetail = {
   name: string;
   phone: string | null;
   role: Role;
+  customerId: string | null;
   overrides: { permission: Permission; allowed: boolean }[];
 };
 
@@ -39,6 +40,8 @@ export function UserEditor({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role>('orders');
+  const [customerId, setCustomerId] = useState('');
+  const [customers, setCustomers] = useState<{ id: string; code: string; name: string }[]>([]);
   const [overrides, setOverrides] = useState<Partial<Record<Permission, boolean>>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -50,10 +53,18 @@ export function UserEditor({
         setName(u.name);
         setPhone(u.phone ?? '');
         setRole(u.role);
+        setCustomerId(u.customerId ?? '');
         setOverrides(Object.fromEntries(u.overrides.map((o) => [o.permission, o.allowed])));
       })
       .catch((err) => setError(errorMessage(err, 'تعذّر تحميل المستخدم')));
   }, [userId]);
+
+  useEffect(() => {
+    if (role !== 'restaurant' || customers.length) return;
+    void api<{ items: { id: string; code: string; name: string }[] }>('/api/customers?pageSize=100')
+      .then((r) => setCustomers(r.items))
+      .catch(() => undefined);
+  }, [role, customers.length]);
 
   const defaults = new Set<Permission>(ROLE_PERMISSIONS[role]);
   const effective = (p: Permission) => overrides[p] ?? defaults.has(p);
@@ -78,6 +89,7 @@ export function UserEditor({
           name,
           phone: phone.trim() || null,
           role,
+          customerId: role === 'restaurant' ? customerId || null : null,
           overrides:
             role === 'super_admin'
               ? []
@@ -126,6 +138,25 @@ export function UserEditor({
             ))}
           </Select>
         </div>
+
+        {role === 'restaurant' && (
+          <label className="block max-w-md">
+            <span className="mb-1 block text-sm font-bold text-brand-brown">العميل</span>
+            <select
+              required
+              className="w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm"
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value)}
+            >
+              <option value="">— اختر العميل —</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {role === 'super_admin' ? (
           <p className="text-sm text-brand-muted">المدير العام يملك كل الصلاحيات.</p>

@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -10,14 +11,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { ROLE_VALUES } from '@mecca/shared';
-
-const timestamps = {
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-};
+import { timestamps } from './common.js';
+import { customers } from './customers.js';
 
 /** Dashboard staff, restaurants and drivers. Accounts are created by an admin (no self sign-up). */
 export const users = pgTable(
@@ -28,6 +23,11 @@ export const users = pgTable(
     name: text('name').notNull(),
     phone: text('phone'),
     role: text('role', { enum: ROLE_VALUES }).notNull(),
+    /** Restaurant accounts: the customer they order for (all of its branches). */
+    // Typed explicitly: users → customers → trade names → files → users is a reference cycle.
+    customerId: uuid('customer_id').references((): AnyPgColumn => customers.id, {
+      onDelete: 'restrict',
+    }),
     isActive: boolean('is_active').notNull().default(true),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     ...timestamps,
@@ -83,5 +83,3 @@ export const sessions = pgTable(
     index('sessions_user_idx').on(t.userId),
   ],
 );
-
-export { timestamps };

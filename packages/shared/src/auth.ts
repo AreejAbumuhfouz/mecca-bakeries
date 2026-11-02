@@ -6,6 +6,8 @@ export type AuthUser = {
   email: string;
   name: string;
   role: Role;
+  /** Restaurant accounts only: the customer they order for. */
+  customerId: string | null;
   permissions: Permission[];
 };
 

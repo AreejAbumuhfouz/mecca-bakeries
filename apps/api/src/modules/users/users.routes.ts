@@ -16,6 +16,7 @@ const CreateUser = z.object({
   name: z.string().trim().min(2).max(120),
   phone,
   role: z.enum(ROLE_VALUES),
+  customerId: z.string().uuid().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -29,6 +30,7 @@ const PatchUser = CreateUser.partial().extend({
 const ListQuery = z.object({
   search: z.string().trim().max(100).optional(),
   role: z.enum(ROLE_VALUES).optional(),
+  customerId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });

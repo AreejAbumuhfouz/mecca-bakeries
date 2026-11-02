@@ -8,7 +8,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { timestamps } from './users.js';
+import { timestamps } from './common.js';
 import { tradeNames } from './trade-names.js';
 
 /** Feeds automatic customer codes (C0001, C0002 …) when no code is entered. */

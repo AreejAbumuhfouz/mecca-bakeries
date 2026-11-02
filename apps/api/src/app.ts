@@ -29,6 +29,22 @@ import { itemsRouter } from './modules/items/items.routes.js';
 import { createContractsService } from './modules/contracts/contracts.service.js';
 import { contractsRouter } from './modules/contracts/contracts.routes.js';
 import { customersRouter } from './modules/customers/customers.routes.js';
+import { createSettingsService } from './modules/settings/settings.service.js';
+import { settingsRouter } from './modules/settings/settings.routes.js';
+import { createOrdersService } from './modules/orders/orders.service.js';
+import { appRouter, ordersRouter } from './modules/orders/orders.routes.js';
+import {
+  createWhatsAppService,
+  type WhatsAppTransport,
+} from './modules/whatsapp/whatsapp.service.js';
+import { whatsappRouter } from './modules/whatsapp/whatsapp.routes.js';
+import {
+  createPushService,
+  expoTransport,
+  type PushTransport,
+} from './modules/notifications/push.js';
+import { createNotifier, type Notifier } from './modules/notifications/notifier.js';
+import { createScheduler } from './modules/scheduler/scheduler.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -42,6 +58,10 @@ export type AppDeps = {
   google: GoogleVerifier | null;
   version: string;
   now?: () => Date;
+  /** Test doubles; real Meta / Expo senders are used when these are omitted. */
+  whatsappTransport?: WhatsAppTransport | null;
+  pushTransport?: PushTransport | null;
+  notifier?: Notifier;
 };
 
 /** Builds the Express app. Kept separate from server.ts so tests can create it without listening. */
@@ -64,7 +84,15 @@ export function createApp(deps: AppDeps) {
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
   app.use(compression());
-  app.use(express.json({ limit: '1mb' }));
+  app.use(
+    express.json({
+      limit: '1mb',
+      // Raw bytes are kept for the WhatsApp webhook signature check.
+      verify: (req, _res, buf) => {
+        (req as express.Request).rawBody = buf;
+      },
+    }),
+  );
   app.use(cookieParser());
   app.use(auditContext);
   if (env.NODE_ENV !== 'test')
@@ -101,12 +129,42 @@ export function createApp(deps: AppDeps) {
   app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
   app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
   app.use('/api/items', itemsRouter(createItemsService(db, files), requireAuth));
-  app.use(
-    '/api/contracts',
-    contractsRouter(createContractsService({ db, files, now: deps.now }), requireAuth),
+  const contracts = createContractsService({ db, files, now: deps.now });
+  app.use('/api/contracts', contractsRouter(contracts, requireAuth));
+
+  const settings = createSettingsService(db);
+  app.use('/api/settings', settingsRouter(settings, requireAuth));
+
+  const whatsappConfig =
+    env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID
+      ? {
+          token: env.WHATSAPP_TOKEN,
+          phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID,
+          verifyToken: env.WHATSAPP_VERIFY_TOKEN,
+          appSecret: env.WHATSAPP_APP_SECRET,
+          apiVersion: env.WHATSAPP_API_VERSION,
+          language: env.WHATSAPP_TEMPLATE_LANG,
+        }
+      : null;
+  const whatsapp = createWhatsAppService({
+    db,
+    config: whatsappConfig,
+    transport:
+      deps.whatsappTransport === undefined ? undefined : (deps.whatsappTransport ?? undefined),
+  });
+  app.use('/api/whatsapp', whatsappRouter(whatsapp, requireAuth));
+
+  const push = createPushService(
+    db,
+    deps.pushTransport !== undefined ? deps.pushTransport : env.PUSH_ENABLED ? expoTransport : null,
   );
+  const notifier = deps.notifier ?? createNotifier({ db, settings, whatsapp, push });
+  const orders = createOrdersService({ db, settings, notifier, now: deps.now });
+  const scheduler = createScheduler({ db, settings, orders, notifier, now: deps.now });
+  app.use('/api/orders', ordersRouter(orders, scheduler, requireAuth));
+  app.use('/api/app', appRouter({ orders, contracts, push }, requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return app;
+  return Object.assign(app, { scheduler, orders });
 }

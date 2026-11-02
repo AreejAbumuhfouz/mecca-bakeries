@@ -5,7 +5,8 @@ export type NavItem = { href: string; label: string; permission?: Permission; re
 /** Sidebar items in the order agreed in the proposal. `ready: false` items are built in later phases. */
 export const NAV: NavItem[] = [
   { href: '/', label: 'لوحة التحكم', ready: true },
-  { href: '/orders', label: 'الطلبات', permission: 'orders.view' },
+  { href: '/orders', label: 'الطلبات', permission: 'orders.view', ready: true },
+  { href: '/messages', label: 'رسائل واتساب', permission: 'orders.view', ready: true },
   { href: '/customers', label: 'المطاعم', permission: 'customers.view', ready: true },
   { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view', ready: true },
   {
@@ -22,5 +23,5 @@ export const NAV: NavItem[] = [
   { href: '/purchasing', label: 'طلبات الشراء', permission: 'purchasing.view' },
   { href: '/reports', label: 'التقارير', permission: 'reports.view' },
   { href: '/users', label: 'المستخدمون والصلاحيات', permission: 'users.view', ready: true },
-  { href: '/settings', label: 'الإعدادات', permission: 'settings.manage' },
+  { href: '/settings', label: 'الإعدادات', permission: 'settings.manage', ready: true },
 ];

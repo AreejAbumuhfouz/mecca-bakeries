@@ -1,7 +1,7 @@
 import { and, asc, eq, ilike, ne, or, sql, type SQL } from 'drizzle-orm';
 import { ROLES, type Permission, type Role } from '@mecca/shared';
 import type { Db } from '../../db/client.js';
-import { userPermissionOverrides, users } from '../../db/schema/index.js';
+import { customers, userPermissionOverrides, users } from '../../db/schema/index.js';
 import { AppError, notFound } from '../../lib/errors.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 
@@ -10,12 +10,19 @@ export type UserInput = {
   name: string;
   phone?: string | null;
   role: Role;
+  customerId?: string | null;
   isActive?: boolean;
 };
 export type UserPatch = Partial<UserInput> & {
   overrides?: { permission: Permission; allowed: boolean }[];
 };
-export type UserListQuery = { search?: string; role?: Role; page: number; pageSize: number };
+export type UserListQuery = {
+  search?: string;
+  role?: Role;
+  customerId?: string;
+  page: number;
+  pageSize: number;
+};
 
 type UserRow = typeof users.$inferSelect;
 const publicUser = (u: UserRow) => ({
@@ -24,6 +31,7 @@ const publicUser = (u: UserRow) => ({
   name: u.name,
   phone: u.phone,
   role: u.role,
+  customerId: u.customerId,
   isActive: u.isActive,
   lastLoginAt: u.lastLoginAt,
   createdAt: u.createdAt,
@@ -53,10 +61,20 @@ export function createUsersService(db: Db) {
       throw new AppError(409, 'LAST_SUPER_ADMIN', 'لا يمكن تعطيل أو تغيير دور آخر مدير للنظام');
   }
 
+  /** Restaurant accounts must belong to a customer; other roles must not. */
+  async function resolveCustomer(role: Role, customerId: string | null | undefined) {
+    if (role !== ROLES.RESTAURANT) return null;
+    if (!customerId) throw new AppError(400, 'CUSTOMER_REQUIRED', 'حساب المطعم يجب أن يُربط بعميل');
+    const c = await db.query.customers.findFirst({ where: eq(customers.id, customerId) });
+    if (!c) throw new AppError(400, 'BAD_CUSTOMER', 'العميل غير موجود');
+    return customerId;
+  }
+
   return {
     async list(q: UserListQuery) {
       const filters: SQL[] = [];
       if (q.role) filters.push(eq(users.role, q.role));
+      if (q.customerId) filters.push(eq(users.customerId, q.customerId));
       if (q.search) {
         const term = `%${q.search}%`;
         filters.push(
@@ -95,10 +113,11 @@ export function createUsersService(db: Db) {
       const email = input.email.trim().toLowerCase();
       const exists = await db.query.users.findFirst({ where: eq(users.email, email) });
       if (exists) throw new AppError(409, 'EMAIL_TAKEN', 'البريد الإلكتروني مستخدم مسبقاً');
+      const customerId = await resolveCustomer(input.role, input.customerId);
       return db.transaction(async (tx) => {
         const [created] = await tx
           .insert(users)
-          .values({ ...input, email, phone: input.phone ?? null })
+          .values({ ...input, email, phone: input.phone ?? null, customerId })
           .returning();
         await writeAudit(tx, ctx, {
           action: 'user.create',
@@ -126,6 +145,11 @@ export function createUsersService(db: Db) {
         });
         if (clash) throw new AppError(409, 'EMAIL_TAKEN', 'البريد الإلكتروني مستخدم مسبقاً');
       }
+      if (fields.role !== undefined || fields.customerId !== undefined)
+        fields.customerId = await resolveCustomer(
+          fields.role ?? before.role,
+          fields.customerId !== undefined ? fields.customerId : before.customerId,
+        );
       const beforeOverrides = await getOverrides(id);
 
       return db.transaction(async (tx) => {

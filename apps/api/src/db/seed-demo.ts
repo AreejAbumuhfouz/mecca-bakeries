@@ -1,8 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { like, sql } from 'drizzle-orm';
-import { addDays, ammanDate, parseJod, type ItemUnit, type Role } from '@mecca/shared';
+import { eq, like, sql } from 'drizzle-orm';
+import {
+  addDays,
+  ammanDate,
+  currentDeliveryDate,
+  cutoffAt,
+  parseJod,
+  ROLE_PERMISSIONS,
+  type AuthUser,
+  type ItemUnit,
+  type Role,
+} from '@mecca/shared';
 import { createDb } from './client.js';
 import { customers, users } from './schema/index.js';
 import { createFilesService } from '../modules/files/files.service.js';
@@ -11,6 +21,9 @@ import { createCustomersService } from '../modules/customers/customers.service.j
 import { createItemsService } from '../modules/items/items.service.js';
 import { createContractsService } from '../modules/contracts/contracts.service.js';
 import type { AuditContext } from '../modules/audit/audit.service.js';
+import { createSettingsService } from '../modules/settings/settings.service.js';
+import { createOrdersService } from '../modules/orders/orders.service.js';
+import { captureNotifier } from '../modules/notifications/notifier.js';
 
 /**
  * Demo data for development and client demos. All names, phones and emails are fictional.
@@ -36,12 +49,35 @@ const jod = (v: string) => parseJod(v)!;
 const today = ammanDate();
 
 if (reset) {
-  await db.execute(sql`TRUNCATE contract_attachments, contract_prices, contracts, items,
-    item_sections, branches, customers, customer_categories, trade_names, files
-    RESTART IDENTITY CASCADE`);
-  for (const seq of ['customer_code_seq', 'item_code_seq', 'contract_number_seq'])
-    await db.execute(sql.raw(`ALTER SEQUENCE ${seq} RESTART WITH 1`));
+  // Plain DELETEs, never TRUNCATE … CASCADE: users reference customers, and a cascade
+  // would wipe every account (including the admin).
   await db.delete(users).where(like(users.email, '%@example.com'));
+  await db.execute(sql`UPDATE users SET customer_id = NULL`);
+  for (const table of [
+    'whatsapp_messages',
+    'order_events',
+    'order_items',
+    'orders',
+    'scheduler_runs',
+    'contract_attachments',
+    'contract_prices',
+    'contracts',
+    'items',
+    'item_sections',
+    'branches',
+    'customers',
+    'customer_categories',
+    'trade_names',
+    'files',
+  ])
+    await db.execute(sql.raw(`DELETE FROM ${table}`));
+  for (const seq of [
+    'customer_code_seq',
+    'item_code_seq',
+    'contract_number_seq',
+    'order_number_seq',
+  ])
+    await db.execute(sql.raw(`ALTER SEQUENCE ${seq} RESTART WITH 1`));
   console.log('✓ Old demo data removed');
 }
 
@@ -325,6 +361,7 @@ const demo: Demo[] = [
   },
 ];
 
+const created: Record<string, string> = {};
 for (const d of demo) {
   const c = await customersSvc.create(
     {
@@ -338,6 +375,7 @@ for (const d of demo) {
     },
     ctx,
   );
+  created[d.name] = c.id;
   for (const [name, address] of d.branches ?? [])
     await customersSvc.createBranch(c.id, { name, address, city: d.city }, ctx);
   if (d.inactive) await customersSvc.update(c.id, { isActive: false }, ctx);
@@ -369,9 +407,112 @@ for (const d of demo) {
   if (d.status) await contractsSvc.update(contract.id, { status: d.status }, ctx);
 }
 
+// ---------- restaurant app account and orders ----------
+await db.insert(users).values({
+  email: 'restaurant@example.com',
+  name: 'مطعم السفرة الذهبية — التطبيق',
+  role: 'restaurant',
+  customerId: created['مطعم السفرة الذهبية']!,
+});
+const [clerk] = await db.select().from(users).where(eq(users.email, 'orders@example.com'));
+const actor: AuthUser = {
+  id: clerk!.id,
+  email: clerk!.email,
+  name: clerk!.name,
+  role: 'orders',
+  customerId: null,
+  permissions: [...ROLE_PERMISSIONS.orders, 'credit.override'],
+};
+const settingsSvc = createSettingsService(db);
+const { notifier } = captureNotifier(); // demo orders send no messages
+const { cutoffTime } = await settingsSvc.getOrderSettings();
+const ordersAt = (at: Date) =>
+  createOrdersService({ db, settings: settingsSvc, notifier, now: () => at });
+const current = currentDeliveryDate(new Date(), cutoffTime);
+const previous = addDays(current, -1);
+
+const baskets: Record<string, [string, number][]> = {
+  'مطعم السفرة الذهبية': [
+    ['خبز عربي كبير', 40],
+    ['صمون فرنسي', 120],
+    ['كرواسان زبدة', 30],
+  ],
+  'فندق الياسمين': [
+    ['خبز توست أبيض', 25],
+    ['كرواسان زبدة', 80],
+    ['خبز برغر بالسمسم', 6],
+    ['كنافة نابلسية', 2],
+  ],
+  'مقهى زاوية القهوة': [
+    ['كرواسان زبدة', 24],
+    ['مناقيش زعتر', 20],
+  ],
+  'مطعم بيت الشاورما': [
+    ['خبز شراك', 60],
+    ['صمون ساندويش طويل', 150],
+  ],
+  'سوبرماركت النخبة': [
+    ['خبز عربي كبير', 100],
+    ['خبز عربي صغير', 80],
+    ['خبز توست أسمر', 30],
+  ],
+  'مطعم أكلات زمان': [
+    ['خبز طابون', 50],
+    ['خبز عربي صغير', 20],
+  ],
+  'مطعم سنابل البحر': [
+    ['خبز عربي كبير', 30],
+    ['خبز هوت دوغ', 4],
+  ],
+};
+const branchesOf = async (name: string) =>
+  (await customersSvc.get(created[name]!)).branches.filter((b) => b.isActive);
+const lines = (basket: [string, number][], factor = 1) =>
+  basket.map(([name, q]) => ({
+    itemId: item[name]!.id,
+    quantity: Math.max(1, Math.round(q * factor)),
+  }));
+
+// Yesterday: placed the evening before, confirmed at the cutoff.
+const yesterdayEvening = ordersAt(
+  new Date(cutoffAt(previous, cutoffTime).getTime() - 5 * 3_600_000),
+);
+let orderCount = 0;
+for (const [name, basket] of Object.entries(baskets))
+  for (const b of await branchesOf(name)) {
+    await yesterdayEvening.place(
+      actor,
+      { branchId: b.id, deliveryDate: previous, lines: lines(basket) },
+      'app',
+      ctx,
+    );
+    orderCount++;
+  }
+await ordersAt(new Date(cutoffAt(previous, cutoffTime).getTime() + 5 * 60_000)).closeOrdering(
+  previous,
+);
+
+// Current delivery date: some branches ordered, some not yet; one order is over its credit limit.
+const live = ordersAt(new Date());
+for (const name of ['مطعم السفرة الذهبية', 'فندق الياسمين', 'مطعم بيت الشاورما'])
+  for (const b of (await branchesOf(name)).slice(0, 2)) {
+    await live.place(actor, { branchId: b.id, lines: lines(baskets[name]!, 1.1) }, 'app', ctx);
+    orderCount++;
+  }
+const [zaman] = await branchesOf('مطعم أكلات زمان');
+await live.place(
+  actor,
+  { branchId: zaman!.id, lines: [{ itemId: item['كنافة نابلسية']!.id, quantity: 40 }] },
+  'app',
+  ctx,
+);
+orderCount++;
+
 console.log(`✓ Demo data added:
   - ${staff.length} staff accounts: ${staff.map(([e]) => e).join(', ')}
   - 2 trade names, 4 customer categories, 5 sections, ${itemRows.length + 1} items
   - ${demo.length} customers with branches; contracts: active, cash, expiring, not started,
-    suspended, expired, and one customer with no contract`);
+    suspended, expired, and one customer with no contract
+  - ${orderCount} orders: yesterday (${previous}) confirmed, today (${current}) open, one held for credit approval
+  - restaurant app account: restaurant@example.com (مطعم السفرة الذهبية)`);
 await close();

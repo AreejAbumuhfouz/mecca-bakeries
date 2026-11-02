@@ -62,6 +62,7 @@ export function createAuthService(deps: AuthDeps) {
       email: user.email,
       name: user.name,
       role: user.role,
+      customerId: user.customerId,
       permissions: [...effectivePermissions(user.role, overrides)].sort(),
     };
   }
