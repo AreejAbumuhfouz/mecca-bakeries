@@ -10,6 +10,7 @@
 | Shared types                       | `packages/shared` | TypeScript                                                        |
 
 The full phase/task plan is in [`docs/development-plan.pdf`](docs/development-plan.pdf).
+Progress, setup troubleshooting and the manual QA checklists are in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## Local setup (macOS)
 
@@ -34,12 +35,8 @@ cp apps/mobile/.env.example apps/mobile/.env  # put your Mac Wi-Fi IP
 #    openssl rand -hex 16   -> OTP_PEPPER
 #    and set SEED_ADMIN_EMAIL / SEED_ADMIN_NAME to your own account.
 
-# 4) Build shared types once
-pnpm --filter @mecca/shared build
-
-# 5) Create tables and the first super admin
-pnpm --filter @mecca/api db:migrate
-pnpm --filter @mecca/api db:seed
+# 4) Build shared types, create tables and the first super admin (safe to re-run)
+pnpm run bootstrap
 ```
 
 ## First login
