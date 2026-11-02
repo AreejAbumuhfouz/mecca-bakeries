@@ -4,3 +4,4 @@ export * from './audit.js';
 export * from './files.js';
 export * from './trade-names.js';
 export * from './customers.js';
+export * from './items.js';

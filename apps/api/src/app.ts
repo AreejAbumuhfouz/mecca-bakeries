@@ -23,6 +23,8 @@ import { createFilesService } from './modules/files/files.service.js';
 import { filesRouter } from './modules/files/files.routes.js';
 import { createTradeNamesService } from './modules/trade-names/trade-names.service.js';
 import { tradeNamesRouter } from './modules/trade-names/trade-names.routes.js';
+import { createItemsService } from './modules/items/items.service.js';
+import { itemsRouter } from './modules/items/items.routes.js';
 import { customersRouter } from './modules/customers/customers.routes.js';
 
 export type AppDeps = {
@@ -77,6 +79,7 @@ export function createApp(deps: AppDeps) {
   app.use('/api/files', filesRouter(files, requireAuth, env.UPLOAD_MAX_MB));
   app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
   app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
+  app.use('/api/items', itemsRouter(createItemsService(db, files), requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
