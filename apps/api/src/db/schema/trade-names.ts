@@ -1,5 +1,5 @@
 import { boolean, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { timestamps } from './users.js';
+import { timestamps } from './common.js';
 import { files } from './files.js';
 
 /**

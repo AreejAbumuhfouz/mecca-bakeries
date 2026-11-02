@@ -21,10 +21,12 @@ const app = createApp({
 
 const server = app.listen(env.PORT, () => {
   logger.info(`API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
+  if (env.SCHEDULER_ENABLED) app.scheduler.start();
 });
 
 async function shutdown(signal: string) {
   logger.info(`${signal} received, shutting down`);
+  app.scheduler.stop();
   server.close();
   await database.close();
   process.exit(0);

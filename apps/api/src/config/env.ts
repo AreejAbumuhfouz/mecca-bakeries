@@ -34,6 +34,25 @@ const EnvSchema = z.object({
   UPLOAD_DIR: z.string().default('uploads'),
   UPLOAD_MAX_MB: z.coerce.number().positive().default(5),
 
+  // WhatsApp Cloud API (Meta). Leave WHATSAPP_TOKEN empty to only log messages.
+  WHATSAPP_TOKEN: z.string().default(''),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().default(''),
+  WHATSAPP_VERIFY_TOKEN: z.string().default(''),
+  WHATSAPP_APP_SECRET: z.string().default(''),
+  WHATSAPP_API_VERSION: z.string().default('v21.0'),
+  WHATSAPP_TEMPLATE_LANG: z.string().default('ar'),
+
+  // App push notifications through Expo.
+  PUSH_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  // Scheduled jobs (reminders, drafts, cutoff). Run them in one process only if you scale out.
+  SCHEDULER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+
   // Email (SMTP). If SMTP_HOST is empty, codes are printed to the console (development only).
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
