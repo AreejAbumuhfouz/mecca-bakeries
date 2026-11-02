@@ -1,70 +1,108 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { I18nManager, Image, StyleSheet, Text, View } from 'react-native';
-import type { ApiResponse, HealthStatus } from '@mecca/shared';
+import { ActivityIndicator, I18nManager, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { AuthProvider, useAuth } from './src/auth';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { OrderScreen } from './src/screens/OrderScreen';
+import { OrdersScreen } from './src/screens/OrdersScreen';
+import { AccountScreen } from './src/screens/AccountScreen';
+import { colors } from './src/theme';
 
-// The app is Arabic-first. forceRTL takes effect after the first reload.
+// Arabic first. forceRTL takes effect after the first reload of the app.
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
-// On a real phone "localhost" is the phone itself: set this to your Mac's Wi-Fi IP in .env
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+type Tab = 'home' | 'orders' | 'account';
+const TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: 'home', label: 'طلب اليوم', icon: '🥖' },
+  { key: 'orders', label: 'طلباتي', icon: '📋' },
+  { key: 'account', label: 'حسابي', icon: '👤' },
+];
 
-const colors = { brown: '#3E2A1C', gold: '#C8862A', cream: '#FBF7F0', muted: '#7A6E62' };
+function Main() {
+  const { user, loading } = useAuth();
+  const [tab, setTab] = useState<Tab>('home');
+  const [open, setOpen] = useState<{ branchId: string; orderId: string | null } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-export default function App() {
-  const [status, setStatus] = useState<'loading' | 'ok' | 'down'>('loading');
+  if (loading)
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.cream,
+        }}
+      >
+        <ActivityIndicator color={colors.brown} size="large" />
+      </View>
+    );
+  if (!user) return <LoginScreen />;
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/health`)
-      .then((r) => r.json() as Promise<ApiResponse<HealthStatus>>)
-      .then((body) => setStatus(body.ok && body.data.status === 'ok' ? 'ok' : 'down'))
-      .catch(() => setStatus('down'));
-  }, []);
+  if (open)
+    return (
+      <OrderScreen
+        branchId={open.branchId}
+        orderId={open.orderId}
+        onClose={(changed) => {
+          setOpen(null);
+          if (changed) setRefreshKey((k) => k + 1);
+          else setRefreshKey((k) => k + 1);
+        }}
+      />
+    );
 
-  const label = {
-    loading: 'جارٍ الاتصال بالخادم…',
-    ok: 'متصل بالخادم ✓',
-    down: 'تعذّر الاتصال بالخادم',
-  }[status];
+  const openOrder = (branchId: string, orderId: string | null) => setOpen({ branchId, orderId });
 
   return (
-    <View style={styles.container}>
-      {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
-      <Image source={require('./assets/logo.png')} style={styles.logo} resizeMode="contain" />
-      <Text style={styles.title}>مخابز مكة</Text>
-      <Text style={styles.subtitle}>تطبيق المطاعم والسائقين</Text>
-      <Text
-        style={[styles.badge, status === 'ok' ? styles.ok : status === 'down' ? styles.down : null]}
+    <View style={{ flex: 1, backgroundColor: colors.cream }}>
+      <View style={{ flex: 1 }}>
+        {tab === 'home' && <HomeScreen onOpenOrder={openOrder} refreshKey={refreshKey} />}
+        {tab === 'orders' && <OrdersScreen onOpenOrder={openOrder} refreshKey={refreshKey} />}
+        {tab === 'account' && <AccountScreen />}
+      </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          borderTopWidth: 1,
+          borderColor: colors.line,
+          backgroundColor: colors.white,
+        }}
       >
-        {label}
-      </Text>
-      <StatusBar style="dark" />
+        {TABS.map((t) => (
+          <Pressable
+            key={t.key}
+            onPress={() => setTab(t.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === t.key }}
+            style={{ flex: 1, alignItems: 'center', paddingVertical: 10 }}
+          >
+            <Text style={{ fontSize: 20 }}>{t.icon}</Text>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: tab === t.key ? '700' : '400',
+                color: tab === t.key ? colors.gold : colors.muted,
+              }}
+            >
+              {t.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  logo: { width: 160, height: 135 },
-  title: { marginTop: 16, fontSize: 26, fontWeight: '700', color: colors.brown },
-  subtitle: { marginTop: 4, fontSize: 15, color: colors.muted },
-  badge: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    overflow: 'hidden',
-    backgroundColor: '#F7EAD0',
-    color: colors.brown,
-    fontWeight: '700',
-  },
-  ok: { backgroundColor: '#E3F2E8', color: '#2E7D4F' },
-  down: { backgroundColor: '#F9E3E0', color: '#B83A2E' },
-});
+export default function App() {
+  return (
+    <AuthProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }}>
+        <Main />
+      </SafeAreaView>
+      <StatusBar style="dark" />
+    </AuthProvider>
+  );
+}
