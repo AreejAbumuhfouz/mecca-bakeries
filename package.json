@@ -11,6 +11,8 @@
     "dev:web": "pnpm --filter @mecca/web dev",
     "dev:mobile": "pnpm --filter @mecca/mobile start",
     "bootstrap": "pnpm --filter @mecca/shared build && pnpm --filter @mecca/api db:migrate && pnpm --filter @mecca/api db:seed",
+    "demo": "pnpm --filter @mecca/api db:demo",
+    "demo:reset": "pnpm --filter @mecca/api db:demo --reset",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",

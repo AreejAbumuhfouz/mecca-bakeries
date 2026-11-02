@@ -5,7 +5,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
-import { emptyCustomerForm, toBody, type Category, type CustomerRow } from '@/lib/customers';
+import {
+  emptyCustomerForm,
+  toBody,
+  type Category,
+  type CustomerRow,
+  type TradeNameOption,
+} from '@/lib/customers';
 import { CustomerFields } from './customer-fields';
 
 type Page = { items: CustomerRow[]; total: number; page: number; pageSize: number };
@@ -18,6 +24,7 @@ export default function CustomersPage() {
   const canManage = can('customers.manage');
   const [data, setData] = useState<Page | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tradeNames, setTradeNames] = useState<TradeNameOption[]>([]);
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState<'' | 'true' | 'false'>('true');
@@ -43,6 +50,9 @@ export default function CustomersPage() {
 
   useEffect(() => {
     void loadCategories().catch(() => setError('تعذّر تحميل الفئات'));
+    void api<TradeNameOption[]>('/api/trade-names')
+      .then(setTradeNames)
+      .catch(() => undefined);
   }, [loadCategories]);
 
   useEffect(() => {
@@ -164,6 +174,7 @@ export default function CustomersPage() {
               form={form}
               setForm={setForm}
               categories={categories}
+              tradeNames={tradeNames}
               codeHint="يُولَّد تلقائياً"
             />
             <p className="text-xs text-brand-muted">
@@ -226,6 +237,7 @@ export default function CustomersPage() {
                 <th className="py-2">الكود</th>
                 <th>الاسم</th>
                 <th>الفئة</th>
+                <th>الاسم التجاري</th>
                 <th>المسؤول</th>
                 <th>الهاتف</th>
                 <th>الفروع</th>
@@ -244,6 +256,7 @@ export default function CustomersPage() {
                     <Link href={`/customers/${c.id}`}>{c.name}</Link>
                   </td>
                   <td>{c.categoryName ?? '—'}</td>
+                  <td>{c.tradeName ?? '—'}</td>
                   <td>{c.contactName ?? '—'}</td>
                   <td dir="ltr" className="text-right">
                     {c.phone ?? '—'}
@@ -260,7 +273,7 @@ export default function CustomersPage() {
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-brand-muted">
+                  <td colSpan={8} className="py-6 text-center text-brand-muted">
                     لا يوجد عملاء
                   </td>
                 </tr>

@@ -30,6 +30,10 @@ const EnvSchema = z.object({
   OTP_WINDOW_MIN: z.coerce.number().int().positive().default(15),
   GOOGLE_CLIENT_IDS: csv(),
 
+  // Uploaded files (logos, contract attachments). Relative paths are resolved from apps/api.
+  UPLOAD_DIR: z.string().default('uploads'),
+  UPLOAD_MAX_MB: z.coerce.number().positive().default(5),
+
   // Email (SMTP). If SMTP_HOST is empty, codes are printed to the console (development only).
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().int().positive().default(587),

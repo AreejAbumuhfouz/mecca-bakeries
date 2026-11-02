@@ -1,4 +1,7 @@
 import { sql } from 'drizzle-orm';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import request from 'supertest';
 import { loadEnv, type Env } from '../src/config/env.js';
 import { createApp } from '../src/app.js';
@@ -23,6 +26,7 @@ export function testEnv(overrides: Partial<Record<keyof Env, string>> = {}): Env
     JWT_ACCESS_SECRET: 'test-secret-test-secret-test-secret-123',
     OTP_PEPPER: 'test-pepper-test-pepper',
     GOOGLE_CLIENT_IDS: 'test-client-id',
+    UPLOAD_DIR: mkdtempSync(path.join(tmpdir(), 'mecca-uploads-')),
     ...overrides,
   });
 }
@@ -57,9 +61,11 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
     advance: (ms: number) => (clock = new Date(clock.getTime() + ms)),
     async reset() {
       await database.db.execute(
-        sql`TRUNCATE branches, customers, customer_categories, audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
+        sql`TRUNCATE contract_attachments, contract_prices, contracts, items, item_sections, branches, customers, customer_categories, trade_names, files, audit_logs, sessions, otp_codes, user_permission_overrides, users RESTART IDENTITY CASCADE`,
       );
       await database.db.execute(sql`ALTER SEQUENCE customer_code_seq RESTART WITH 1`);
+      await database.db.execute(sql`ALTER SEQUENCE item_code_seq RESTART WITH 1`);
+      await database.db.execute(sql`ALTER SEQUENCE contract_number_seq RESTART WITH 1`);
       sent.length = 0;
       googleIdentities.clear();
       clock = new Date();
@@ -75,6 +81,11 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
       if (!code) throw new Error('No OTP email captured');
       const res = await request(app).post('/api/auth/otp/verify').send({ email, code }).expect(200);
       return res.body.data as { accessToken: string; refreshToken: string };
+    },
+    /** Logs in a fresh user with the given role and returns the access token. */
+    async tokenFor(role: Role, email = `${role}@example.com`) {
+      await this.createUser(email, role);
+      return (await this.login(email)).accessToken;
     },
     close: database.close,
   };

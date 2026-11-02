@@ -5,6 +5,7 @@ import { ROLE_LABELS_AR, ROLE_VALUES, type Role } from '@mecca/shared';
 import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, Input } from '@/components/ui';
+import { UserEditor } from './user-editor';
 
 type UserRow = {
   id: string;
@@ -27,6 +28,7 @@ export default function UsersPage() {
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const canManage = can('users.manage');
 
   const load = useCallback(async () => {
@@ -88,6 +90,18 @@ export default function UsersPage() {
       </div>
 
       {error && <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-800">{error}</div>}
+
+      {editingId && (
+        <UserEditor
+          key={editingId}
+          userId={editingId}
+          onClose={() => setEditingId(null)}
+          onSaved={() => {
+            setEditingId(null);
+            void load();
+          }}
+        />
+      )}
 
       {showForm && (
         <Card title="مستخدم جديد">
@@ -177,15 +191,26 @@ export default function UsersPage() {
                   {u.isActive ? <Badge tone="green">مفعّل</Badge> : <Badge tone="red">معطّل</Badge>}
                 </td>
                 {canManage && (
-                  <td className="text-left">
-                    {u.id !== me?.id && (
+                  <td className="text-xs">
+                    <div className="flex justify-end gap-3">
                       <button
-                        className="text-xs text-brand-brown underline"
-                        onClick={() => void toggleActive(u)}
+                        className="text-brand-brown underline"
+                        onClick={() => {
+                          setEditingId(u.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                       >
-                        {u.isActive ? 'تعطيل' : 'تفعيل'}
+                        تعديل
                       </button>
-                    )}
+                      {u.id !== me?.id && (
+                        <button
+                          className="text-brand-brown underline"
+                          onClick={() => void toggleActive(u)}
+                        >
+                          {u.isActive ? 'تعطيل' : 'تفعيل'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 )}
               </tr>

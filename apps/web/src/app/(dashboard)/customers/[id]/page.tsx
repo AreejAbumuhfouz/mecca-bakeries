@@ -14,7 +14,10 @@ import {
   type Category,
   type Customer,
   type CustomerForm,
+  type TradeNameOption,
 } from '@/lib/customers';
+import { CONTRACT_STATE_LABELS_AR, formatJod } from '@mecca/shared';
+import { STATE_TONE, type ContractRow } from '@/lib/contracts';
 import { CustomerFields } from '../customer-fields';
 
 const errMsg = (err: unknown, fallback: string) =>
@@ -25,6 +28,7 @@ const customerToForm = (c: Customer): CustomerForm => ({
   name: c.name,
   nameEn: c.nameEn ?? '',
   categoryId: c.categoryId ?? '',
+  tradeNameId: c.tradeNameId ?? '',
   contactName: c.contactName ?? '',
   phone: c.phone ?? '',
   email: c.email ?? '',
@@ -60,6 +64,7 @@ export default function CustomerPage() {
   const canManage = can('customers.manage');
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tradeNames, setTradeNames] = useState<TradeNameOption[]>([]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<CustomerForm | null>(null);
   /** null = closed, 'new' = add form, otherwise the branch id being edited. */
@@ -68,12 +73,22 @@ export default function CustomerPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [contracts, setContracts] = useState<ContractRow[] | null>(null);
+  const canContracts = can('contracts.view');
+
   const load = useCallback(async () => {
     setCustomer(await api<Customer>(`/api/customers/${id}`));
-  }, [id]);
+    if (canContracts)
+      setContracts(
+        (await api<{ items: ContractRow[] }>(`/api/contracts?customerId=${id}&pageSize=50`)).items,
+      );
+  }, [id, canContracts]);
 
   useEffect(() => {
     void load().catch((err) => setError(errMsg(err, 'تعذّر تحميل العميل')));
+    void api<TradeNameOption[]>('/api/trade-names')
+      .then(setTradeNames)
+      .catch(() => undefined);
     void api<Category[]>('/api/customers/categories')
       .then(setCategories)
       .catch(() => undefined);
@@ -193,7 +208,12 @@ export default function CustomerPage() {
       <Card title="بيانات العميل">
         {editing && form ? (
           <form onSubmit={saveCustomer} className="space-y-4">
-            <CustomerFields form={form} setForm={setForm} categories={categories} />
+            <CustomerFields
+              form={form}
+              setForm={setForm}
+              categories={categories}
+              tradeNames={tradeNames}
+            />
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
                 {busy ? 'جارٍ الحفظ…' : 'حفظ'}
@@ -207,6 +227,7 @@ export default function CustomerPage() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Info label="الاسم بالإنجليزية" value={customer.nameEn} ltr />
             <Info label="الفئة" value={customer.category?.name ?? null} />
+            <Info label="الاسم التجاري" value={customer.tradeName?.name ?? null} />
             <Info label="الشخص المسؤول" value={customer.contactName} />
             <Info label="الهاتف" value={customer.phone} ltr />
             <Info label="البريد الإلكتروني" value={customer.email} ltr />
@@ -216,6 +237,41 @@ export default function CustomerPage() {
           </div>
         )}
       </Card>
+
+      {contracts && (
+        <Card
+          title={`العقود (${contracts.length})`}
+          actions={
+            can('contracts.manage') && (
+              <Link href={`/contracts/new?customerId=${customer.id}`}>
+                <Button variant="gold">+ عقد جديد</Button>
+              </Link>
+            )
+          }
+        >
+          <ul className="divide-y divide-stone-100 text-sm">
+            {contracts.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-4 py-2">
+                <Link href={`/contracts/${c.id}`} className="font-mono font-bold underline">
+                  {c.number}
+                </Link>
+                <span className="font-mono text-brand-muted">
+                  {c.startDate} ← {c.endDate}
+                </span>
+                <span>
+                  {c.paymentType === 'credit' ? `سقف ${formatJod(c.creditLimit)}` : 'نقدي'}
+                </span>
+                <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+              </li>
+            ))}
+            {contracts.length === 0 && (
+              <li className="py-3 text-brand-muted">
+                لا يوجد عقد — لا يستطيع العميل الطلب حتى يُضاف له عقد.
+              </li>
+            )}
+          </ul>
+        </Card>
+      )}
 
       <Card
         title={`الفروع (${customer.branches.length})`}

@@ -48,7 +48,9 @@ export function refreshSession(): Promise<LoginResult | null> {
 /** JSON request to the API with the access token; retries once after refreshing an expired token. */
 export async function api<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  // JSON bodies only: FormData uploads must let the browser set the multipart boundary.
+  if (typeof init.body === 'string' && !headers.has('Content-Type'))
+    headers.set('Content-Type', 'application/json');
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   const res = await fetch(`${API_URL}${path}`, { ...init, headers, credentials: 'include' });
   if (res.status === 401 && retry && !path.startsWith('/api/auth/')) {
@@ -58,3 +60,41 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
   }
   return parse<T>(res);
 }
+
+export type UploadedFile = {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  isPublic: boolean;
+};
+
+/** Uploads one file (logo, item image or contract attachment). */
+export function uploadFile(file: File, isPublic: boolean) {
+  const body = new FormData();
+  body.append('isPublic', String(isPublic));
+  body.append('file', file);
+  return api<UploadedFile>('/api/files', { method: 'POST', body });
+}
+
+/** URL for a public file (logos, item images) usable in <img src>. */
+export const fileUrl = (id: string) => `${API_URL}/api/files/${id}`;
+
+/** Opens a private file (contract attachment) in a new tab using the current session. */
+export async function openPrivateFile(id: string) {
+  const load = () =>
+    fetch(fileUrl(id), {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
+    });
+  let res = await load();
+  if (res.status === 401 && (await refreshSession())) res = await load();
+  if (!res.ok) throw new ApiRequestError(res.status, 'FILE_ERROR', 'تعذّر فتح الملف');
+  const url = URL.createObjectURL(await res.blob());
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** Readable Arabic message from any thrown error. */
+export const errorMessage = (err: unknown, fallback: string) =>
+  err instanceof ApiRequestError ? err.message : fallback;

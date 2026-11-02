@@ -39,3 +39,12 @@ export function requirePermission(...needed: Permission[]): RequestHandler {
     next();
   };
 }
+
+/** Requires at least one of the listed permissions. Use after `authenticate`. */
+export function requireAnyPermission(...anyOf: Permission[]): RequestHandler {
+  return (req, _res, next) => {
+    const have = new Set(req.auth?.permissions ?? []);
+    if (anyOf.some((p) => have.has(p))) return next();
+    next(new AppError(403, 'FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء', { anyOf }));
+  };
+}

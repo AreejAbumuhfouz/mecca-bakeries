@@ -15,6 +15,27 @@
       "when": 1793650747848,
       "tag": "0001_customers_branches",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793653607203,
+      "tag": "0002_trade_names_files",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793653825001,
+      "tag": "0003_items_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793654017029,
+      "tag": "0004_contracts",
+      "breakpoints": true
     }
   ]
 }

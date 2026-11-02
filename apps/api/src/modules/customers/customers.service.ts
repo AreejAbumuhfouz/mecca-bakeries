@@ -1,11 +1,9 @@
 import { and, asc, eq, ilike, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../../db/client.js';
-import { branches, customerCategories, customers } from '../../db/schema/index.js';
+import { branches, customerCategories, customers, tradeNames } from '../../db/schema/index.js';
 import { AppError, notFound } from '../../lib/errors.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
-
-type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
-type Conn = Db | Tx;
+import { clean, type Conn, type Tx } from '../../lib/db-utils.js';
 
 export type CategoryInput = { name: string; nameEn?: string | null; isActive?: boolean };
 
@@ -14,6 +12,7 @@ export type CustomerInput = {
   name: string;
   nameEn?: string | null;
   categoryId?: string | null;
+  tradeNameId?: string | null;
   contactName?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -38,6 +37,7 @@ export type BranchInput = {
 export type CustomerListQuery = {
   search?: string;
   categoryId?: string;
+  tradeNameId?: string;
   isActive?: boolean;
   page: number;
   pageSize: number;
@@ -49,16 +49,6 @@ const normalizeCode = (code: string) => code.trim().toUpperCase();
 const customerCodeFor = (n: number) => `C${String(n).padStart(4, '0')}`;
 const branchCodeFor = (customerCode: string, n: number) =>
   `${customerCode}-${String(n).padStart(2, '0')}`;
-
-/** Empty strings from forms are stored as NULL. */
-function clean<T extends Record<string, unknown>>(input: T): T {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(input)) {
-    if (v === undefined) continue;
-    out[k] = typeof v === 'string' && v.trim() === '' && k !== 'name' ? null : v;
-  }
-  return out as T;
-}
 
 const codeTaken = () => new AppError(409, 'CODE_TAKEN', 'الكود مستخدم مسبقاً');
 
@@ -111,6 +101,12 @@ export function createCustomersService(db: Db) {
       where: eq(customerCategories.id, categoryId),
     });
     if (!cat) throw new AppError(400, 'BAD_CATEGORY', 'الفئة غير موجودة');
+  }
+
+  async function assertTradeName(conn: Conn, tradeNameId: string | null | undefined) {
+    if (!tradeNameId) return;
+    const tn = await conn.query.tradeNames.findFirst({ where: eq(tradeNames.id, tradeNameId) });
+    if (!tn) throw new AppError(400, 'BAD_TRADE_NAME', 'الاسم التجاري غير موجود');
   }
 
   async function insertBranch(
@@ -200,6 +196,7 @@ export function createCustomersService(db: Db) {
     async list(q: CustomerListQuery) {
       const filters: SQL[] = [];
       if (q.categoryId) filters.push(eq(customers.categoryId, q.categoryId));
+      if (q.tradeNameId) filters.push(eq(customers.tradeNameId, q.tradeNameId));
       if (q.isActive !== undefined) filters.push(eq(customers.isActive, q.isActive));
       if (q.search) {
         const term = `%${q.search}%`;
@@ -224,6 +221,8 @@ export function createCustomersService(db: Db) {
             nameEn: customers.nameEn,
             categoryId: customers.categoryId,
             categoryName: customerCategories.name,
+            tradeNameId: customers.tradeNameId,
+            tradeName: tradeNames.name,
             contactName: customers.contactName,
             phone: customers.phone,
             city: customers.city,
@@ -232,6 +231,7 @@ export function createCustomersService(db: Db) {
           })
           .from(customers)
           .leftJoin(customerCategories, eq(customerCategories.id, customers.categoryId))
+          .leftJoin(tradeNames, eq(tradeNames.id, customers.tradeNameId))
           .where(where)
           .orderBy(asc(customers.code))
           .limit(q.pageSize)
@@ -247,20 +247,29 @@ export function createCustomersService(db: Db) {
     async get(id: string) {
       const customer = await db.query.customers.findFirst({ where: eq(customers.id, id) });
       if (!customer) throw notFound('Customer');
-      const [category, branchRows] = await Promise.all([
+      const [category, tradeName, branchRows] = await Promise.all([
         customer.categoryId
           ? db.query.customerCategories.findFirst({
               where: eq(customerCategories.id, customer.categoryId),
             })
           : undefined,
+        customer.tradeNameId
+          ? db.query.tradeNames.findFirst({ where: eq(tradeNames.id, customer.tradeNameId) })
+          : undefined,
         db.select().from(branches).where(eq(branches.customerId, id)).orderBy(asc(branches.code)),
       ]);
-      return { ...customer, category: category ?? null, branches: branchRows };
+      return {
+        ...customer,
+        category: category ?? null,
+        tradeName: tradeName ?? null,
+        branches: branchRows,
+      };
     },
 
     async create(input: CustomerCreate, ctx: AuditContext) {
       const { createMainBranch = true, ...data } = input;
       await assertCategory(db, data.categoryId);
+      await assertTradeName(db, data.tradeNameId);
       return db.transaction(async (tx) => {
         let code: string;
         if (data.code) {
@@ -310,6 +319,7 @@ export function createCustomersService(db: Db) {
       }
       if (fields.name) fields.name = fields.name.trim();
       await assertCategory(db, fields.categoryId);
+      await assertTradeName(db, fields.tradeNameId);
       return db.transaction(async (tx) => {
         const [after] = Object.keys(fields).length
           ? await tx.update(customers).set(fields).where(eq(customers.id, id)).returning()
