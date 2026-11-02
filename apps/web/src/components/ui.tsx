@@ -1,4 +1,13 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react';
+
+const fieldClass =
+  'w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold-light';
 
 export function Button({
   variant = 'primary',
@@ -26,10 +35,7 @@ export function Input({
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-bold text-brand-brown">{label}</span>
-      <input
-        className="w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold-light"
-        {...props}
-      />
+      <input className={fieldClass} {...props} />
       {error && <span className="mt-1 block text-xs text-red-700">{error}</span>}
     </label>
   );
@@ -75,4 +81,36 @@ export function Badge({
       {children}
     </span>
   );
+}
+
+export function Select({
+  label,
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-bold text-brand-brown">{label}</span>
+      <select className={fieldClass} {...props}>
+        {children}
+      </select>
+    </label>
+  );
+}
+
+export function Textarea({
+  label,
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-bold text-brand-brown">{label}</span>
+      <textarea className={fieldClass} rows={2} {...props} />
+    </label>
+  );
+}
+
+export function ErrorBox({ message }: { message: string }) {
+  if (!message) return null;
+  return <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-800">{message}</div>;
 }
