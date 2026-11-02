@@ -12,7 +12,8 @@ export function createMailer(
   if (!env.SMTP_HOST) {
     return {
       async send(mail) {
-        logger.warn({ to: mail.to, subject: mail.subject }, `[DEV MAIL] ${mail.text}`);
+        // Printed on its own so the login code is easy to spot in the terminal.
+        logger.warn(`[DEV MAIL] to ${mail.to}\n${mail.text}`);
       },
     };
   }

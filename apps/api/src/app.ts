@@ -62,7 +62,21 @@ export function createApp(deps: AppDeps) {
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
   app.use(auditContext);
-  if (env.NODE_ENV !== 'test') app.use(pinoHttp({ logger }));
+  if (env.NODE_ENV !== 'test')
+    app.use(
+      pinoHttp({
+        logger,
+        // One short line per request: "POST /api/auth/otp/request 200 12ms".
+        quietReqLogger: true,
+        serializers: { req: () => undefined, res: () => undefined },
+        customSuccessMessage: (req, res, ms) =>
+          `${req.method} ${req.url} ${res.statusCode} ${Math.round(ms)}ms`,
+        customErrorMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
+        customLogLevel: (_req, res, err) =>
+          err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info',
+        customAttributeKeys: { responseTime: 'ms' },
+      }),
+    );
 
   app.use('/api/health', healthRouter(deps.pingDb, deps.version));
   app.use(

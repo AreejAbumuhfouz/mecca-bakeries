@@ -91,3 +91,37 @@ export function effectivePermissions(
   }
   return set;
 }
+
+/** Arabic labels for the permissions screen. */
+export const PERMISSION_LABELS_AR: Record<Permission, string> = {
+  'users.view': 'عرض المستخدمين',
+  'users.manage': 'إدارة المستخدمين والصلاحيات',
+  'audit.view': 'عرض سجل التدقيق',
+  'settings.manage': 'إدارة الإعدادات',
+  'customers.view': 'عرض العملاء',
+  'customers.manage': 'إدارة العملاء والفروع',
+  'contracts.view': 'عرض العقود',
+  'contracts.manage': 'إدارة العقود والأسعار الخاصة',
+  'credit.override': 'الموافقة على تجاوز الائتمان',
+  'trade_names.manage': 'إدارة الأسماء التجارية',
+  'items.view': 'عرض الأصناف',
+  'items.manage': 'إدارة الأصناف والأسعار',
+  'orders.view': 'عرض الطلبات',
+  'orders.manage': 'إدارة الطلبات',
+  'orders.place': 'تقديم طلبات (تطبيق المطعم)',
+  'production.view': 'عرض الإنتاج',
+  'production.manage': 'إدارة الإنتاج والمخزون',
+  'variances.approve': 'اعتماد فروقات الإنتاج',
+  'deliveries.view': 'عرض التوزيع',
+  'deliveries.manage': 'إدارة التوزيع والسائقين',
+  'deliveries.confirm': 'تأكيد التسليم (تطبيق السائق)',
+  'invoices.view': 'عرض الفواتير',
+  'invoices.manage': 'إدارة الفواتير',
+  'invoices.edit_locked': 'تعديل فاتورة مقفلة',
+  'payments.view': 'عرض المقبوضات',
+  'payments.manage': 'تسجيل المقبوضات',
+  'purchasing.view': 'عرض طلبات الشراء',
+  'purchasing.manage': 'إدارة طلبات الشراء',
+  'reports.view': 'عرض التقارير',
+  'own_account.view': 'عرض حسابه وفواتيره (المطعم)',
+};
