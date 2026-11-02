@@ -1,3 +1,4 @@
+import type { IncomingMessage } from 'node:http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -28,6 +29,10 @@ import { itemsRouter } from './modules/items/items.routes.js';
 import { createContractsService } from './modules/contracts/contracts.service.js';
 import { contractsRouter } from './modules/contracts/contracts.routes.js';
 import { customersRouter } from './modules/customers/customers.routes.js';
+
+/** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
+const fullUrl = (req: IncomingMessage) =>
+  (req as IncomingMessage & { originalUrl?: string }).originalUrl ?? req.url;
 
 export type AppDeps = {
   env: Env;
@@ -70,8 +75,8 @@ export function createApp(deps: AppDeps) {
         quietReqLogger: true,
         serializers: { req: () => undefined, res: () => undefined },
         customSuccessMessage: (req, res, ms) =>
-          `${req.method} ${req.url} ${res.statusCode} ${Math.round(ms)}ms`,
-        customErrorMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
+          `${req.method} ${fullUrl(req)} ${res.statusCode} ${Math.round(ms)}ms`,
+        customErrorMessage: (req, res) => `${req.method} ${fullUrl(req)} ${res.statusCode}`,
         customLogLevel: (_req, res, err) =>
           err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info',
         customAttributeKeys: { responseTime: 'ms' },
