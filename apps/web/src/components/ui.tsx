@@ -7,7 +7,7 @@ import type {
 } from 'react';
 
 const fieldClass =
-  'w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold-light';
+  'w-full rounded-lg border border-brand-line bg-surface px-3 py-2.5 text-sm outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold-light';
 
 export function Button({
   variant = 'primary',
@@ -15,9 +15,9 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'gold' | 'outline' }) {
   const styles = {
-    primary: 'bg-brand-brown text-white hover:bg-brand-brown-2',
+    primary: 'bg-primary text-on-primary hover:bg-primary-hover',
     gold: 'bg-brand-gold text-white hover:opacity-90',
-    outline: 'border border-brand-brown text-brand-brown bg-white hover:bg-brand-cream',
+    outline: 'border border-brand-brown text-brand-brown bg-surface hover:bg-brand-cream',
   }[variant];
   return (
     <button
@@ -51,7 +51,7 @@ export function Card({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-brand-line bg-white p-5">
+    <section className="rounded-2xl border border-brand-line bg-surface p-5">
       {(title || actions) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-lg font-bold text-brand-brown">{title}</h2>}

@@ -61,7 +61,7 @@ export const orders = pgTable(
     // Duplicate prevention: one live order per branch per day.
     uniqueIndex('orders_branch_day_live_unique')
       .on(t.branchId, t.deliveryDate)
-      .where(sql`status in ('draft','submitted','pending_approval','confirmed')`),
+      .where(sql`status in ('draft','submitted','pending_approval','confirmed','delivered')`),
     index('orders_delivery_date_idx').on(t.deliveryDate),
     index('orders_customer_idx').on(t.customerId),
     index('orders_status_idx').on(t.status),

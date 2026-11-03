@@ -16,6 +16,7 @@ export function Button({
   disabled?: boolean;
   busy?: boolean;
 }) {
+  const styles = makeStyles();
   const v = styles[variant];
   return (
     <Pressable
@@ -40,17 +41,19 @@ export function Button({
   );
 }
 
-const STATUS_COLORS: Record<OrderStatus, [string, string]> = {
-  draft: ['#EEE', colors.muted],
+const statusColors = (): Record<OrderStatus, [string, string]> => ({
+  draft: [colors.grayBg, colors.muted],
   submitted: [colors.goldLight, colors.brown],
   pending_approval: [colors.redBg, colors.red],
   confirmed: [colors.greenBg, colors.green],
+  delivered: [colors.greenBg, colors.green],
   rejected: [colors.redBg, colors.red],
-  cancelled: ['#EEE', colors.muted],
-};
+  cancelled: [colors.grayBg, colors.muted],
+});
 
 export function StatusBadge({ status }: { status: OrderStatus }) {
-  const [bg, fg] = STATUS_COLORS[status];
+  const styles = makeStyles();
+  const [bg, fg] = statusColors()[status];
   return (
     <Text style={[styles.badge, { backgroundColor: bg, color: fg }]}>
       {ORDER_STATUS_LABELS_AR[status]}
@@ -71,6 +74,7 @@ export function Countdown({ cutoffAt, serverNow }: { cutoffAt: string; serverNow
   const m = Math.floor((left % 3_600_000) / 60_000);
   const s = Math.floor((left % 60_000) / 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
+  const styles = makeStyles();
   return (
     <View style={styles.countdown}>
       <Text style={styles.countdownLabel}>{left > 0 ? 'يُغلق الطلب بعد' : 'أُغلق الطلب'}</Text>
@@ -83,41 +87,42 @@ export function Empty({ children }: { children: ReactNode }) {
   return <Text style={{ textAlign: 'center', color: colors.muted, padding: 24 }}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  primary: { backgroundColor: colors.brown },
-  gold: { backgroundColor: colors.gold },
-  outline: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.brown },
-  danger: { backgroundColor: colors.red },
-  disabled: { opacity: 0.5 },
-  pressed: { opacity: 0.8 },
-  buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 999,
-    overflow: 'hidden',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  countdown: {
-    backgroundColor: colors.brown,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  countdownLabel: { color: colors.goldLight, fontSize: 14 },
-  countdownTime: {
-    color: colors.white,
-    fontSize: 34,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-});
+const makeStyles = () =>
+  StyleSheet.create({
+    button: {
+      minHeight: 48,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+    },
+    primary: { backgroundColor: colors.brown },
+    gold: { backgroundColor: colors.gold },
+    outline: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.brown },
+    danger: { backgroundColor: colors.red },
+    disabled: { opacity: 0.5 },
+    pressed: { opacity: 0.8 },
+    buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
+    badge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 999,
+      overflow: 'hidden',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    countdown: {
+      backgroundColor: colors.brown,
+      borderRadius: 16,
+      padding: 16,
+      alignItems: 'center',
+    },
+    countdownLabel: { color: colors.goldLight, fontSize: 14 },
+    countdownTime: {
+      color: colors.white,
+      fontSize: 34,
+      fontWeight: '700',
+      fontVariant: ['tabular-nums'],
+    },
+  });

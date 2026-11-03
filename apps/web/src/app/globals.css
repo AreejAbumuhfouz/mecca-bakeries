@@ -4,20 +4,79 @@
 @import '@fontsource/cairo/latin-400.css';
 @import '@fontsource/cairo/latin-700.css';
 
-/* Mecca Bakeries brand tokens (taken from the logo) */
+/* `dark:` utilities follow the class on <html>, set from the saved choice or the system. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Mecca Bakeries brand tokens (taken from the logo). Light values here; dark values below. */
 @theme {
   --font-sans: 'Cairo', system-ui, sans-serif;
-  --color-brand-brown: #3e2a1c;
+  --color-brand-brown: #3e2a1c; /* headings and strong text */
   --color-brand-brown-2: #5c3f28;
   --color-brand-gold: #c8862a;
   --color-brand-gold-light: #f7ead0;
-  --color-brand-cream: #fbf7f0;
+  --color-brand-cream: #fbf7f0; /* page background */
   --color-brand-line: #e3d8c6;
   --color-brand-muted: #7a6e62;
+  --color-surface: #ffffff; /* cards, inputs, header */
+  --color-ink: #2b2118; /* body text */
+  --color-primary: #3e2a1c; /* main buttons */
+  --color-primary-hover: #5c3f28;
+  --color-on-primary: #ffffff;
+  --color-sidebar: #3e2a1c;
+  --color-sidebar-ink: #f3e9da;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-brand-brown: #f1e6d6;
+  --color-brand-brown-2: #e0d2bf;
+  --color-brand-gold: #dc9a3c;
+  --color-brand-gold-light: #3d2c14;
+  --color-brand-cream: #15110d;
+  --color-brand-line: #3a2f25;
+  --color-brand-muted: #a89a8b;
+  --color-surface: #1e1813;
+  --color-ink: #ece3d6;
+  --color-primary: #dc9a3c;
+  --color-primary-hover: #e8ab55;
+  --color-on-primary: #1a120b;
+  --color-sidebar: #0f0b08;
+  --color-sidebar-ink: #e9dcc9;
+
+  /* Status colours used across the pages, tuned for a dark background. */
+  --color-stone-100: #2d251e;
+  --color-stone-200: #3a3027;
+  --color-stone-400: #7d6f62;
+  --color-stone-700: #d4c8b9;
+  --color-red-50: #3a1714;
+  --color-red-300: #f0a39a;
+  --color-red-700: #ef7f73;
+  --color-red-800: #f4a097;
+  --color-green-50: #12301d;
+  --color-green-800: #86d9a1;
+  --color-amber-50: #3a2a0c;
+  --color-amber-900: #f3cf7a;
 }
 
 html,
 body {
   background: var(--color-brand-cream);
-  color: #2b2118;
+  color: var(--color-ink);
+}
+
+/* Printed sheets are always light. */
+@media print {
+  .dark {
+    color-scheme: light;
+    --color-brand-brown: #3e2a1c;
+    --color-brand-cream: #ffffff;
+    --color-brand-line: #e3d8c6;
+    --color-brand-muted: #7a6e62;
+    --color-brand-gold-light: #f7ead0;
+    --color-surface: #ffffff;
+    --color-ink: #2b2118;
+    --color-stone-100: #f5f5f4;
+    --color-red-800: #991b1b;
+    --color-green-800: #166534;
+  }
 }

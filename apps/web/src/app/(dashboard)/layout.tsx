@@ -3,19 +3,48 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { LogOut, Menu, Moon, PanelRightClose, PanelRightOpen, Sun, X } from 'lucide-react';
 import { ROLE_LABELS_AR } from '@mecca/shared';
 import { useAuth } from '@/lib/auth';
+import { useTheme } from '@/lib/theme';
 import { NAV } from '@/components/nav';
+
+const COLLAPSE_KEY = 'mb-sidebar-collapsed';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout, can } = useAuth();
+  const { theme, toggle } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
   }, [loading, user, router]);
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
+    } catch {
+      // storage blocked: start expanded
+    }
+  }, []);
+
+  // Close the phone drawer after navigating.
+  useEffect(() => setMobileOpen(false), [pathname]);
+
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1');
+      } catch {
+        // ignore
+      }
+      return !c;
+    });
+  }
 
   if (loading || !user) {
     return (
@@ -26,49 +55,125 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const items = NAV.filter((i) => !i.permission || can(i.permission));
+  // On phones the drawer always shows labels.
+  const narrow = collapsed && !mobileOpen;
+  const initials = user.name.trim().charAt(0);
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-60 shrink-0 bg-brand-brown px-4 py-5 text-[#F3E9DA]">
-        <div className="mb-6 rounded-xl bg-white p-2 text-center">
-          <Image src="/logo.png" alt="مخابز مكة" width={96} height={81} className="mx-auto" />
+      {mobileOpen && (
+        <button
+          aria-label="إغلاق القائمة"
+          className="fixed inset-0 z-30 bg-black/40 md:hidden print:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 right-0 z-40 flex shrink-0 flex-col bg-sidebar text-sidebar-ink transition-all duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 print:hidden ${
+          mobileOpen ? 'translate-x-0' : 'translate-x-full'
+        } ${narrow ? 'w-[76px]' : 'w-64'}`}
+      >
+        <div className={`flex items-center gap-2 px-3 pt-4 pb-3 ${narrow ? 'justify-center' : ''}`}>
+          <div className={`rounded-xl bg-white p-1.5 ${narrow ? 'w-12' : 'flex-1'} transition-all`}>
+            <Image
+              src="/logo.png"
+              alt="مخابز مكة"
+              width={narrow ? 40 : 80}
+              height={narrow ? 34 : 67}
+              className="mx-auto"
+            />
+          </div>
+          <button
+            className="rounded-lg p-1.5 hover:bg-white/10 md:hidden"
+            aria-label="إغلاق القائمة"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X size={20} />
+          </button>
         </div>
-        <nav className="space-y-0.5">
+
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
           {items.map((item) => {
             const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.ready ? item.href : '#'}
                 aria-disabled={!item.ready}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
-                  active ? 'bg-brand-gold font-bold text-white' : 'hover:bg-white/10'
-                } ${item.ready ? '' : 'cursor-default opacity-50'}`}
+                title={narrow ? item.label + (item.ready ? '' : ' (قريباً)') : undefined}
+                className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  narrow ? 'justify-center' : ''
+                } ${
+                  active
+                    ? 'bg-brand-gold font-bold text-white shadow-sm'
+                    : 'text-sidebar-ink/85 hover:bg-white/10 hover:text-sidebar-ink'
+                } ${item.ready ? '' : 'cursor-default opacity-45'}`}
               >
-                {item.label}
-                {!item.ready && <span className="text-[10px]">قريباً</span>}
+                <Icon size={19} strokeWidth={active ? 2.3 : 1.8} className="shrink-0" />
+                {!narrow && <span className="flex-1 truncate">{item.label}</span>}
+                {!narrow && !item.ready && <span className="text-[10px]">قريباً</span>}
               </Link>
             );
           })}
         </nav>
+
+        <div className="hidden border-t border-white/10 p-3 md:block">
+          <button
+            onClick={toggleCollapsed}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-ink/80 hover:bg-white/10 ${
+              narrow ? 'justify-center' : ''
+            }`}
+            title={narrow ? 'توسيع القائمة' : undefined}
+          >
+            {narrow ? <PanelRightOpen size={19} /> : <PanelRightClose size={19} />}
+            {!narrow && 'تصغير القائمة'}
+          </button>
+        </div>
       </aside>
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-brand-line bg-white px-6 py-3">
-          <div className="text-sm text-brand-muted">نظام إدارة الطلبات والإنتاج والتوزيع</div>
-          <div className="flex items-center gap-3">
-            <div className="text-left">
-              <div className="text-sm font-bold text-brand-brown">{user.name}</div>
-              <div className="text-xs text-brand-muted">{ROLE_LABELS_AR[user.role]}</div>
+
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-brand-line bg-surface/90 px-4 py-2.5 backdrop-blur md:px-6 print:hidden">
+          <div className="flex items-center gap-2">
+            <button
+              className="rounded-lg p-2 text-brand-brown hover:bg-brand-cream md:hidden"
+              aria-label="فتح القائمة"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+            <div className="hidden text-sm text-brand-muted sm:block">
+              نظام إدارة الطلبات والإنتاج والتوزيع
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggle}
+              className="rounded-lg border border-brand-line p-2 text-brand-brown hover:bg-brand-cream"
+              aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+              title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+            >
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            <div className="flex items-center gap-2 rounded-lg px-2 py-1">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gold-light text-sm font-bold text-brand-brown">
+                {initials}
+              </span>
+              <div className="hidden text-right sm:block">
+                <div className="text-sm leading-tight font-bold text-brand-brown">{user.name}</div>
+                <div className="text-xs text-brand-muted">{ROLE_LABELS_AR[user.role]}</div>
+              </div>
             </div>
             <button
               onClick={() => void logout()}
-              className="rounded-lg border border-brand-line px-3 py-1.5 text-xs hover:bg-brand-cream"
+              className="flex items-center gap-1.5 rounded-lg border border-brand-line px-3 py-2 text-xs text-brand-brown hover:bg-brand-cream"
             >
-              خروج
+              <LogOut size={15} />
+              <span className="hidden sm:inline">خروج</span>
             </button>
           </div>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

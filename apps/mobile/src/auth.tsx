@@ -45,8 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: 'POST',
       body: { email, code },
     });
-    if (!result.user.permissions.includes('orders.place')) {
-      throw new Error('هذا التطبيق لحسابات المطاعم فقط. استخدم لوحة التحكم من الكمبيوتر.');
+    const p = result.user.permissions;
+    if (!p.includes('orders.place') && !p.includes('deliveries.confirm')) {
+      throw new Error('هذا التطبيق لحسابات المطاعم والسائقين. استخدم لوحة التحكم من الكمبيوتر.');
     }
     await saveSession(result);
     setUser(result.user);

@@ -14,12 +14,16 @@ import type { SettingsService } from '../settings/settings.service.js';
 import type { OrdersService } from '../orders/orders.service.js';
 import type { ProductionService } from '../production/production.service.js';
 import type { Notifier } from '../notifications/notifier.js';
+import type { DistributionService } from '../distribution/distribution.service.js';
+import type { BalanceAlerts } from '../billing/balance-alerts.js';
 
 /**
  * Minute-by-minute scheduler for the ordering day (Amman time):
  *   reminders (9, 10, 11 PM)   → branches with no order for the coming delivery date
  *   drafts (12:00 AM)          → drafts copied from yesterday's orders
- *   cutoff (3:00 AM)           → orders confirmed, drafts submitted or cancelled, final plan built
+ *   cutoff (3:00 AM)           → orders confirmed, drafts submitted or cancelled, final plan and
+ *                                driver trips built
+ *   balance alerts (10:00 AM)  → customers with unpaid balances get their statement
  * Each run is recorded in scheduler_runs, so a job never runs twice for the same slot,
  * even with several API processes or after a restart. Missed slots are caught up within a
  * short window (reminders 60 min, drafts 2 h, cutoff 12 h) instead of firing late.
@@ -29,10 +33,12 @@ export function createScheduler(deps: {
   settings: SettingsService;
   orders: OrdersService;
   production?: ProductionService;
+  distribution?: DistributionService;
+  alerts?: BalanceAlerts;
   notifier: Notifier;
   now?: () => Date;
 }) {
-  const { db, settings, orders, notifier, production } = deps;
+  const { db, settings, orders, notifier, production, distribution, alerts } = deps;
   const now = () => deps.now?.() ?? new Date();
   let timer: NodeJS.Timeout | null = null;
   let running = false;
@@ -92,6 +98,13 @@ export function createScheduler(deps: {
                 .catch((err: unknown) =>
                   logger.warn(`[scheduler] plan ${deliveryDate}: ${String(err)}`),
                 );
+            // Driver trips follow from the confirmed orders and the routes.
+            if (distribution)
+              await distribution
+                .generate(deliveryDate, { userId: null, ip: 'scheduler' })
+                .catch((err: unknown) =>
+                  logger.warn(`[scheduler] trips ${deliveryDate}: ${String(err)}`),
+                );
             return result;
           });
       }
@@ -112,6 +125,12 @@ export function createScheduler(deps: {
                 for (const t of targets) await notifier.reminder(t, deliveryDate);
                 return { reminded: targets.length };
               });
+
+      if (alerts) {
+        const r = await settings.getReceivablesSettings();
+        if (r.alertsEnabled && dueWithin(today, r.alertTime, 120))
+          await once('balance_alerts', today, () => alerts.runDaily());
+      }
     } catch (err) {
       logger.error({ err }, '[scheduler] tick failed');
     } finally {

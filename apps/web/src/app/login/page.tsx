@@ -3,13 +3,16 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useTheme } from '@/lib/theme';
 import { ApiRequestError } from '@/lib/api';
 import { Button, Input } from '@/components/ui';
 
 export default function LoginPage() {
   const { user, loading, requestCode, verifyCode } = useAuth();
   const router = useRouter();
+  const { theme, toggle } = useTheme();
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -49,16 +52,18 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-brand-line bg-white p-8 shadow-sm">
-        <Image
-          src="/logo.png"
-          alt="مخابز مكة"
-          width={120}
-          height={101}
-          className="mx-auto"
-          priority
-        />
+    <main className="relative flex min-h-screen items-center justify-center p-6">
+      <button
+        onClick={toggle}
+        className="absolute top-4 left-4 rounded-lg border border-brand-line bg-surface p-2 text-brand-brown"
+        aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+      >
+        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+      </button>
+      <div className="w-full max-w-sm rounded-2xl border border-brand-line bg-surface p-8 shadow-sm">
+        <div className="mx-auto w-fit rounded-xl bg-white p-2">
+          <Image src="/logo.png" alt="مخابز مكة" width={120} height={101} priority />
+        </div>
         <h1 className="mt-4 text-center text-xl font-bold text-brand-brown">تسجيل الدخول</h1>
         <p className="mt-1 text-center text-sm text-brand-muted">لوحة تحكم مخابز مكة</p>
 

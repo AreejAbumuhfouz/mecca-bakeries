@@ -142,7 +142,7 @@ export default function UsersPage() {
             <label className="block">
               <span className="mb-1 block text-sm font-bold text-brand-brown">الدور</span>
               <select
-                className="w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm"
+                className="w-full rounded-lg border border-brand-line bg-surface px-3 py-2.5 text-sm"
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
               >
@@ -160,7 +160,7 @@ export default function UsersPage() {
                 </span>
                 <select
                   required
-                  className="w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-sm"
+                  className="w-full rounded-lg border border-brand-line bg-surface px-3 py-2.5 text-sm"
                   value={form.customerId}
                   onChange={(e) => setForm({ ...form, customerId: e.target.value })}
                 >

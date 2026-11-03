@@ -5,7 +5,7 @@ import { COMMON_UNITS } from '@/lib/purchasing';
 export type LineDraft = { description: string; quantity: string; unit: string; note: string };
 export const emptyLine = (): LineDraft => ({ description: '', quantity: '', unit: 'كغ', note: '' });
 
-const field = 'h-9 rounded-lg border border-brand-line bg-white px-2 text-sm';
+const field = 'h-9 rounded-lg border border-brand-line bg-surface px-2 text-sm';
 
 export function PoLinesEditor({
   lines,

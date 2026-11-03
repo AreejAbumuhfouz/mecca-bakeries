@@ -19,6 +19,15 @@ const OrderSettings = z
   })
   .partial();
 
+const Receivables = z
+  .object({
+    alertsEnabled: z.boolean(),
+    alertTime: time,
+    minAmount: z.number().int().min(0).max(100_000_000),
+    onlyOverdue: z.boolean(),
+  })
+  .partial();
+
 export function settingsRouter(svc: SettingsService, authenticate: RequestHandler): Router {
   const router = Router();
   router.use(authenticate);
@@ -54,6 +63,19 @@ export function settingsRouter(svc: SettingsService, authenticate: RequestHandle
     res.json({
       ok: true,
       data: await svc.updateProductionSettings(Production.parse(req.body), req.audit),
+    });
+  });
+  router.get(
+    '/receivables',
+    requireAnyPermission('settings.manage', 'payments.view'),
+    async (_req, res) => {
+      res.json({ ok: true, data: await svc.getReceivablesSettings() });
+    },
+  );
+  router.put('/receivables', requirePermission('settings.manage'), async (req, res) => {
+    res.json({
+      ok: true,
+      data: await svc.updateReceivablesSettings(Receivables.parse(req.body), req.audit),
     });
   });
   return router;
