@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import type { OrderSettings } from '@mecca/shared';
+import { filsToJodString, type OrderSettings, type ReceivablesSettings } from '@mecca/shared';
+import { jodToFils } from '@/lib/billing';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox, Input } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
@@ -15,7 +16,78 @@ type Run = {
   error: string | null;
 };
 
-const JOB_LABELS: Record<string, string> = { reminder: 'تذكير', drafts: 'مسودات', cutoff: 'إغلاق' };
+const JOB_LABELS: Record<string, string> = {
+  reminder: 'تذكير',
+  drafts: 'مسودات',
+  cutoff: 'إغلاق',
+  balance_alerts: 'تذكير الذمم',
+};
+
+/** Daily reminder of unpaid balances. */
+function ReceivablesCard() {
+  const [r, setR] = useState<ReceivablesSettings | null>(null);
+  const [min, setMin] = useState('');
+  const [msg, setMsg] = useState('');
+  useEffect(() => {
+    void api<ReceivablesSettings>('/api/settings/receivables').then((v) => {
+      setR(v);
+      setMin(filsToJodString(v.minAmount));
+    });
+  }, []);
+  if (!r) return null;
+  async function save() {
+    const minAmount = jodToFils(min || '0');
+    if (minAmount === null) return setMsg('المبلغ غير صحيح');
+    try {
+      setR(
+        await api<ReceivablesSettings>('/api/settings/receivables', {
+          method: 'PUT',
+          body: JSON.stringify({ ...r, minAmount }),
+        }),
+      );
+      setMsg('تم الحفظ ✓');
+    } catch (err) {
+      setMsg(errorMessage(err, 'تعذّر الحفظ'));
+    }
+  }
+  return (
+    <Card title="تذكير الذمم اليومي">
+      <div className="space-y-3">
+        <Toggle
+          label="إرسال كشف الحساب يومياً للعملاء (واتساب + التطبيق)"
+          checked={r.alertsEnabled}
+          onChange={(v) => setR({ ...r, alertsEnabled: v })}
+        />
+        <Toggle
+          label="فقط لمن عليه مبلغ متأخر"
+          checked={r.onlyOverdue}
+          onChange={(v) => setR({ ...r, onlyOverdue: v })}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="وقت الإرسال"
+            type="time"
+            value={r.alertTime}
+            onChange={(e) => setR({ ...r, alertTime: e.target.value })}
+          />
+          <Input
+            label="أقل رصيد (دينار)"
+            dir="ltr"
+            value={min}
+            onChange={(e) => setMin(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <Button type="button" onClick={() => void save()}>
+            حفظ
+          </Button>
+          <span className="text-sm text-brand-muted">{msg}</span>
+        </div>
+        <p className="text-xs text-brand-muted">يمكن إيقافه لعميل معيّن من صفحة كشف حسابه.</p>
+      </div>
+    </Card>
+  );
+}
 
 function Toggle({
   label,
@@ -221,6 +293,8 @@ export default function SettingsPage() {
           </ul>
         </Card>
       )}
+
+      <ReceivablesCard />
 
       <Card title="آخر المهام المجدولة">
         <ul className="divide-y divide-stone-100 text-sm">

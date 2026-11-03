@@ -563,16 +563,14 @@ export function createBillingService(deps: {
             `المبلغ أكبر من المتبقي على الفاتورة ${inv.number}`,
           );
       }
-      await tx
-        .insert(paymentAllocations)
-        .values(
-          manual.map((a) => ({
-            paymentId: p!.id,
-            invoiceId: a.invoiceId,
-            amount: a.amount,
-            manual: true,
-          })),
-        );
+      await tx.insert(paymentAllocations).values(
+        manual.map((a) => ({
+          paymentId: p!.id,
+          invoiceId: a.invoiceId,
+          amount: a.amount,
+          manual: true,
+        })),
+      );
     }
     return p!;
   }

@@ -84,7 +84,8 @@ export const fileUrl = (id: string) => `${API_URL}/api/files/${id}`;
 export const openPrivateFile = (id: string) => openAuthed(`/api/files/${id}`);
 
 /** Opens any protected API file (e.g. a purchase order PDF) in a new tab. */
-export async function openAuthed(path: string) {
+/** Downloads a protected file (PDF, signature…) with the session token. */
+export async function fetchAuthedBlob(path: string) {
   const load = () =>
     fetch(`${API_URL}${path}`, {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -93,7 +94,11 @@ export async function openAuthed(path: string) {
   let res = await load();
   if (res.status === 401 && (await refreshSession())) res = await load();
   if (!res.ok) throw new ApiRequestError(res.status, 'FILE_ERROR', 'تعذّر فتح الملف');
-  const url = URL.createObjectURL(await res.blob());
+  return res.blob();
+}
+
+export async function openAuthed(path: string) {
+  const url = URL.createObjectURL(await fetchAuthedBlob(path));
   window.open(url, '_blank', 'noopener');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
