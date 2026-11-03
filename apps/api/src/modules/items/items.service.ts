@@ -11,6 +11,7 @@ export type SectionInput = {
   name: string;
   nameEn?: string | null;
   sortOrder?: number;
+  productionLineId?: string | null;
   isActive?: boolean;
 };
 

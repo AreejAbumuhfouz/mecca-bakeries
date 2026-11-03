@@ -37,5 +37,24 @@ export function settingsRouter(svc: SettingsService, authenticate: RequestHandle
       data: await svc.updateOrderSettings(OrderSettings.parse(req.body), req.audit),
     });
   });
+  const Production = z
+    .object({
+      toleranceBps: z.number().int().min(0).max(5_000),
+      defaultExtraBps: z.number().int().min(0).max(5_000),
+    })
+    .partial();
+  router.get(
+    '/production',
+    requireAnyPermission('settings.manage', 'production.view'),
+    async (_req, res) => {
+      res.json({ ok: true, data: await svc.getProductionSettings() });
+    },
+  );
+  router.put('/production', requirePermission('settings.manage'), async (req, res) => {
+    res.json({
+      ok: true,
+      data: await svc.updateProductionSettings(Production.parse(req.body), req.audit),
+    });
+  });
   return router;
 }
