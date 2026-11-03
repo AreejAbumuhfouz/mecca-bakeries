@@ -24,6 +24,9 @@ import type { AuditContext } from '../modules/audit/audit.service.js';
 import { createSettingsService } from '../modules/settings/settings.service.js';
 import { createOrdersService } from '../modules/orders/orders.service.js';
 import { captureNotifier } from '../modules/notifications/notifier.js';
+import { createProductionService } from '../modules/production/production.service.js';
+import { createPurchasingService } from '../modules/purchasing/purchasing.service.js';
+import { createWhatsAppService } from '../modules/whatsapp/whatsapp.service.js';
 
 /**
  * Demo data for development and client demos. All names, phones and emails are fictional.
@@ -54,6 +57,14 @@ if (reset) {
   await db.delete(users).where(like(users.email, '%@example.com'));
   await db.execute(sql`UPDATE users SET customer_id = NULL`);
   for (const table of [
+    'variance_approvals',
+    'stock_losses',
+    'vehicle_loads',
+    'production_items',
+    'production_days',
+    'purchase_order_lines',
+    'purchase_orders',
+    'suppliers',
     'whatsapp_messages',
     'order_events',
     'order_items',
@@ -64,6 +75,8 @@ if (reset) {
     'contracts',
     'items',
     'item_sections',
+    'production_lines',
+    'vehicles',
     'branches',
     'customers',
     'customer_categories',
@@ -76,6 +89,7 @@ if (reset) {
     'item_code_seq',
     'contract_number_seq',
     'order_number_seq',
+    'purchase_order_number_seq',
   ])
     await db.execute(sql.raw(`ALTER SEQUENCE ${seq} RESTART WITH 1`));
   console.log('✓ Old demo data removed');
@@ -508,11 +522,191 @@ await live.place(
 );
 orderCount++;
 
+// ---------- production (phase 3) ----------
+const [boss] = await db.select().from(users).where(eq(users.email, 'production@example.com'));
+const producer: AuthUser = {
+  id: boss!.id,
+  email: boss!.email,
+  name: boss!.name,
+  role: 'production',
+  customerId: null,
+  permissions: [...ROLE_PERMISSIONS.production, 'variances.approve'],
+};
+const productionAt = (at: Date) =>
+  createProductionService({ db, settings: settingsSvc, now: () => at });
+const prod = productionAt(new Date());
+const lineIds: Record<string, string> = {};
+for (const [i, name] of ['خط الخبز', 'خط الصمون والمعجنات', 'خط الحلويات'].entries())
+  lineIds[name] = (await prod.saveLine(null, { name, sortOrder: i + 1 }, ctx)).id;
+const sectionLine: Record<string, string> = {
+  خبز: 'خط الخبز',
+  'صمون وتوست': 'خط الصمون والمعجنات',
+  معجنات: 'خط الصمون والمعجنات',
+  'كعك وبسكويت': 'خط الحلويات',
+  حلويات: 'خط الحلويات',
+};
+for (const [section, line] of Object.entries(sectionLine))
+  await itemsSvc.updateSection(sec[section]!, { productionLineId: lineIds[line]! }, ctx);
+const vehicleIds: string[] = [];
+for (const [name, plate, driverName] of [
+  ['سيارة 1 — عمّان الغربية', '12-34567', 'أبو محمد'],
+  ['سيارة 2 — عمّان الشرقية والزرقاء', '12-76543', 'أبو يوسف'],
+  ['سيارة 3 — المحافظات', '13-11122', 'أبو فادي'],
+])
+  vehicleIds.push((await prod.saveVehicle(null, { name, plate, driverName }, ctx)).id);
+
+// Yesterday: final plan after the cutoff, produced, loaded, some waste, one approved variance, closed.
+const afterCutoff = productionAt(new Date(cutoffAt(previous, cutoffTime).getTime() + 10 * 60_000));
+await afterCutoff.generate(previous, ctx);
+const dayOf = async (d: string) => {
+  const v = await afterCutoff.getDay(d);
+  if (!v) throw new Error(`No production plan for ${d}`);
+  return v;
+};
+let day = await dayOf(previous);
+const extraOf = (ordered: number) => Math.max(1, Math.round(ordered * 0.05));
+await afterCutoff.updateItems(
+  previous,
+  day.items.map((r) => ({ itemId: r.itemId, extraQty: extraOf(r.ordered) })),
+  producer,
+  ctx,
+);
+day = await dayOf(previous);
+// The first item is under-produced by 10% so a variance needs approval.
+const short = day.items[0]!;
+await afterCutoff.updateItems(
+  previous,
+  day.items.map((r) => ({
+    itemId: r.itemId,
+    producedQty: r === short ? Math.round(r.ordered * 0.9) : r.planned,
+  })),
+  producer,
+  ctx,
+);
+// Spread the ordered quantities over the three vehicles; the short item loads what was made.
+const loads: { itemId: string; quantity: number }[][] = [[], [], []];
+for (const r of day.items) {
+  const total = r === short ? Math.round(r.ordered * 0.9) : r.ordered;
+  const a = Math.floor(total / 2);
+  const b = Math.floor((total - a) / 2);
+  for (const [v, q] of [a, b, total - a - b].entries())
+    if (q > 0) loads[v]!.push({ itemId: r.itemId, quantity: q });
+}
+for (const [v, lines] of loads.entries())
+  await afterCutoff.setLoads(previous, vehicleIds[v]!, lines, ctx);
+// Waste equals the extra that was not loaded, so the rest balance out.
+for (const r of day.items.filter((x) => x !== short).slice(0, 2))
+  await afterCutoff.addLoss(
+    previous,
+    { itemId: r.itemId, kind: 'waste', reason: 'burnt', quantity: r.extra, note: 'احترق في الفرن' },
+    producer,
+    ctx,
+  );
+day = await dayOf(previous);
+for (const r of day.items.filter((x) => x.needsApproval))
+  await afterCutoff.approveVariance(
+    previous,
+    r.itemId,
+    r.itemId === short.itemId
+      ? 'نقص في الطحين صباحاً، تم إبلاغ الزبائن'
+      : 'الزيادة بقيت في المخبز وبيعت في الصالة',
+    producer,
+    ctx,
+  );
+await afterCutoff.close(previous, producer, ctx);
+
+// Today: a preliminary plan from the orders placed so far.
+await prod.generate(current, ctx);
+
+// ---------- suppliers and purchase orders ----------
+const purchasing = createPurchasingService({
+  db,
+  whatsapp: createWhatsAppService({ db, config: null }),
+  files,
+  pdf: async () => Buffer.from(''),
+});
+const supplierIds: string[] = [];
+for (const [name, contactName, phone] of [
+  ['مطاحن الشرق للطحين', 'أبو أحمد', '0790000201'],
+  ['شركة الألبان الذهبية', 'نادر', '0790000202'],
+  ['مؤسسة التغليف الحديث', 'م. هالة', '0790000203'],
+])
+  supplierIds.push(
+    (await purchasing.saveSupplier(null, { name, contactName, phone, whatsappPhone: phone }, ctx))
+      .id,
+  );
+const [buyer] = await db.select().from(users).where(eq(users.email, 'purchasing@example.com'));
+const purchaser: AuthUser = {
+  id: buyer!.id,
+  email: buyer!.email,
+  name: buyer!.name,
+  role: 'purchasing',
+  customerId: null,
+  permissions: [...ROLE_PERMISSIONS.purchasing],
+};
+const pos: [
+  number,
+  [string, number, string][],
+  ('sent' | 'confirmed' | 'received' | 'cancelled')[],
+][] = [
+  [
+    0,
+    [
+      ['طحين زيرو', 40, 'كيس'],
+      ['طحين أسمر', 10, 'كيس'],
+      ['سميد', 5, 'كيس'],
+    ],
+    ['sent', 'received'],
+  ],
+  [
+    1,
+    [
+      ['زبدة', 60, 'كغ'],
+      ['حليب طازج', 40, 'لتر'],
+      ['جبنة عكاوي', 25, 'كغ'],
+    ],
+    ['sent', 'confirmed'],
+  ],
+  [
+    2,
+    [
+      ['أكياس خبز مطبوعة', 20, 'رول'],
+      ['علب كرواسان', 10, 'كرتونة'],
+    ],
+    ['sent'],
+  ],
+  [
+    0,
+    [
+      ['خميرة فورية', 12, 'كرتونة'],
+      ['سكر', 10, 'كيس'],
+    ],
+    [],
+  ],
+  [2, [['صواني كنافة ألمنيوم', 5, 'كرتونة']], ['cancelled']],
+];
+for (const [s, items, steps] of pos) {
+  const po = await purchasing.create(
+    {
+      supplierId: supplierIds[s]!,
+      neededDate: addDays(today, 2),
+      notes: 'التسليم صباحاً قبل الساعة 8',
+      lines: items.map(([description, quantity, unit]) => ({ description, quantity, unit })),
+    },
+    purchaser,
+    ctx,
+  );
+  for (const st of steps) await purchasing.setStatus(po.id, st, ctx);
+}
+
 console.log(`✓ Demo data added:
   - ${staff.length} staff accounts: ${staff.map(([e]) => e).join(', ')}
   - 2 trade names, 4 customer categories, 5 sections, ${itemRows.length + 1} items
   - ${demo.length} customers with branches; contracts: active, cash, expiring, not started,
     suspended, expired, and one customer with no contract
   - ${orderCount} orders: yesterday (${previous}) confirmed, today (${current}) open, one held for credit approval
-  - restaurant app account: restaurant@example.com (مطعم السفرة الذهبية)`);
+  - restaurant app account: restaurant@example.com (مطعم السفرة الذهبية)
+  - production: 3 lines, 3 vehicles; ${previous} closed (with waste and an approved variance),
+    ${current} preliminary plan
+  - 3 suppliers and ${pos.length} purchase orders in different statuses`);
 await close();

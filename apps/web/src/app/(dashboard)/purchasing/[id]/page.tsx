@@ -35,7 +35,7 @@ export default function PurchaseOrderPage() {
   const canManage = can('purchasing.manage');
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [editing, setEditing] = useState<LineDraft[] | null>(null);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -49,7 +49,7 @@ export default function PurchaseOrderPage() {
 
   async function run(fn: () => Promise<unknown>, fallback: string) {
     setError('');
-    setNotice('');
+    setNotice(null);
     setBusy(true);
     try {
       await fn();
@@ -68,8 +68,11 @@ export default function PurchaseOrderPage() {
       const r = await api<PurchaseOrder>(`/api/purchasing/orders/${id}/send`, { method: 'POST' });
       setNotice(
         r.delivered
-          ? 'تم إرسال طلب الشراء للمورد على واتساب ✓'
-          : 'تم تسجيل الإرسال، لكن واتساب غير مربوط بعد فلم يصل الطلب للمورد فعلياً.',
+          ? { ok: true, text: 'تم إرسال طلب الشراء للمورد على واتساب ✓' }
+          : {
+              ok: false,
+              text: 'تم تسجيل الإرسال، لكن واتساب غير مربوط بعد فلم يصل الطلب للمورد فعلياً.',
+            },
       );
     }, 'تعذّر الإرسال');
   }
@@ -163,7 +166,11 @@ export default function PurchaseOrderPage() {
 
       <ErrorBox message={error} />
       {notice && (
-        <div className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-800">{notice}</div>
+        <div
+          className={`rounded-lg px-4 py-2 text-sm ${notice.ok ? 'bg-green-50 text-green-800' : 'bg-amber-50 text-amber-900'}`}
+        >
+          {notice.text}
+        </div>
       )}
 
       <Card title={`البنود (${po.lines.length})`}>
