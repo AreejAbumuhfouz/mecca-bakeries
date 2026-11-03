@@ -270,6 +270,8 @@ export function createOrdersService(deps: {
   async function assertEditable(actor: AuthUser, order: OrderRow) {
     if (['cancelled', 'rejected'].includes(order.status))
       throw new AppError(409, 'ORDER_CLOSED', 'الطلب ملغى أو مرفوض');
+    if (order.status === 'delivered')
+      throw new AppError(409, 'ORDER_DELIVERED', 'تم تسليم الطلب؛ أي تصحيح يكون على الفاتورة');
     if (isStaff(actor)) return;
     if (order.customerId !== actor.customerId) throw notFound('Order');
     const { cutoffTime } = await settings.getOrderSettings();
@@ -778,7 +780,7 @@ export function createOrdersService(deps: {
                   and c.status = 'active' and c.start_date <= ${deliveryDate} and c.end_date >= ${deliveryDate})`,
             sql`not exists (select 1 from orders o where o.branch_id = ${branches.id}
                   and o.delivery_date = ${deliveryDate}
-                  and o.status in ('draft','submitted','pending_approval','confirmed'))`,
+                  and o.status in ('draft','submitted','pending_approval','confirmed','delivered'))`,
           ),
         )
         .orderBy(asc(customers.name), asc(branches.code));

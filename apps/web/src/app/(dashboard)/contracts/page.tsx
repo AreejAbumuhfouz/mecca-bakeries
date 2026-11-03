@@ -15,7 +15,7 @@ import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { STATE_TONE, type ContractRow } from '@/lib/contracts';
 
 type Page = { items: ContractRow[]; total: number };
-const filterClass = 'rounded-lg border border-brand-line bg-white px-3 py-2 text-sm';
+const filterClass = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
 
 export default function ContractsPage() {
   const { can } = useAuth();

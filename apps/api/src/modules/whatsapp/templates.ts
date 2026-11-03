@@ -42,6 +42,11 @@ export const WHATSAPP_TEMPLATES = {
     body: 'طلب شراء رقم {{1}} من مخابز مكة، مطلوب بتاريخ {{2}}. التفاصيل في الملف المرفق. نرجو تأكيد الطلب بالرد على هذه الرسالة.',
     header: 'document',
   },
+  mb_balance_statement: {
+    label: 'تذكير بالرصيد مع كشف الحساب (PDF)',
+    body: 'عميلنا العزيز {{1}}، رصيدكم المستحق لدى مخابز مكة {{2}} دينار، منها {{3}} دينار متأخرة. كشف الحساب مرفق. للاستفسار تواصلوا معنا.',
+    header: 'document',
+  },
 } as const;
 
 export type TemplateName = keyof typeof WHATSAPP_TEMPLATES;

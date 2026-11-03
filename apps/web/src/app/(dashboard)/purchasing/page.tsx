@@ -80,7 +80,7 @@ export default function PurchasingPage() {
         title={`الطلبات (${orders.length})`}
         actions={
           <select
-            className="rounded-lg border border-brand-line bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm"
             value={status}
             onChange={(e) => setStatus(e.target.value as '' | PurchaseOrderStatus)}
           >

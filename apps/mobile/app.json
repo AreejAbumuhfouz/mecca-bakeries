@@ -5,11 +5,16 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "extra": { "supportsRTL": true },
+    "userInterfaceStyle": "automatic",
+    "extra": {
+      "supportsRTL": true
+    },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.meccabakeries.app"
+      "bundleIdentifier": "com.meccabakeries.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "يُسجَّل موقع التسليم لحظة تأكيد السائق فقط."
+      }
     },
     "android": {
       "package": "com.meccabakeries.app",
@@ -19,7 +24,16 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
-    }
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "يُسجَّل موقع التسليم لحظة تأكيد السائق فقط."
+        }
+      ]
+    ]
   }
 }

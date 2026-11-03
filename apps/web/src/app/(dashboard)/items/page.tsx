@@ -76,7 +76,7 @@ const toForm = (i: Item): Form => ({
   sortOrder: String(i.sortOrder),
 });
 
-const filterClass = 'rounded-lg border border-brand-line bg-white px-3 py-2 text-sm';
+const filterClass = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
 
 export default function ItemsPage() {
   const { can } = useAuth();

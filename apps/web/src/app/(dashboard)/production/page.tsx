@@ -178,7 +178,7 @@ export default function ProductionPage() {
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
-            className="rounded-lg border border-brand-line bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
@@ -236,8 +236,8 @@ export default function ProductionPage() {
                 onClick={() => setTab(t.key)}
                 className={`rounded-full px-4 py-2 text-sm font-bold ${
                   tab === t.key
-                    ? 'bg-brand-brown text-white'
-                    : 'border border-brand-line bg-white text-brand-brown'
+                    ? 'bg-primary text-on-primary'
+                    : 'border border-brand-line bg-surface text-brand-brown'
                 }`}
               >
                 {t.label}

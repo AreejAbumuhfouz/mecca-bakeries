@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { formatJod } from '@mecca/shared';
 import { api, errorText } from '../api';
 import { useAuth } from '../auth';
 import { Button } from '../components';
-import { colors, ui } from '../theme';
+import { colors, ui, useTheme } from '../theme';
 import type { Me } from '../types';
 
 export function AccountScreen() {
   const { user, logout } = useAuth();
+  const { mode, toggle } = useTheme();
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState('');
 
@@ -59,9 +61,16 @@ export function AccountScreen() {
           ))}
         </View>
       )}
+      <Pressable onPress={toggle} style={[ui.card, ui.between]} accessibilityRole="switch">
+        <View style={ui.row}>
+          <Ionicons name={mode === 'dark' ? 'moon' : 'sunny'} size={20} color={colors.gold} />
+          <Text style={ui.text}>المظهر</Text>
+        </View>
+        <Text style={[ui.text, { fontWeight: '700' }]}>{mode === 'dark' ? 'داكن' : 'فاتح'}</Text>
+      </Pressable>
       <Button title="تسجيل الخروج" variant="outline" onPress={() => void logout()} />
       <Text style={[ui.muted, { textAlign: 'center', color: colors.muted }]}>
-        مخابز مكة — الإصدار 0.2
+        مخابز مكة — الإصدار 0.3
       </Text>
     </ScrollView>
   );

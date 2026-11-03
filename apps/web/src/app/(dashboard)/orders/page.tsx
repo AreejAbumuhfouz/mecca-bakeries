@@ -16,7 +16,7 @@ import { formatAmman, STATUS_TONE, type OrderRow } from '@/lib/orders';
 
 type Page = { items: OrderRow[]; total: number };
 type Window = { deliveryDate: string; cutoffAt: string };
-const filterClass = 'rounded-lg border border-brand-line bg-white px-3 py-2 text-sm';
+const filterClass = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
 
 export default function OrdersPage() {
   const { can } = useAuth();

@@ -9,7 +9,7 @@ import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
 import type { ProductionLine, Vehicle } from '@/lib/production';
 
 type Section = { id: string; name: string; productionLineId: string | null; isActive: boolean };
-const field = 'rounded-lg border border-brand-line bg-white px-3 py-2 text-sm';
+const field = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
 
 export default function ProductionSetupPage() {
   const { can } = useAuth();

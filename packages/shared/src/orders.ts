@@ -14,6 +14,7 @@ export const ORDER_STATUSES = [
   'submitted',
   'pending_approval',
   'confirmed',
+  'delivered',
   'rejected',
   'cancelled',
 ] as const;
@@ -24,6 +25,7 @@ export const ORDER_STATUS_LABELS_AR: Record<OrderStatus, string> = {
   submitted: 'مُرسل',
   pending_approval: 'بانتظار موافقة الإدارة',
   confirmed: 'مؤكد',
+  delivered: 'تم التسليم',
   rejected: 'مرفوض',
   cancelled: 'ملغى',
 };
@@ -34,6 +36,7 @@ export const LIVE_ORDER_STATUSES: OrderStatus[] = [
   'submitted',
   'pending_approval',
   'confirmed',
+  'delivered',
 ];
 
 export const ORDER_SOURCES = ['app', 'dashboard', 'auto_draft'] as const;
@@ -54,6 +57,7 @@ export const ORDER_EVENT_TYPES = [
   'approved',
   'rejected',
   'confirmed',
+  'delivered',
   'cancelled',
 ] as const;
 export type OrderEventType = (typeof ORDER_EVENT_TYPES)[number];
@@ -67,6 +71,7 @@ export const ORDER_EVENT_LABELS_AR: Record<OrderEventType, string> = {
   approved: 'موافقة استثنائية',
   rejected: 'رفض الموافقة',
   confirmed: 'تأكيد عند الإغلاق',
+  delivered: 'تسليم من السائق',
   cancelled: 'إلغاء',
 };
 

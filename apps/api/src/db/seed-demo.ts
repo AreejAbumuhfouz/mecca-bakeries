@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { eq, like, sql } from 'drizzle-orm';
+import { and, eq, like, sql } from 'drizzle-orm';
 import {
   addDays,
   ammanDate,
@@ -14,7 +14,7 @@ import {
   type Role,
 } from '@mecca/shared';
 import { createDb } from './client.js';
-import { customers, users } from './schema/index.js';
+import { branches, customers, users } from './schema/index.js';
 import { createFilesService } from '../modules/files/files.service.js';
 import { createTradeNamesService } from '../modules/trade-names/trade-names.service.js';
 import { createCustomersService } from '../modules/customers/customers.service.js';
@@ -27,6 +27,8 @@ import { captureNotifier } from '../modules/notifications/notifier.js';
 import { createProductionService } from '../modules/production/production.service.js';
 import { createPurchasingService } from '../modules/purchasing/purchasing.service.js';
 import { createWhatsAppService } from '../modules/whatsapp/whatsapp.service.js';
+import { createBillingService } from '../modules/billing/billing.service.js';
+import { createDistributionService } from '../modules/distribution/distribution.service.js';
 
 /**
  * Demo data for development and client demos. All names, phones and emails are fictional.
@@ -57,6 +59,16 @@ if (reset) {
   await db.delete(users).where(like(users.email, '%@example.com'));
   await db.execute(sql`UPDATE users SET customer_id = NULL`);
   for (const table of [
+    'payment_allocations',
+    'payments',
+    'invoice_revisions',
+    'invoice_lines',
+    'invoices',
+    'delivery_lines',
+    'deliveries',
+    'trips',
+    'route_stops',
+    'routes',
     'variance_approvals',
     'stock_losses',
     'vehicle_loads',
@@ -90,6 +102,7 @@ if (reset) {
     'contract_number_seq',
     'order_number_seq',
     'purchase_order_number_seq',
+    'payment_number_seq',
   ])
     await db.execute(sql.raw(`ALTER SEQUENCE ${seq} RESTART WITH 1`));
   console.log('✓ Old demo data removed');
@@ -699,6 +712,162 @@ for (const [s, items, steps] of pos) {
   for (const st of steps) await purchasing.setStatus(po.id, st, ctx);
 }
 
+// ---------- distribution, invoices and collections (phase 4) ----------
+const noPdf = async () => Buffer.from('');
+const billing = createBillingService({ db, files, pdf: noPdf });
+const distribution = createDistributionService({ db, billing, files, pdf: noPdf });
+const [driver1] = await db.select().from(users).where(eq(users.email, 'driver@example.com'));
+const [driver2, driver3] = await db
+  .insert(users)
+  .values([
+    { email: 'driver2@example.com', name: 'أبو يوسف — سائق', role: 'driver' },
+    { email: 'driver3@example.com', name: 'أبو فادي — سائق', role: 'driver' },
+  ])
+  .returning();
+const allBranches = await db
+  .select({ id: branches.id, customerId: branches.customerId, city: customers.city })
+  .from(branches)
+  .innerJoin(customers, eq(customers.id, branches.customerId))
+  .where(and(eq(branches.isActive, true), eq(customers.isActive, true)));
+const routePlan: [string, (city: string | null) => boolean, string][] = [
+  ['مسار عمّان الغربية', (c) => c === 'عمّان', driver1!.id],
+  ['مسار الزرقاء ومادبا', (c) => c === 'الزرقاء' || c === 'مادبا', driver2!.id],
+  ['مسار المحافظات', (c) => c !== 'عمّان' && c !== 'الزرقاء' && c !== 'مادبا', driver3!.id],
+];
+for (const [i, [name, match, driverId]] of routePlan.entries()) {
+  const r = await distribution.saveRoute(
+    null,
+    { name, driverId, vehicleId: vehicleIds[i] ?? null, sortOrder: i + 1 },
+    ctx,
+  );
+  await distribution.setStops(
+    r.id,
+    allBranches.filter((b) => match(b.city)).map((b) => b.id),
+    ctx,
+  );
+}
+
+// Opening balances from before the system: two customers with old, overdue debt.
+const admin = {
+  ...actor,
+  role: 'super_admin' as const,
+  permissions: [...ROLE_PERMISSIONS.super_admin],
+};
+await billing.createOpening(
+  created['مطعم بيت الشاورما']!,
+  { amount: jod('420'), date: addDays(today, -75), note: 'رصيد منقول من الدفاتر' },
+  admin,
+  ctx,
+);
+await billing.createOpening(
+  created['سوبرماركت النخبة']!,
+  { amount: jod('260'), date: addDays(today, -40), note: 'رصيد منقول من الدفاتر' },
+  admin,
+  ctx,
+);
+await billing.createOpening(
+  created['فندق الياسمين']!,
+  { amount: jod('150'), date: addDays(today, 10), note: 'رصيد منقول من الدفاتر' },
+  admin,
+  ctx,
+);
+
+// Today's deliveries: trips from the confirmed orders; most stops delivered, some left for the app.
+const dayTrips = await distribution.generate(previous, ctx);
+const driverActor = (u: typeof driver1) => ({
+  id: u!.id,
+  email: u!.email,
+  name: u!.name,
+  role: 'driver' as const,
+  customerId: null,
+  permissions: [...ROLE_PERMISSIONS.driver],
+});
+const drivers = [driver1, driver2, driver3];
+let deliveredCount = 0;
+let leftForApp = 0;
+for (const t of dayTrips.trips) {
+  const detail = await distribution.trip(t.id);
+  const who = driverActor(drivers.find((d) => d!.id === detail.driver?.id) ?? driver1);
+  for (const [i, s] of detail.stops.entries()) {
+    // Driver 1 still has the last two stops of the day to do in the app.
+    if (detail.driver?.id === driver1!.id && i >= detail.stops.length - 2) {
+      leftForApp++;
+      continue;
+    }
+    const at = new Date(Date.now() - (detail.stops.length - i) * 20 * 60_000).toISOString();
+    const base = {
+      clientRef: `demo-${s.deliveryId}`,
+      deliveredAt: at,
+      latitude: 31.95 + i * 0.01,
+      longitude: 35.88 + i * 0.01,
+      accuracyM: 15,
+      receiverName: ['أبو خالد', 'م. ليلى', 'سارة', 'أبو علي', 'أحمد'][i % 5]!,
+    };
+    if (i === 1 && detail.driver?.id === driver2!.id) {
+      await distribution.confirm(
+        s.deliveryId,
+        { ...base, outcome: 'failed', failReason: 'shop_closed', lines: [] },
+        who,
+        ctx,
+      );
+      continue;
+    }
+    const short = i === 0; // first stop of each trip is short by 10% on its first item
+    const lines = s.items.map((it, j) => ({
+      itemId: it.itemId,
+      deliveredQty: short && j === 0 ? Math.round(it.quantity * 0.9) : it.quantity,
+      shortReason: short && j === 0 ? ('bakery_shortage' as const) : null,
+      returnedQty: s.allowReturns && j === 0 && i === 2 ? 3 : 0,
+      returnReason: s.allowReturns && j === 0 && i === 2 ? ('unsold' as const) : null,
+    }));
+    const value = lines.reduce((sum, l, j) => sum + l.deliveredQty * s.items[j]!.unitPrice, 0);
+    await distribution.confirm(
+      s.deliveryId,
+      {
+        ...base,
+        outcome: 'delivered',
+        lines,
+        collected:
+          s.paymentType === 'cash' || i % 3 === 0
+            ? { amount: s.paymentType === 'cash' ? value : Math.round(value / 2), method: 'cash' }
+            : null,
+      },
+      who,
+      ctx,
+    );
+    deliveredCount++;
+  }
+}
+// The accountant approves part of the day; the rest stays as drafts to review.
+const drafts = await billing.draftIds(previous);
+await billing.approve(drafts.slice(0, Math.ceil(drafts.length / 2)), admin, ctx);
+
+// Office payments: a cheque against the oldest debt, a transfer.
+await billing.createPayment(
+  {
+    customerId: created['مطعم بيت الشاورما']!,
+    amount: jod('200'),
+    method: 'cheque',
+    reference: '000123',
+    chequeDueDate: addDays(today, 15),
+    receivedOn: addDays(today, -5),
+    note: 'دفعة على الحساب',
+  },
+  admin,
+  ctx,
+);
+await billing.createPayment(
+  {
+    customerId: created['فندق الياسمين']!,
+    amount: jod('100'),
+    method: 'transfer',
+    reference: 'TRX-7781',
+    receivedOn: addDays(today, -2),
+  },
+  admin,
+  ctx,
+);
+
 console.log(`✓ Demo data added:
   - ${staff.length} staff accounts: ${staff.map(([e]) => e).join(', ')}
   - 2 trade names, 4 customer categories, 5 sections, ${itemRows.length + 1} items
@@ -708,5 +877,7 @@ console.log(`✓ Demo data added:
   - restaurant app account: restaurant@example.com (مطعم السفرة الذهبية)
   - production: 3 lines, 3 vehicles; ${previous} closed (with waste and an approved variance),
     ${current} preliminary plan
-  - 3 suppliers and ${pos.length} purchase orders in different statuses`);
+  - 3 suppliers and ${pos.length} purchase orders in different statuses
+  - 3 routes with drivers (driver@, driver2@, driver3@example.com); ${previous}: ${deliveredCount} delivered
+    with invoices, ${leftForApp} left for driver@example.com to do in the app; opening balances and payments`);
 await close();

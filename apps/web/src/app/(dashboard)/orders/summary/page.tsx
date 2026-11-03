@@ -88,7 +88,7 @@ function SummaryView() {
             {data.counts.map((c) => (
               <span
                 key={c.status}
-                className="rounded-full border border-brand-line bg-white px-3 py-1"
+                className="rounded-full border border-brand-line bg-surface px-3 py-1"
               >
                 {ORDER_STATUS_LABELS_AR[c.status]}: <b>{c.n}</b>
               </span>

@@ -1,0 +1,2 @@
+DROP INDEX "orders_branch_day_live_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "orders_branch_day_live_unique" ON "orders" USING btree ("branch_id","delivery_date") WHERE status in ('draft','submitted','pending_approval','confirmed','delivered');
