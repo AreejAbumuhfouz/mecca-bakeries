@@ -8,7 +8,7 @@ export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000
 const REFRESH_KEY = 'mb_refresh_token';
 
 /** Phone keychain on iOS/Android; the browser's storage when the app is opened on the web for testing. */
-const store = {
+export const store = {
   get: async (key: string) =>
     Platform.OS === 'web'
       ? (globalThis.localStorage?.getItem(key) ?? null)
@@ -110,6 +110,18 @@ export async function api<T>(
     onExpired?.();
   }
   return parse<T>(res);
+}
+
+/** A protected file (used for PDFs when the app runs in a browser). */
+export async function fetchBlob(path: string) {
+  const load = () =>
+    fetch(`${API_URL}${path}`, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
+  let res = await load();
+  if (res.status === 401 && (await refreshSession())) res = await load();
+  if (!res.ok) throw new ApiError(res.status, 'FILE_ERROR', 'تعذّر فتح الملف');
+  return res.blob();
 }
 
 export const errorText = (err: unknown, fallback: string) =>
