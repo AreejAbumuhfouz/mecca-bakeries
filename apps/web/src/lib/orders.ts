@@ -63,6 +63,7 @@ export const STATUS_TONE: Record<OrderStatus, 'green' | 'gold' | 'red' | 'neutra
   submitted: 'gold',
   pending_approval: 'red',
   confirmed: 'green',
+  delivered: 'green',
   rejected: 'red',
   cancelled: 'neutral',
 };

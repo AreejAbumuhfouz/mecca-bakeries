@@ -47,6 +47,8 @@ export const customers = pgTable(
     address: text('address'),
     notes: text('notes'),
     isActive: boolean('is_active').notNull().default(true),
+    /** Daily reminder of the unpaid balance (WhatsApp + app). */
+    balanceAlerts: boolean('balance_alerts').notNull().default(true),
     /** Last branch number used, so branch codes are never reused. */
     branchSeq: integer('branch_seq').notNull().default(0),
     ...timestamps,

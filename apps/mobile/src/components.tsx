@@ -45,6 +45,7 @@ const STATUS_COLORS: Record<OrderStatus, [string, string]> = {
   submitted: [colors.goldLight, colors.brown],
   pending_approval: [colors.redBg, colors.red],
   confirmed: [colors.greenBg, colors.green],
+  delivered: [colors.greenBg, colors.green],
   rejected: [colors.redBg, colors.red],
   cancelled: ['#EEE', colors.muted],
 };

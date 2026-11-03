@@ -217,7 +217,7 @@ export function createWhatsAppService(deps: {
       template: TemplateName,
       params: string[],
       document: { buffer: Buffer; mimeType: string; filename: string },
-      meta: { sentBy?: string | null } = {},
+      meta: { sentBy?: string | null; customerId?: string | null } = {},
     ) => send({ template, params, document }, to, meta),
 
     /** Free text reply from the dashboard (only delivered within 24h of the customer's last message). */

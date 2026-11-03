@@ -50,6 +50,11 @@ import { productionRouter } from './modules/production/production.routes.js';
 import { createPurchasingService } from './modules/purchasing/purchasing.service.js';
 import { purchasingRouter } from './modules/purchasing/purchasing.routes.js';
 import { createChromePdfRenderer, type PdfRenderer } from './lib/pdf.js';
+import { createBillingService } from './modules/billing/billing.service.js';
+import { accountRouter, billingRouter } from './modules/billing/billing.routes.js';
+import { createBalanceAlerts } from './modules/billing/balance-alerts.js';
+import { createDistributionService } from './modules/distribution/distribution.service.js';
+import { distributionRouter, driverRouter } from './modules/distribution/distribution.routes.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -131,11 +136,14 @@ export function createApp(deps: AppDeps) {
   app.use('/api/users', usersRouter(createUsersService(db), requireAuth));
   app.use('/api/audit', auditRouter(db, requireAuth));
   const files = createFilesService(db, env.UPLOAD_DIR);
+  const pdf = deps.pdf ?? createChromePdfRenderer();
+  const billing = createBillingService({ db, files, pdf, now: deps.now });
+  const openInvoices = billing.openInvoicesProvider;
   app.use('/api/files', filesRouter(files, requireAuth, env.UPLOAD_MAX_MB));
   app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
   app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
   app.use('/api/items', itemsRouter(createItemsService(db, files), requireAuth));
-  const contracts = createContractsService({ db, files, now: deps.now });
+  const contracts = createContractsService({ db, files, openInvoices, now: deps.now });
   app.use('/api/contracts', contractsRouter(contracts, requireAuth));
 
   const settings = createSettingsService(db);
@@ -165,21 +173,36 @@ export function createApp(deps: AppDeps) {
     deps.pushTransport !== undefined ? deps.pushTransport : env.PUSH_ENABLED ? expoTransport : null,
   );
   const notifier = deps.notifier ?? createNotifier({ db, settings, whatsapp, push });
-  const orders = createOrdersService({ db, settings, notifier, now: deps.now });
+  const orders = createOrdersService({ db, settings, notifier, openInvoices, now: deps.now });
   const production = createProductionService({ db, settings, now: deps.now });
-  const scheduler = createScheduler({ db, settings, orders, production, notifier, now: deps.now });
+  const distribution = createDistributionService({ db, billing, files, pdf, now: deps.now });
+  const alerts = createBalanceAlerts({ db, billing, whatsapp, push, settings, now: deps.now });
+  const scheduler = createScheduler({
+    db,
+    settings,
+    orders,
+    production,
+    distribution,
+    alerts,
+    notifier,
+    now: deps.now,
+  });
   app.use('/api/production', productionRouter(production, requireAuth));
   const purchasing = createPurchasingService({
     db,
     whatsapp,
     files,
-    pdf: deps.pdf ?? createChromePdfRenderer(),
+    pdf,
   });
   app.use('/api/purchasing', purchasingRouter(purchasing, requireAuth));
   app.use('/api/orders', ordersRouter(orders, scheduler, requireAuth));
   app.use('/api/app', appRouter({ orders, contracts, push }, requireAuth));
+  app.use('/api/app/account', accountRouter(billing, requireAuth));
+  app.use('/api/billing', billingRouter(billing, alerts, requireAuth));
+  app.use('/api/distribution', distributionRouter(distribution, requireAuth));
+  app.use('/api/driver', driverRouter(distribution, requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
-  return Object.assign(app, { scheduler, orders, production });
+  return Object.assign(app, { scheduler, orders, production, billing, distribution, alerts });
 }

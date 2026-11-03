@@ -42,8 +42,13 @@ export type LossInput = {
 };
 
 /** Ordered quantities used for each plan kind. */
-const PRELIMINARY_STATUSES: OrderStatus[] = ['submitted', 'pending_approval', 'confirmed'];
-const FINAL_STATUSES: OrderStatus[] = ['confirmed'];
+const PRELIMINARY_STATUSES: OrderStatus[] = [
+  'submitted',
+  'pending_approval',
+  'confirmed',
+  'delivered',
+];
+const FINAL_STATUSES: OrderStatus[] = ['confirmed', 'delivered'];
 
 /** Allowed difference for a base quantity: at least 1 unit when there is any tolerance. */
 const allowance = (base: number, bps: number) =>
