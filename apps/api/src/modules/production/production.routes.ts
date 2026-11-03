@@ -106,12 +106,10 @@ export function productionRouter(svc: ProductionService, authenticate: RequestHa
   });
   router.post('/days/:date/losses', manage, async (req, res) => {
     const { date } = DateParam.parse(req.params);
-    res
-      .status(201)
-      .json({
-        ok: true,
-        data: await svc.addLoss(date, Loss.parse(req.body), req.auth!, req.audit),
-      });
+    res.status(201).json({
+      ok: true,
+      data: await svc.addLoss(date, Loss.parse(req.body), req.auth!, req.audit),
+    });
   });
   router.delete('/days/:date/losses/:lossId', manage, async (req, res) => {
     const { date, lossId } = z

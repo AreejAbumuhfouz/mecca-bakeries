@@ -38,6 +38,37 @@ export function metaTransport(cfg: WhatsAppConfig): WhatsAppTransport {
   };
 }
 
+/** Uploads a file to Meta and returns its media id (needed to send documents). */
+export type MediaUploader = (file: {
+  buffer: Buffer;
+  mimeType: string;
+  filename: string;
+}) => Promise<{ ok: boolean; id?: string; error?: string }>;
+
+export function metaUploader(cfg: WhatsAppConfig): MediaUploader {
+  return async ({ buffer, mimeType, filename }) => {
+    const form = new FormData();
+    form.append('messaging_product', 'whatsapp');
+    form.append('type', mimeType);
+    form.append('file', new Blob([new Uint8Array(buffer)], { type: mimeType }), filename);
+    const res = await fetch(
+      `https://graph.facebook.com/${cfg.apiVersion}/${cfg.phoneNumberId}/media`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${cfg.token}` },
+        body: form,
+      },
+    );
+    const json = (await res.json().catch(() => ({}))) as {
+      id?: string;
+      error?: { message?: string };
+    };
+    return res.ok && json.id
+      ? { ok: true, id: json.id }
+      : { ok: false, error: json.error?.message ?? `HTTP ${res.status}` };
+  };
+}
+
 type WebhookBody = {
   entry?: {
     changes?: {
@@ -53,9 +84,17 @@ export function createWhatsAppService(deps: {
   db: Db;
   config: WhatsAppConfig | null;
   transport?: WhatsAppTransport;
+  mediaUploader?: MediaUploader;
 }) {
   const { db, config } = deps;
   const transport = deps.transport ?? (config ? metaTransport(config) : null);
+  const uploadMedia: MediaUploader | null =
+    deps.mediaUploader ??
+    (config
+      ? metaUploader(config)
+      : transport
+        ? async () => ({ ok: true, id: 'test-media' })
+        : null);
 
   async function customerByPhone(phone: string) {
     const local = `0${phone.slice(3)}`;
@@ -74,7 +113,13 @@ export function createWhatsAppService(deps: {
   }
 
   async function send(
-    kind: { template: TemplateName; params: string[] } | { text: string },
+    kind:
+      | {
+          template: TemplateName;
+          params: string[];
+          document?: { buffer: Buffer; mimeType: string; filename: string };
+        }
+      | { text: string },
     to: string,
     meta: { customerId?: string | null; orderId?: string | null; sentBy?: string | null },
   ) {
@@ -98,6 +143,32 @@ export function createWhatsAppService(deps: {
       logger.info(`[WHATSAPP not configured] to ${phone}: ${body}`);
       return row!;
     }
+    let header: unknown[] = [];
+    if ('template' in kind && kind.document) {
+      const media = uploadMedia
+        ? await uploadMedia(kind.document).catch((err: unknown) => ({
+            ok: false,
+            error: String(err),
+            id: undefined,
+          }))
+        : null;
+      if (!media?.ok) {
+        const [failed] = await db
+          .update(whatsappMessages)
+          .set({ status: 'failed', error: media?.error ?? 'media upload failed' })
+          .where(eq(whatsappMessages.id, row!.id))
+          .returning();
+        return failed!;
+      }
+      header = [
+        {
+          type: 'header',
+          parameters: [
+            { type: 'document', document: { id: media.id, filename: kind.document.filename } },
+          ],
+        },
+      ];
+    }
     const payload =
       'template' in kind
         ? {
@@ -108,6 +179,7 @@ export function createWhatsAppService(deps: {
               name: kind.template,
               language: { code: config?.language ?? 'ar' },
               components: [
+                ...header,
                 { type: 'body', parameters: kind.params.map((text) => ({ type: 'text', text })) },
               ],
             },
@@ -138,6 +210,15 @@ export function createWhatsAppService(deps: {
       params: string[],
       meta: { customerId?: string | null; orderId?: string | null } = {},
     ) => send({ template, params }, to, meta),
+
+    /** Template with a PDF attached as its document header (e.g. a purchase order). */
+    sendDocumentTemplate: (
+      to: string,
+      template: TemplateName,
+      params: string[],
+      document: { buffer: Buffer; mimeType: string; filename: string },
+      meta: { sentBy?: string | null } = {},
+    ) => send({ template, params, document }, to, meta),
 
     /** Free text reply from the dashboard (only delivered within 24h of the customer's last message). */
     async sendText(to: string, text: string, sentBy: string) {

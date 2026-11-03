@@ -58,6 +58,7 @@ export async function setupTestApp(envOverrides: Partial<Record<keyof Env, strin
       return { ok: true, messageId: `wamid.${whatsappSent.length}` };
     },
     pushTransport: async (messages) => void pushSent.push(...messages),
+    pdf: async (html) => Buffer.from(`%PDF-test ${html.length}`),
   });
 
   return {

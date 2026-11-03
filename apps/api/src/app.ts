@@ -47,6 +47,9 @@ import { createNotifier, type Notifier } from './modules/notifications/notifier.
 import { createScheduler } from './modules/scheduler/scheduler.js';
 import { createProductionService } from './modules/production/production.service.js';
 import { productionRouter } from './modules/production/production.routes.js';
+import { createPurchasingService } from './modules/purchasing/purchasing.service.js';
+import { purchasingRouter } from './modules/purchasing/purchasing.routes.js';
+import { createChromePdfRenderer, type PdfRenderer } from './lib/pdf.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -64,6 +67,7 @@ export type AppDeps = {
   whatsappTransport?: WhatsAppTransport | null;
   pushTransport?: PushTransport | null;
   notifier?: Notifier;
+  pdf?: PdfRenderer;
 };
 
 /** Builds the Express app. Kept separate from server.ts so tests can create it without listening. */
@@ -165,6 +169,13 @@ export function createApp(deps: AppDeps) {
   const production = createProductionService({ db, settings, now: deps.now });
   const scheduler = createScheduler({ db, settings, orders, production, notifier, now: deps.now });
   app.use('/api/production', productionRouter(production, requireAuth));
+  const purchasing = createPurchasingService({
+    db,
+    whatsapp,
+    files,
+    pdf: deps.pdf ?? createChromePdfRenderer(),
+  });
+  app.use('/api/purchasing', purchasingRouter(purchasing, requireAuth));
   app.use('/api/orders', ordersRouter(orders, scheduler, requireAuth));
   app.use('/api/app', appRouter({ orders, contracts, push }, requireAuth));
 

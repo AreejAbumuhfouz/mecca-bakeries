@@ -17,6 +17,7 @@
     "db:demo": "tsx --env-file=.env src/db/seed-demo.ts"
   },
   "dependencies": {
+    "@fontsource/cairo": "^5.3.0",
     "@mecca/shared": "workspace:*",
     "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
@@ -31,6 +32,7 @@
     "nodemailer": "^10.3.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
+    "playwright-core": "1.63.0",
     "postgres": "^4.0.0",
     "zod": "^3.25.76"
   },
