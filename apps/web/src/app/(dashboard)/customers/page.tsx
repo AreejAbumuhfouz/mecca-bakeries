@@ -105,7 +105,7 @@ export default function CustomersPage() {
   }
 
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
-  const filterClass = 'rounded-lg border border-brand-line bg-white px-3 py-2 text-sm';
+  const filterClass = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
 
   return (
     <div className="space-y-6">

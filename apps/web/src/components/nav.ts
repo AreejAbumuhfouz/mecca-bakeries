@@ -1,27 +1,100 @@
 import type { Permission } from '@mecca/shared';
+import {
+  BarChart3,
+  Building2,
+  ClipboardList,
+  Croissant,
+  Factory,
+  FileSignature,
+  LayoutDashboard,
+  MessageCircle,
+  Receipt,
+  Settings,
+  ShoppingCart,
+  Store,
+  Truck,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 
-export type NavItem = { href: string; label: string; permission?: Permission; ready?: boolean };
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  permission?: Permission;
+  ready?: boolean;
+};
 
 /** Sidebar items in the order agreed in the proposal. `ready: false` items are built in later phases. */
 export const NAV: NavItem[] = [
-  { href: '/', label: 'لوحة التحكم', ready: true },
-  { href: '/orders', label: 'الطلبات', permission: 'orders.view', ready: true },
-  { href: '/messages', label: 'رسائل واتساب', permission: 'orders.view', ready: true },
-  { href: '/customers', label: 'المطاعم', permission: 'customers.view', ready: true },
-  { href: '/contracts', label: 'العقود والائتمان', permission: 'contracts.view', ready: true },
+  { href: '/', label: 'لوحة التحكم', icon: LayoutDashboard, ready: true },
+  {
+    href: '/orders',
+    label: 'الطلبات',
+    icon: ClipboardList,
+    permission: 'orders.view',
+    ready: true,
+  },
+  {
+    href: '/messages',
+    label: 'رسائل واتساب',
+    icon: MessageCircle,
+    permission: 'orders.view',
+    ready: true,
+  },
+  { href: '/customers', label: 'المطاعم', icon: Store, permission: 'customers.view', ready: true },
+  {
+    href: '/contracts',
+    label: 'العقود والائتمان',
+    icon: FileSignature,
+    permission: 'contracts.view',
+    ready: true,
+  },
   {
     href: '/trade-names',
     label: 'الأسماء التجارية',
+    icon: Building2,
     permission: 'trade_names.manage',
     ready: true,
   },
-  { href: '/items', label: 'الأصناف والأسعار', permission: 'items.view', ready: true },
-  { href: '/production', label: 'الإنتاج والمخزون', permission: 'production.view', ready: true },
-  { href: '/deliveries', label: 'التوزيع والسائقون', permission: 'deliveries.view' },
-  { href: '/invoices', label: 'الفواتير', permission: 'invoices.view' },
-  { href: '/payments', label: 'المقبوضات والذمم', permission: 'payments.view' },
-  { href: '/purchasing', label: 'طلبات الشراء', permission: 'purchasing.view', ready: true },
-  { href: '/reports', label: 'التقارير', permission: 'reports.view' },
-  { href: '/users', label: 'المستخدمون والصلاحيات', permission: 'users.view', ready: true },
-  { href: '/settings', label: 'الإعدادات', permission: 'settings.manage', ready: true },
+  {
+    href: '/items',
+    label: 'الأصناف والأسعار',
+    icon: Croissant,
+    permission: 'items.view',
+    ready: true,
+  },
+  {
+    href: '/production',
+    label: 'الإنتاج والمخزون',
+    icon: Factory,
+    permission: 'production.view',
+    ready: true,
+  },
+  { href: '/deliveries', label: 'التوزيع والسائقون', icon: Truck, permission: 'deliveries.view' },
+  { href: '/invoices', label: 'الفواتير', icon: Receipt, permission: 'invoices.view' },
+  { href: '/payments', label: 'المقبوضات والذمم', icon: Wallet, permission: 'payments.view' },
+  {
+    href: '/purchasing',
+    label: 'طلبات الشراء',
+    icon: ShoppingCart,
+    permission: 'purchasing.view',
+    ready: true,
+  },
+  { href: '/reports', label: 'التقارير', icon: BarChart3, permission: 'reports.view' },
+  {
+    href: '/users',
+    label: 'المستخدمون والصلاحيات',
+    icon: Users,
+    permission: 'users.view',
+    ready: true,
+  },
+  {
+    href: '/settings',
+    label: 'الإعدادات',
+    icon: Settings,
+    permission: 'settings.manage',
+    ready: true,
+  },
 ];
