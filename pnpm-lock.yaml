@@ -36,6 +36,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@fontsource/cairo':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@mecca/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -78,6 +81,9 @@ importers:
       pino-http:
         specifier: ^11.0.0
         version: 11.0.0
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
       postgres:
         specifier: ^4.0.0
         version: 4.0.0
@@ -3835,6 +3841,11 @@ packages:
 
   pino@10.4.0:
     resolution: {integrity: sha512-bk1ZMTwG/Vymx+zPoa28MhNzucFvXJWp3csrSuxuHPSMeUettaCoQ5Jvg07mtC4JGNpcfTwz41oVCnNgBK9+vA==}
+    hasBin: true
+
+  playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   plist@3.1.1:
@@ -8393,6 +8404,8 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
       thread-stream: 4.2.0
+
+  playwright-core@1.63.0: {}
 
   plist@3.1.1:
     dependencies:

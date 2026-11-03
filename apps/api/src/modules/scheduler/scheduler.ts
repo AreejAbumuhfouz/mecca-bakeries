@@ -12,13 +12,14 @@ import { schedulerRuns } from '../../db/schema/index.js';
 import { logger } from '../../lib/logger.js';
 import type { SettingsService } from '../settings/settings.service.js';
 import type { OrdersService } from '../orders/orders.service.js';
+import type { ProductionService } from '../production/production.service.js';
 import type { Notifier } from '../notifications/notifier.js';
 
 /**
  * Minute-by-minute scheduler for the ordering day (Amman time):
  *   reminders (9, 10, 11 PM)   → branches with no order for the coming delivery date
  *   drafts (12:00 AM)          → drafts copied from yesterday's orders
- *   cutoff (3:00 AM)           → orders confirmed, drafts submitted or cancelled
+ *   cutoff (3:00 AM)           → orders confirmed, drafts submitted or cancelled, final plan built
  * Each run is recorded in scheduler_runs, so a job never runs twice for the same slot,
  * even with several API processes or after a restart. Missed slots are caught up within a
  * short window (reminders 60 min, drafts 2 h, cutoff 12 h) instead of firing late.
@@ -27,10 +28,11 @@ export function createScheduler(deps: {
   db: Db;
   settings: SettingsService;
   orders: OrdersService;
+  production?: ProductionService;
   notifier: Notifier;
   now?: () => Date;
 }) {
-  const { db, settings, orders, notifier } = deps;
+  const { db, settings, orders, notifier, production } = deps;
   const now = () => deps.now?.() ?? new Date();
   let timer: NodeJS.Timeout | null = null;
   let running = false;
@@ -81,7 +83,17 @@ export function createScheduler(deps: {
         const cut = cutoffAt(deliveryDate, s.cutoffTime);
         const diff = now().getTime() - cut.getTime();
         if (diff >= 0 && diff < 12 * 3_600_000)
-          await once('cutoff', deliveryDate, () => orders.closeOrdering(deliveryDate));
+          await once('cutoff', deliveryDate, async () => {
+            const result = await orders.closeOrdering(deliveryDate);
+            // The final production plan is ready as soon as ordering closes.
+            if (production)
+              await production
+                .generate(deliveryDate, { userId: null, ip: 'scheduler' })
+                .catch((err: unknown) =>
+                  logger.warn(`[scheduler] plan ${deliveryDate}: ${String(err)}`),
+                );
+            return result;
+          });
       }
 
       const deliveryDate = currentDeliveryDate(now(), s.cutoffTime);

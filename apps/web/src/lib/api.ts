@@ -81,9 +81,12 @@ export function uploadFile(file: File, isPublic: boolean) {
 export const fileUrl = (id: string) => `${API_URL}/api/files/${id}`;
 
 /** Opens a private file (contract attachment) in a new tab using the current session. */
-export async function openPrivateFile(id: string) {
+export const openPrivateFile = (id: string) => openAuthed(`/api/files/${id}`);
+
+/** Opens any protected API file (e.g. a purchase order PDF) in a new tab. */
+export async function openAuthed(path: string) {
   const load = () =>
-    fetch(fileUrl(id), {
+    fetch(`${API_URL}${path}`, {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       credentials: 'include',
     });

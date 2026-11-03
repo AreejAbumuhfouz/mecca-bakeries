@@ -1,0 +1,119 @@
+'use client';
+
+import { COMMON_UNITS } from '@/lib/purchasing';
+
+export type LineDraft = { description: string; quantity: string; unit: string; note: string };
+export const emptyLine = (): LineDraft => ({ description: '', quantity: '', unit: 'كغ', note: '' });
+
+const field = 'h-9 rounded-lg border border-brand-line bg-white px-2 text-sm';
+
+export function PoLinesEditor({
+  lines,
+  setLines,
+}: {
+  lines: LineDraft[];
+  setLines: (l: LineDraft[]) => void;
+}) {
+  const update = (i: number, patch: Partial<LineDraft>) =>
+    setLines(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  return (
+    <div className="space-y-2">
+      <datalist id="po-units">
+        {COMMON_UNITS.map((u) => (
+          <option key={u} value={u} />
+        ))}
+      </datalist>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-right text-brand-muted">
+            <th className="w-8">#</th>
+            <th>المادة</th>
+            <th className="w-28">الكمية</th>
+            <th className="w-36">الوحدة</th>
+            <th>ملاحظة</th>
+            <th className="w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {lines.map((l, i) => (
+            <tr key={i}>
+              <td className="py-1 text-brand-muted">{i + 1}</td>
+              <td>
+                <input
+                  className={`${field} w-full`}
+                  aria-label={`المادة ${i + 1}`}
+                  placeholder="مثلاً: طحين زيرو"
+                  value={l.description}
+                  onChange={(e) => update(i, { description: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  dir="ltr"
+                  inputMode="decimal"
+                  className={`${field} w-24`}
+                  aria-label={`الكمية ${i + 1}`}
+                  value={l.quantity}
+                  onChange={(e) => update(i, { quantity: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  list="po-units"
+                  className={`${field} w-32`}
+                  aria-label={`الوحدة ${i + 1}`}
+                  value={l.unit}
+                  onChange={(e) => update(i, { unit: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  className={`${field} w-full`}
+                  value={l.note}
+                  onChange={(e) => update(i, { note: e.target.value })}
+                />
+              </td>
+              <td>
+                {lines.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-red-700"
+                    aria-label="حذف البند"
+                    onClick={() => setLines(lines.filter((_, j) => j !== i))}
+                  >
+                    ✕
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        className="text-sm text-brand-brown underline"
+        onClick={() => setLines([...lines, emptyLine()])}
+      >
+        + بند آخر
+      </button>
+    </div>
+  );
+}
+
+/** Drafts → API lines, or an Arabic error. Empty rows are ignored. */
+export function toPoLines(lines: LineDraft[]) {
+  const out = [];
+  for (const [i, l] of lines.entries()) {
+    if (!l.description.trim() && !l.quantity.trim()) continue;
+    const q = Number(l.quantity.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))));
+    if (!l.description.trim() || !(q > 0) || !l.unit.trim())
+      return `البند ${i + 1}: أكملي المادة والكمية والوحدة`;
+    out.push({
+      description: l.description.trim(),
+      quantity: Math.round(q * 1000) / 1000,
+      unit: l.unit.trim(),
+      note: l.note.trim() || null,
+    });
+  }
+  return out.length ? out : 'أضيفي بنداً واحداً على الأقل';
+}

@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -11,6 +12,7 @@ import {
 import { ITEM_UNITS } from '@mecca/shared';
 import { timestamps } from './common.js';
 import { files } from './files.js';
+import { productionLines } from './production.js';
 
 /** Feeds automatic item codes (I0001 …) when no code is entered. */
 export const itemCodeSeq = pgSequence('item_code_seq', { startWith: 1 });
@@ -23,6 +25,10 @@ export const itemSections = pgTable(
     name: text('name').notNull(),
     nameEn: text('name_en'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** The production line that makes this section's items. */
+    productionLineId: uuid('production_line_id').references((): AnyPgColumn => productionLines.id, {
+      onDelete: 'set null',
+    }),
     isActive: boolean('is_active').notNull().default(true),
     ...timestamps,
   },

@@ -9,6 +9,7 @@ const Section = z.object({
   name: z.string().trim().min(2).max(80),
   nameEn: optionalText(80),
   sortOrder: z.number().int().min(0).max(10_000).optional(),
+  productionLineId: z.string().uuid().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 

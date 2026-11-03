@@ -2,6 +2,7 @@
  * WhatsApp message templates. Business-initiated messages must use templates approved by Meta:
  * register each one in WhatsApp Manager with the same name, language "ar" (Arabic),
  * category "Utility", and the body below ({{1}}, {{2}} … are the parameters in order).
+ * Templates with header "document" also need a Document header in WhatsApp Manager.
  */
 export const WHATSAPP_TEMPLATES = {
   mb_order_confirmed: {
@@ -35,6 +36,11 @@ export const WHATSAPP_TEMPLATES = {
   mb_order_reminder: {
     label: 'تذكير بالطلب',
     body: 'تذكير: لم يصلنا طلب فرع {{1}} ليوم {{2}}. آخر موعد للطلب {{3}}. مخابز مكة',
+  },
+  mb_purchase_order: {
+    label: 'طلب شراء لمورد (مع ملف PDF)',
+    body: 'طلب شراء رقم {{1}} من مخابز مكة، مطلوب بتاريخ {{2}}. التفاصيل في الملف المرفق. نرجو تأكيد الطلب بالرد على هذه الرسالة.',
+    header: 'document',
   },
 } as const;
 
