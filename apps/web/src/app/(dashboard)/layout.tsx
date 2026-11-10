@@ -54,6 +54,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // Restaurant and driver accounts work in the phone app; the dashboard is for staff.
+  if (user.role === 'restaurant' || user.role === 'driver') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="max-w-md space-y-4 rounded-2xl border border-brand-line bg-surface p-8 text-center">
+          <div className="mx-auto w-fit rounded-xl bg-white p-2">
+            <Image src="/logo.png" alt="مخابز مكة" width={90} height={76} />
+          </div>
+          <h1 className="text-xl font-bold text-brand-brown">هذا الحساب للتطبيق</h1>
+          <p className="text-sm leading-7 text-brand-muted">
+            حساب {user.role === 'driver' ? 'السائق' : 'المطعم'} «{user.name}» يعمل من تطبيق مخابز
+            مكة على الجوال. لوحة التحكم لموظفي المخبز فقط.
+          </p>
+          <button
+            onClick={() => void logout()}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-on-primary"
+          >
+            <LogOut size={16} /> خروج والدخول بحساب آخر
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const items = NAV.filter((i) => !i.permission || can(i.permission));
   // On phones the drawer always shows labels.
   const narrow = collapsed && !mobileOpen;
