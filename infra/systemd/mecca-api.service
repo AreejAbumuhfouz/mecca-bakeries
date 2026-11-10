@@ -1,0 +1,23 @@
+[Unit]
+Description=Mecca Bakeries API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=mecca
+WorkingDirectory=/opt/mecca/apps/api
+EnvironmentFile=/opt/mecca/apps/api/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node --enable-source-maps dist/server.js
+Restart=always
+RestartSec=3
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/mecca/apps/api/uploads
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

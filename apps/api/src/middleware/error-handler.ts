@@ -9,7 +9,22 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
   res.status(404).json(body);
 };
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+/** Unexpected errors are logged with the request id and, if set up, emailed. */
+export const createErrorHandler =
+  (onUnexpected?: (err: unknown, ctx: Record<string, unknown>) => void): ErrorRequestHandler =>
+  (err, req, res, next) =>
+    handle(err, req, res, next, onUnexpected);
+
+export const errorHandler: ErrorRequestHandler = (err, req, res, next) =>
+  handle(err, req, res, next);
+
+function handle(
+  err: unknown,
+  req: Parameters<ErrorRequestHandler>[1],
+  res: Parameters<ErrorRequestHandler>[2],
+  _next: Parameters<ErrorRequestHandler>[3],
+  onUnexpected?: (err: unknown, ctx: Record<string, unknown>) => void,
+) {
   if (err instanceof AppError) {
     const body: ApiError = {
       ok: false,
@@ -26,10 +41,29 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(400).json(body);
     return;
   }
-  logger.error({ err }, 'Unhandled error');
+  // Body too large, bad JSON and similar client mistakes carry their own status.
+  const status =
+    (err as { status?: number; statusCode?: number }).status ??
+    (err as { statusCode?: number }).statusCode;
+  if (status && status >= 400 && status < 500) {
+    res.status(status).json({ ok: false, error: { code: 'BAD_REQUEST', message: 'Bad request' } });
+    return;
+  }
+  const ctx = {
+    requestId: req.requestId,
+    method: req.method,
+    url: req.originalUrl,
+    userId: req.auth?.id,
+  };
+  logger.error({ err, ...ctx }, 'Unhandled error');
+  onUnexpected?.(err, ctx);
   const body: ApiError = {
     ok: false,
-    error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' },
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'Something went wrong',
+      details: { requestId: req.requestId },
+    },
   };
   res.status(500).json(body);
-};
+}

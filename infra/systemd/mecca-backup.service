@@ -1,0 +1,9 @@
+[Unit]
+Description=Mecca Bakeries daily backup (database + uploads, off-site copy)
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=mecca
+Environment=BACKUP_ENV=/etc/mecca/backup.env
+ExecStart=/opt/mecca/infra/backup/backup.sh

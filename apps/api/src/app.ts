@@ -2,6 +2,9 @@ import type { IncomingMessage } from 'node:http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { requestId } from './middleware/request-id.js';
+import { createErrorAlerts } from './lib/alerts.js';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { pinoHttp } from 'pino-http';
@@ -9,7 +12,7 @@ import type { Env } from './config/env.js';
 import type { Db } from './db/client.js';
 import { logger } from './lib/logger.js';
 import type { Mailer } from './lib/mailer.js';
-import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { createErrorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { auditContext, authenticate } from './middleware/auth.js';
 import { healthRouter, type DbPing } from './routes/health.js';
 import { createTokenService } from './modules/auth/tokens.js';
@@ -107,7 +110,23 @@ export function createApp(deps: AppDeps) {
     }),
   );
   app.use(cookieParser());
+  app.use(requestId);
   app.use(auditContext);
+  if (env.NODE_ENV !== 'test')
+    app.use(
+      '/api',
+      rateLimit({
+        windowMs: 60_000,
+        limit: env.API_RATE_LIMIT_PER_MIN,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        skip: (req) => req.path.startsWith('/health'),
+        message: {
+          ok: false,
+          error: { code: 'RATE_LIMITED', message: 'طلبات كثيرة، حاول بعد دقيقة' },
+        },
+      }),
+    );
   if (env.NODE_ENV !== 'test')
     app.use(
       pinoHttp({
@@ -121,6 +140,7 @@ export function createApp(deps: AppDeps) {
         customLogLevel: (_req, res, err) =>
           err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info',
         customAttributeKeys: { responseTime: 'ms' },
+        genReqId: (req) => (req as unknown as express.Request).requestId ?? '',
       }),
     );
 
@@ -212,6 +232,15 @@ export function createApp(deps: AppDeps) {
   app.use('/api/reports', reportsRouter(reports, { db, files, pdf }, requireAuth));
 
   app.use(notFoundHandler);
-  app.use(errorHandler);
-  return Object.assign(app, { scheduler, orders, production, billing, distribution, alerts });
+  const alert = createErrorAlerts({ mailer: deps.mailer, to: env.ALERT_EMAIL });
+  app.use(createErrorHandler(alert));
+  return Object.assign(app, {
+    alert,
+    scheduler,
+    orders,
+    production,
+    billing,
+    distribution,
+    alerts,
+  });
 }
