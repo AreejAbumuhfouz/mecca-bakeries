@@ -14,7 +14,22 @@ import {
   type Role,
 } from '@mecca/shared';
 import { createDb } from './client.js';
-import { branches, customers, users } from './schema/index.js';
+import {
+  branches,
+  customers,
+  deliveries,
+  deliveryLines,
+  invoices,
+  orderItems,
+  orders,
+  productionDays,
+  productionItems,
+  routeStops,
+  routes,
+  stockLosses,
+  trips,
+  users,
+} from './schema/index.js';
 import { createFilesService } from '../modules/files/files.service.js';
 import { createTradeNamesService } from '../modules/trade-names/trade-names.service.js';
 import { createCustomersService } from '../modules/customers/customers.service.js';
@@ -747,12 +762,178 @@ for (const [i, [name, match, driverId]] of routePlan.entries()) {
   );
 }
 
-// Opening balances from before the system: two customers with old, overdue debt.
 const admin = {
   ...actor,
   role: 'super_admin' as const,
   permissions: [...ROLE_PERMISSIONS.super_admin],
 };
+
+// History: the two weeks before today, delivered and invoiced, so reports and the home chart
+// have something to show. Built from today's orders with quantities varied day to day.
+const todays = await db
+  .select({ order: orders, routeId: routeStops.routeId, position: routeStops.position })
+  .from(orders)
+  .innerJoin(routeStops, eq(routeStops.branchId, orders.branchId))
+  .where(and(eq(orders.deliveryDate, previous), eq(orders.status, 'confirmed')));
+const todaysItems = await db.select().from(orderItems);
+const allRoutes = await db.select().from(routes);
+let seedRand = 42;
+const rand = () => ((seedRand = (seedRand * 16807) % 2147483647) - 1) / 2147483646;
+const historyDays = 13;
+let historyInvoices = 0;
+for (let k = historyDays; k >= 1; k--) {
+  const day = addDays(previous, -k);
+  const at = (h: number) => new Date(cutoffAt(day, cutoffTime).getTime() + h * 3_600_000);
+  await db.transaction(async (tx) => {
+    const tripOf = new Map<string, string>();
+    const made = new Map<string, number>();
+    for (const r of allRoutes) {
+      const [tr] = await tx
+        .insert(trips)
+        .values({
+          deliveryDate: day,
+          routeId: r.id,
+          driverId: r.driverId,
+          vehicleId: r.vehicleId,
+          status: 'done',
+          startedAt: at(3),
+          finishedAt: at(3 + 2 + rand() * 2),
+        })
+        .returning();
+      tripOf.set(r.id, tr!.id);
+    }
+    for (const t of todays) {
+      if (rand() < 0.12) continue; // some customers skip a day
+      const factor = 0.75 + rand() * 0.5;
+      const lines = todaysItems
+        .filter((i) => i.orderId === t.order.id)
+        .map((i) => ({ ...i, quantity: Math.max(1, Math.round(i.quantity * factor)) }));
+      const total = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
+      const [n] = await tx.execute<{ n: string }>(sql`select nextval('order_number_seq') as n`);
+      const [o] = await tx
+        .insert(orders)
+        .values({
+          number: `ORD-${String(Number(n!.n)).padStart(6, '0')}`,
+          customerId: t.order.customerId,
+          branchId: t.order.branchId,
+          contractId: t.order.contractId,
+          deliveryDate: day,
+          status: 'delivered',
+          source: t.order.source,
+          total,
+          itemCount: lines.length,
+          submittedAt: at(-6),
+          confirmedAt: at(0),
+        })
+        .returning();
+      await tx.insert(orderItems).values(
+        lines.map((l) => ({
+          orderId: o!.id,
+          itemId: l.itemId,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          priceSource: l.priceSource,
+          lineTotal: l.quantity * l.unitPrice,
+        })),
+      );
+      const short = rand() < 0.15;
+      const delivered = lines.map((l, j) => ({
+        itemId: l.itemId,
+        orderedQty: l.quantity,
+        deliveredQty: short && j === 0 ? Math.round(l.quantity * 0.9) : l.quantity,
+        shortReason: short && j === 0 ? ('bakery_shortage' as const) : null,
+        returnedQty: 0,
+        returnReason: null,
+      }));
+      for (const l of delivered) made.set(l.itemId, (made.get(l.itemId) ?? 0) + l.orderedQty);
+      const [d] = await tx
+        .insert(deliveries)
+        .values({
+          tripId: tripOf.get(t.routeId)!,
+          orderId: o!.id,
+          position: t.position,
+          status: short ? 'partial' : 'delivered',
+          receiverName: 'المستلم',
+          deliveredAt: at(4 + rand() * 2),
+          confirmedAt: at(4 + rand() * 2),
+          latitude: 31.9 + rand() * 0.1,
+          longitude: 35.85 + rand() * 0.1,
+          clientRef: `demo-history-${o!.id}`,
+        })
+        .returning();
+      await tx.insert(deliveryLines).values(delivered.map((l) => ({ ...l, deliveryId: d!.id })));
+      const inv = await billing.createFromDelivery(tx, {
+        orderId: o!.id,
+        deliveryId: d!.id,
+        lines: delivered,
+        actorId: admin.id,
+      });
+      if (inv) {
+        await tx
+          .update(invoices)
+          .set({ status: 'approved', approvedBy: admin.id, approvedAt: at(8) })
+          .where(eq(invoices.id, inv.id));
+        historyInvoices++;
+        // Cash customers pay the driver; most credit customers pay invoices older than a week.
+        const contract = t.order.contractId
+          ? await tx.query.contracts.findFirst({
+              where: (c, { eq: e }) => e(c.id, t.order.contractId!),
+            })
+          : null;
+        const pays = contract?.paymentType === 'cash' || (k > 7 && rand() < 0.6);
+        if (pays)
+          await billing.insertPayment(
+            tx,
+            {
+              customerId: t.order.customerId,
+              amount: inv.total,
+              method:
+                contract?.paymentType === 'cash' ? 'cash' : rand() < 0.5 ? 'transfer' : 'cheque',
+              reference: contract?.paymentType === 'cash' ? null : `H${Math.round(rand() * 1e6)}`,
+              receivedOn: contract?.paymentType === 'cash' ? day : addDays(day, 5),
+            },
+            {
+              source: contract?.paymentType === 'cash' ? 'driver' : 'office',
+              deliveryId: contract?.paymentType === 'cash' ? d!.id : null,
+              receivedBy: admin.id,
+            },
+          );
+        await billing.rebalance(tx, t.order.customerId);
+      }
+    }
+    // A closed production day to match.
+    const [pd] = await tx
+      .insert(productionDays)
+      .values({
+        deliveryDate: day,
+        status: 'closed',
+        generatedAt: at(0),
+        finalizedAt: at(0),
+        closedAt: at(9),
+        closedBy: admin.id,
+      })
+      .returning();
+    const prodRows = [...made].map(([itemId, qty]) => {
+      const extra = Math.max(1, Math.round(qty * 0.03));
+      return { dayId: pd!.id, itemId, orderedQty: qty, extraQty: extra, producedQty: qty + extra };
+    });
+    if (prodRows.length) await tx.insert(productionItems).values(prodRows);
+    const wasted = prodRows.filter(() => rand() < 0.3);
+    if (wasted.length)
+      await tx.insert(stockLosses).values(
+        wasted.map((r) => ({
+          dayId: pd!.id,
+          itemId: r.itemId,
+          kind: 'waste' as const,
+          reason: (['burnt', 'damaged', 'shape'] as const)[Math.floor(rand() * 3)]!,
+          quantity: r.extraQty,
+          createdBy: admin.id,
+        })),
+      );
+  });
+}
+
+// Opening balances from before the system: two customers with old, overdue debt.
 await billing.createOpening(
   created['مطعم بيت الشاورما']!,
   { amount: jod('420'), date: addDays(today, -75), note: 'رصيد منقول من الدفاتر' },
@@ -879,5 +1060,6 @@ console.log(`✓ Demo data added:
     ${current} preliminary plan
   - 3 suppliers and ${pos.length} purchase orders in different statuses
   - 3 routes with drivers (driver@, driver2@, driver3@example.com); ${previous}: ${deliveredCount} delivered
-    with invoices, ${leftForApp} left for driver@example.com to do in the app; opening balances and payments`);
+    with invoices, ${leftForApp} left for driver@example.com to do in the app; opening balances and payments
+  - history: ${historyDays} earlier days delivered and invoiced (${historyInvoices} invoices) for the reports`);
 await close();
