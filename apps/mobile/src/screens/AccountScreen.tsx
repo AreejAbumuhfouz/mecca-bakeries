@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatJod } from '@mecca/shared';
 import { api, errorText } from '../api';
@@ -69,8 +69,15 @@ export function AccountScreen() {
         <Text style={[ui.text, { fontWeight: '700' }]}>{mode === 'dark' ? 'داكن' : 'فاتح'}</Text>
       </Pressable>
       <Button title="تسجيل الخروج" variant="outline" onPress={() => void logout()} />
+      {process.env.EXPO_PUBLIC_PRIVACY_URL ? (
+        <Pressable onPress={() => void Linking.openURL(process.env.EXPO_PUBLIC_PRIVACY_URL!)}>
+          <Text style={[ui.muted, { textAlign: 'center', textDecorationLine: 'underline' }]}>
+            سياسة الخصوصية
+          </Text>
+        </Pressable>
+      ) : null}
       <Text style={[ui.muted, { textAlign: 'center', color: colors.muted }]}>
-        مخابز مكة — الإصدار 0.3
+        مخابز مكة — الإصدار 1.0.0
       </Text>
     </ScrollView>
   );

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Mecca Bakeries backup every day at 04:30 Amman time (after the 03:00 cutoff)
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 Asia/Amman
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

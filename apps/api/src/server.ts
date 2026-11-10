@@ -31,5 +31,12 @@ async function shutdown(signal: string) {
   await database.close();
   process.exit(0);
 }
+// A crash is logged and emailed; systemd starts the API again.
+for (const event of ['unhandledRejection', 'uncaughtException'] as const)
+  process.on(event, (err) => {
+    logger.fatal({ err }, event);
+    app.alert(err, { event });
+    setTimeout(() => process.exit(1), 2000);
+  });
 process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));

@@ -59,6 +59,19 @@ const EnvSchema = z.object({
   SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().default(''),
   MAIL_FROM: z.string().default('Mecca Bakeries <no-reply@localhost>'),
+
+  // App store review: a restaurant account the reviewers can log into with a fixed code.
+  // Leave empty except while the app is in review.
+  STORE_REVIEW_EMAIL: z.string().default(''),
+  STORE_REVIEW_CODE: z
+    .string()
+    .regex(/^(\d{6})?$/, 'STORE_REVIEW_CODE must be 6 digits')
+    .default(''),
+
+  // Monitoring: unexpected server errors are emailed here (at most one every 15 minutes).
+  ALERT_EMAIL: z.string().default(''),
+  // Requests per minute per IP across the whole API (login has its own stricter limit).
+  API_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(600),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -73,8 +86,17 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment variables:\n${issues}`);
   }
   const env = parsed.data;
-  if (env.NODE_ENV === 'production' && !env.SMTP_HOST) {
-    throw new Error('SMTP_HOST is required in production (login codes are sent by email).');
+  if (env.NODE_ENV === 'production') {
+    const problems: string[] = [];
+    if (!env.SMTP_HOST) problems.push('SMTP_HOST is required (login codes are sent by email)');
+    if (/change|example|secret/i.test(env.JWT_ACCESS_SECRET))
+      problems.push('JWT_ACCESS_SECRET still has the example value');
+    if (/change|example|pepper/i.test(env.OTP_PEPPER))
+      problems.push('OTP_PEPPER still has the example value');
+    if (env.CORS_ORIGINS.some((o) => o.startsWith('http://')))
+      problems.push('CORS_ORIGINS must use https:// in production');
+    if (problems.length)
+      throw new Error(`Unsafe production settings:\n  - ${problems.join('\n  - ')}`);
   }
   return env;
 }

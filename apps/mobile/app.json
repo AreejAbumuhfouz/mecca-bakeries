@@ -2,7 +2,7 @@
   "expo": {
     "name": "مخابز مكة",
     "slug": "mecca-bakeries",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -14,6 +14,10 @@
       "bundleIdentifier": "com.meccabakeries.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "يُسجَّل موقع التسليم لحظة تأكيد السائق فقط."
+      },
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,7 +29,9 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "versionCode": 1,
+      "blockedPermissions": ["android.permission.ACCESS_BACKGROUND_LOCATION"]
     },
     "plugins": [
       [
@@ -34,6 +40,16 @@
           "locationWhenInUsePermission": "يُسجَّل موقع التسليم لحظة تأكيد السائق فقط."
         }
       ]
-    ]
+    ],
+    "scheme": "meccabakeries",
+    "description": "تطبيق مخابز مكة للمطاعم والسائقين: طلب اليوم، الفواتير وكشف الحساب، وتأكيد التسليم.",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF7F0"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

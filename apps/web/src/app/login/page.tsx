@@ -118,6 +118,9 @@ export default function LoginPage() {
           </form>
         )}
       </div>
+      <a href="/privacy" className="absolute bottom-4 text-xs text-brand-muted underline">
+        سياسة الخصوصية
+      </a>
     </main>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { filsToJodString, type OrderSettings, type ReceivablesSettings } from '@mecca/shared';
 import { jodToFils } from '@/lib/billing';
-import { api, errorMessage } from '@/lib/api';
+import { api, errorMessage, fetchAuthedBlob } from '@/lib/api';
 import { Button, Card, ErrorBox, Input } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 
@@ -295,6 +296,29 @@ export default function SettingsPage() {
       )}
 
       <ReceivablesCard />
+
+      <Card title="بياناتكم">
+        <p className="mb-3 text-sm text-brand-muted">
+          البيانات ملك مخابز مكة بالكامل. نزّلي نسخة كاملة منها (كل جدول في ورقة Excel) في أي وقت.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() =>
+            void fetchAuthedBlob('/api/reports/export/all').then((blob) => {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = `mecca-bakeries-data-${new Date().toISOString().slice(0, 10)}.xlsx`;
+              a.click();
+            })
+          }
+        >
+          تنزيل كل البيانات (Excel)
+        </Button>
+        <Link href="/settings/import" className="mr-3 text-sm text-brand-brown underline">
+          نقل البيانات من Excel (العملاء، الأصناف، العقود، الأرصدة الافتتاحية)
+        </Link>
+      </Card>
 
       <Card title="آخر المهام المجدولة">
         <ul className="divide-y divide-stone-100 text-sm">

@@ -1,0 +1,19 @@
+[Unit]
+Description=Mecca Bakeries dashboard (Next.js)
+After=network.target mecca-api.service
+
+[Service]
+Type=simple
+User=mecca
+WorkingDirectory=/opt/mecca/apps/web
+EnvironmentFile=/opt/mecca/apps/web/.env.production
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3000
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
