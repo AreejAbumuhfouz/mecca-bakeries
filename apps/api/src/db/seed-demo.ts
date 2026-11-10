@@ -891,6 +891,8 @@ for (let k = historyDays; k >= 1; k--) {
                 contract?.paymentType === 'cash' ? 'cash' : rand() < 0.5 ? 'transfer' : 'cheque',
               reference: contract?.paymentType === 'cash' ? null : `H${Math.round(rand() * 1e6)}`,
               receivedOn: contract?.paymentType === 'cash' ? day : addDays(day, 5),
+              // Paid against this invoice, so the old opening balances stay overdue in the demo.
+              allocations: [{ invoiceId: inv.id, amount: inv.total }],
             },
             {
               source: contract?.paymentType === 'cash' ? 'driver' : 'office',

@@ -39,7 +39,8 @@ if [ -d "$UPLOAD_DIR" ]; then
   tar -czf "$files_file" -C "$(dirname "$UPLOAD_DIR")" "$(basename "$UPLOAD_DIR")"
 fi
 
-( cd "$BACKUP_DIR" && sha256sum "db_$stamp.dump" $( [ -f "$files_file" ] && echo "uploads_$stamp.tar.gz" ) ) > "$BACKUP_DIR/SHA256_$stamp.txt"
+sha() { if command -v sha256sum >/dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
+( cd "$BACKUP_DIR" && sha "db_$stamp.dump" $( [ -f "$files_file" ] && echo "uploads_$stamp.tar.gz" ) ) > "$BACKUP_DIR/SHA256_$stamp.txt"
 
 if [ -n "$RCLONE_REMOTE" ]; then
   echo "→ off-site copy to $RCLONE_REMOTE"
