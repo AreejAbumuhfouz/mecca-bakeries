@@ -60,6 +60,14 @@ const EnvSchema = z.object({
   SMTP_PASS: z.string().default(''),
   MAIL_FROM: z.string().default('Mecca Bakeries <no-reply@localhost>'),
 
+  // App store review: a restaurant account the reviewers can log into with a fixed code.
+  // Leave empty except while the app is in review.
+  STORE_REVIEW_EMAIL: z.string().default(''),
+  STORE_REVIEW_CODE: z
+    .string()
+    .regex(/^(\d{6})?$/, 'STORE_REVIEW_CODE must be 6 digits')
+    .default(''),
+
   // Monitoring: unexpected server errors are emailed here (at most one every 15 minutes).
   ALERT_EMAIL: z.string().default(''),
   // Requests per minute per IP across the whole API (login has its own stricter limit).

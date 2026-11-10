@@ -26,7 +26,8 @@ export type AuthDeps = {
     | 'OTP_MAX_PER_WINDOW'
     | 'OTP_WINDOW_MIN'
     | 'REFRESH_TOKEN_TTL_DAYS'
-  >;
+  > &
+    Partial<Pick<Env, 'STORE_REVIEW_EMAIL' | 'STORE_REVIEW_CODE'>>;
   mailer: Mailer;
   tokens: TokenService;
   google: GoogleVerifier | null;
@@ -100,12 +101,19 @@ export function createAuthService(deps: AuthDeps) {
       const user = await db.query.users.findFirst({ where: eq(users.email, email) });
       if (!user || !user.isActive) return; // silently ignore unknown or disabled accounts
 
-      const code = generateOtp();
+      // App store reviewers can't read our emails: one restaurant account may use a fixed code.
+      const review =
+        env.STORE_REVIEW_EMAIL &&
+        env.STORE_REVIEW_CODE &&
+        email === normalizeEmail(env.STORE_REVIEW_EMAIL) &&
+        user.role === 'restaurant';
+      const code = review ? env.STORE_REVIEW_CODE! : generateOtp();
       await db.insert(otpCodes).values({
         email,
         codeHash: hmac(`${email}:${code}`, env.OTP_PEPPER),
         expiresAt: new Date(now().getTime() + minutes(env.OTP_TTL_MIN)),
       });
+      if (review) return;
       await mailer.send({
         to: email,
         subject: 'رمز الدخول — مخابز مكة',
