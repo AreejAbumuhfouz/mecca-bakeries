@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { formatJod, ITEM_UNIT_LABELS_AR } from '@mecca/shared';
 import type { CatalogItem } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 /** Quantities keyed by item id. */
 export type Quantities = Record<string, number>;
@@ -44,7 +45,7 @@ export function OrderLinesEditor({
       <div className="flex flex-wrap items-center gap-3">
         <input
           className="w-56 rounded-lg border border-brand-line px-3 py-2 text-sm"
-          placeholder="بحث عن صنف"
+          placeholder={t('بحث عن صنف')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -55,83 +56,85 @@ export function OrderLinesEditor({
             checked={onlyChosen}
             onChange={(e) => setOnlyChosen(e.target.checked)}
           />
-          المختار فقط ({chosen})
+          {t('المختار فقط ({0})', chosen)}
         </label>
-        <span className="mr-auto text-lg font-bold text-brand-brown">
-          المجموع: {formatJod(total)}
+        <span className="ms-auto text-lg font-bold text-brand-brown">
+          {t('المجموع: {0}', formatJod(total))}
         </span>
       </div>
       <div className="max-h-[520px] overflow-auto rounded-xl border border-brand-line">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-brand-cream">
-            <tr className="text-right text-brand-muted">
-              <th className="px-3 py-2">الكود</th>
-              <th>الصنف</th>
-              <th>الوحدة</th>
-              <th>السعر</th>
-              <th className="w-44">الكمية</th>
-              <th>المجموع</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((i) => {
-              const q = quantities[i.id] ?? 0;
-              return (
-                <tr
-                  key={i.id}
-                  className={`border-t border-stone-100 ${q ? 'bg-brand-gold-light/30' : ''}`}
-                >
-                  <td className="px-3 py-2 font-mono">{i.code}</td>
-                  <td className="font-bold">
-                    {i.name}
-                    <span className="mr-2 text-xs font-normal text-brand-muted">
-                      {i.sectionName}
-                    </span>
-                  </td>
-                  <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
-                  <td>
-                    {formatJod(i.price)}
-                    {i.source === 'contract' && (
-                      <span className="mr-1 text-xs text-brand-gold">خاص</span>
-                    )}
-                  </td>
-                  <td className="py-1">
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        className="h-8 w-8 rounded-lg border border-brand-line text-lg"
-                        onClick={() => setQty(i.id, q - 1)}
-                        aria-label="إنقاص"
-                      >
-                        −
-                      </button>
-                      <input
-                        dir="ltr"
-                        inputMode="numeric"
-                        className="h-8 w-16 rounded-lg border border-brand-line text-center"
-                        value={q || ''}
-                        placeholder="0"
-                        aria-label={`كمية ${i.name}`}
-                        onChange={(e) =>
-                          setQty(i.id, Number(e.target.value.replace(/\D/g, '')) || 0)
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="h-8 w-8 rounded-lg border border-brand-line text-lg"
-                        onClick={() => setQty(i.id, q + 1)}
-                        aria-label="زيادة"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                  <td className="font-bold">{q ? formatJod(q * i.price) : '—'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-brand-cream">
+              <tr className="text-start text-brand-muted">
+                <th className="px-3 py-2">{t('الكود')}</th>
+                <th>{t('الصنف')}</th>
+                <th>{t('الوحدة')}</th>
+                <th>{t('السعر')}</th>
+                <th className="w-44">{t('الكمية')}</th>
+                <th>{t('المجموع')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((i) => {
+                const q = quantities[i.id] ?? 0;
+                return (
+                  <tr
+                    key={i.id}
+                    className={`border-t border-stone-100 ${q ? 'bg-brand-gold-light/30' : ''}`}
+                  >
+                    <td className="px-3 py-2 font-mono">{i.code}</td>
+                    <td className="font-bold">
+                      {i.name}
+                      <span className="ms-2 text-xs font-normal text-brand-muted">
+                        {i.sectionName}
+                      </span>
+                    </td>
+                    <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
+                    <td>
+                      {formatJod(i.price)}
+                      {i.source === 'contract' && (
+                        <span className="ms-1 text-xs text-brand-gold">{t('خاص')}</span>
+                      )}
+                    </td>
+                    <td className="py-1">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="h-8 w-8 rounded-lg border border-brand-line text-lg"
+                          onClick={() => setQty(i.id, q - 1)}
+                          aria-label={t('إنقاص')}
+                        >
+                          −
+                        </button>
+                        <input
+                          dir="ltr"
+                          inputMode="numeric"
+                          className="h-8 w-16 rounded-lg border border-brand-line text-center"
+                          value={q || ''}
+                          placeholder="0"
+                          aria-label={t('كمية {0}', i.name)}
+                          onChange={(e) =>
+                            setQty(i.id, Number(e.target.value.replace(/\D/g, '')) || 0)
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="h-8 w-8 rounded-lg border border-brand-line text-lg"
+                          onClick={() => setQty(i.id, q + 1)}
+                          aria-label={t('زيادة')}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                    <td className="font-bold">{q ? formatJod(q * i.price) : '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage, openPrivateFile, uploadFile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Badge, Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
 import {
   STATE_TONE,
   termsToBody,
@@ -21,13 +21,14 @@ import {
 } from '@/lib/contracts';
 import { TermsFields } from '../terms-fields';
 import { draftToPrices, PricesEditor, pricesToDraft, type PriceDraft } from '../prices-editor';
+import { arrow, t } from '@/lib/i18n';
 
 type Credit = {
   allowed: boolean;
   outstanding: number;
   overdueAmount: number;
   available: number | null;
-  reasons: { code: string; message: string }[];
+  reasons: { code: string; message: string; key?: string; args?: string[] }[];
   contract: { id: string } | null;
 };
 
@@ -65,7 +66,7 @@ export default function ContractPage() {
   }, [id]);
 
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر تحميل العقد')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر تحميل العقد'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>, fallback: string) {
@@ -91,7 +92,7 @@ export default function ContractPage() {
     if (
       await run(
         () => api(`/api/contracts/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-        'تعذّر حفظ الشروط',
+        t('تعذّر حفظ الشروط'),
       )
     )
       setEditTerms(null);
@@ -103,7 +104,7 @@ export default function ContractPage() {
     if (
       await run(
         () => api(`/api/contracts/${id}/prices`, { method: 'PUT', body: JSON.stringify(prices) }),
-        'تعذّر حفظ الأسعار',
+        t('تعذّر حفظ الأسعار'),
       )
     )
       setEditPrices(false);
@@ -112,7 +113,7 @@ export default function ContractPage() {
   const setStatus = (status: 'active' | 'suspended' | 'terminated') =>
     run(
       () => api(`/api/contracts/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-      'تعذّر تغيير الحالة',
+      t('تعذّر تغيير الحالة'),
     );
 
   async function renew(e: FormEvent) {
@@ -126,7 +127,7 @@ export default function ContractPage() {
       });
       router.push(`/contracts/${created.id}`);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر تجديد العقد'));
+      setError(errorMessage(err, t('تعذّر تجديد العقد')));
     } finally {
       setBusy(false);
     }
@@ -141,7 +142,7 @@ export default function ContractPage() {
         body: JSON.stringify({ fileId: uploaded.id, label: attLabel.trim() || file.name }),
       });
       setAttLabel('');
-    }, 'تعذّر رفع المرفق');
+    }, t('تعذّر رفع المرفق'));
     if (fileInput.current) fileInput.current.value = '';
   }
 
@@ -149,7 +150,7 @@ export default function ContractPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">جارٍ التحميل…</p>}
+        {!error && <PageSkeleton />}
       </div>
     );
   }
@@ -164,31 +165,31 @@ export default function ContractPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/contracts" className="text-sm text-brand-muted underline">
-            ← العقود
+            {t('← العقود')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
-            عقد <span className="font-mono">{c.number}</span>
+            {t('عقد')} <span className="font-mono">{c.number}</span>
           </h1>
           <div className="mt-1 flex items-center gap-2 text-sm">
             <Link href={`/customers/${c.customer.id}`} className="font-bold underline">
               {c.customer.name}
             </Link>
             <span className="font-mono text-brand-muted">{c.customer.code}</span>
-            <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+            <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
           </div>
         </div>
         {editable && !editTerms && (
           <div className="flex flex-wrap gap-2">
             <Button variant="gold" onClick={() => setRenewEnd(addDays(c.endDate, 365))}>
-              تجديد
+              {t('تجديد')}
             </Button>
             {c.status === 'active' ? (
               <Button variant="outline" disabled={busy} onClick={() => void setStatus('suspended')}>
-                إيقاف مؤقت
+                {t('إيقاف مؤقت')}
               </Button>
             ) : (
               <Button variant="outline" disabled={busy} onClick={() => void setStatus('active')}>
-                إعادة تفعيل
+                {t('إعادة تفعيل')}
               </Button>
             )}
             {confirmTerminate ? (
@@ -197,14 +198,14 @@ export default function ContractPage() {
                 disabled={busy}
                 onClick={() => void setStatus('terminated').then(() => setConfirmTerminate(false))}
               >
-                تأكيد إلغاء العقد
+                {t('تأكيد إلغاء العقد')}
               </Button>
             ) : (
               <Button variant="outline" onClick={() => setConfirmTerminate(true)}>
-                إلغاء العقد
+                {t('إلغاء العقد')}
               </Button>
             )}
-            <Button onClick={() => setEditTerms(termsToForm(c))}>تعديل الشروط</Button>
+            <Button onClick={() => setEditTerms(termsToForm(c))}>{t('تعديل الشروط')}</Button>
           </div>
         )}
       </div>
@@ -212,106 +213,111 @@ export default function ContractPage() {
       <ErrorBox message={error} />
 
       {renewEnd !== null && (
-        <Card title="تجديد العقد">
+        <Card title={t('تجديد العقد')}>
           <form onSubmit={renew} className="flex flex-wrap items-end gap-3">
             <p className="w-full text-sm text-brand-muted">
-              يُنشأ عقد جديد بنفس الشروط والأسعار الخاصة، يبدأ في {addDays(c.endDate, 1)}.
+              {t('يُنشأ عقد جديد بنفس الشروط والأسعار الخاصة، يبدأ في {0}.', addDays(c.endDate, 1))}
             </p>
             <Input
-              label="تاريخ نهاية العقد الجديد"
+              label={t('تاريخ نهاية العقد الجديد')}
               type="date"
               required
               value={renewEnd}
               onChange={(e) => setRenewEnd(e.target.value)}
             />
             <Button type="submit" disabled={busy}>
-              إنشاء العقد الجديد
+              {t('إنشاء العقد الجديد')}
             </Button>
             <Button type="button" variant="outline" onClick={() => setRenewEnd(null)}>
-              إلغاء
+              {t('إلغاء')}
             </Button>
           </form>
         </Card>
       )}
 
       {credit && (
-        <Card title="حالة الائتمان اليوم">
+        <Card title={t('حالة الائتمان اليوم')}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Info label="يمكنه الطلب" value={credit.allowed ? 'نعم ✓' : 'لا ✗'} />
-            <Info label="الرصيد المستحق" value={formatJod(credit.outstanding)} />
-            <Info label="ذمم متأخرة" value={formatJod(credit.overdueAmount)} />
+            <Info label={t('يمكنه الطلب')} value={credit.allowed ? t('نعم ✓') : t('لا ✗')} />
+            <Info label={t('الرصيد المستحق')} value={formatJod(credit.outstanding)} />
+            <Info label={t('ذمم متأخرة')} value={formatJod(credit.overdueAmount)} />
             <Info
-              label="الائتمان المتاح"
-              value={credit.available === null ? 'نقدي' : formatJod(Math.max(0, credit.available))}
+              label={t('الائتمان المتاح')}
+              value={
+                credit.available === null ? t('نقدي') : formatJod(Math.max(0, credit.available))
+              }
             />
           </div>
           {credit.reasons.length > 0 && (
             <ul className="mt-3 list-inside list-disc text-sm text-red-800">
               {credit.reasons.map((r) => (
-                <li key={r.code}>{r.message}</li>
+                <li key={r.code}>{t(r.key ?? r.message, ...(r.args ?? []))}</li>
               ))}
             </ul>
           )}
           {credit.contract && credit.contract.id !== c.id && (
             <p className="mt-3 text-sm text-brand-muted">
-              الحالة محسوبة على العقد الساري حالياً لهذا العميل وليس هذا العقد.
+              {t('الحالة محسوبة على العقد الساري حالياً لهذا العميل وليس هذا العقد.')}
             </p>
           )}
           <p className="mt-3 text-xs text-brand-muted">
-            الرصيد والذمم تُحسب من الفواتير بعد بناء وحدة الفواتير (المرحلة 4).
+            {t('الرصيد والذمم تُحسب من الفواتير المعتمدة والدفعات.')}
           </p>
         </Card>
       )}
 
-      <Card title="شروط العقد">
+      <Card title={t('شروط العقد')}>
         {editTerms ? (
           <form onSubmit={saveTerms} className="space-y-4">
             <TermsFields form={editTerms} setForm={setEditTerms} />
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
-                {busy ? 'جارٍ الحفظ…' : 'حفظ الشروط'}
+                {busy ? t('جارٍ الحفظ…') : t('حفظ الشروط')}
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditTerms(null)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </form>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Info label="المدة" value={`${c.startDate} ← ${c.endDate}`} />
-            <Info label="طريقة الدفع" value={PAYMENT_TYPE_LABELS_AR[c.paymentType]} />
+            <Info label={t('المدة')} value={`${c.startDate} ${arrow()} ${c.endDate}`} />
+            <Info label={t('طريقة الدفع')} value={t(PAYMENT_TYPE_LABELS_AR[c.paymentType])} />
             <Info
-              label="سقف الائتمان"
+              label={t('سقف الائتمان')}
               value={c.paymentType === 'credit' ? formatJod(c.creditLimit) : '—'}
             />
             <Info
-              label="مدة السداد"
-              value={c.paymentType === 'credit' ? `${c.paymentTermsDays} يوم` : '—'}
+              label={t('مدة السداد')}
+              value={c.paymentType === 'credit' ? t('{0} يوم', c.paymentTermsDays) : '—'}
             />
-            <Info label="سماحية التأخير" value={`${c.overdueGraceDays} يوم`} />
+            <Info label={t('سماحية التأخير')} value={t('{0} يوم', c.overdueGraceDays)} />
             <Info
-              label="الخصم العام"
-              value={c.discountBps ? `${c.discountBps / 100}%` : 'لا يوجد'}
+              label={t('الخصم العام')}
+              value={c.discountBps ? `${c.discountBps / 100}%` : t('لا يوجد')}
             />
             <Info
-              label="المرتجعات"
-              value={c.allowReturns ? `مسموحة حتى ${c.maxReturnBps / 100}%` : 'غير مسموحة'}
+              label={t('المرتجعات')}
+              value={c.allowReturns ? t('مسموحة حتى {0}%', c.maxReturnBps / 100) : t('غير مسموحة')}
             />
-            <Info label="تنبيه التجديد" value={`قبل ${c.renewalAlertDays} يوم`} />
-            {c.returnsNotes && <Info label="شروط المرتجعات" value={c.returnsNotes} />}
-            {c.notes && <Info label="ملاحظات" value={c.notes} />}
+            <Info
+              label={t('تنبيه التجديد')}
+              value={t('قبل الانتهاء بـ {0} يوم', c.renewalAlertDays)}
+            />
+            {c.returnsNotes && <Info label={t('شروط المرتجعات')} value={c.returnsNotes} />}
+            {c.notes && <Info label={t('ملاحظات')} value={c.notes} />}
           </div>
         )}
       </Card>
 
       <Card
-        title={`الأسعار الخاصة (${c.prices.length})`}
+        title={t('الأسعار الخاصة ({0})', c.prices.length)}
         actions={
           editable &&
           (editPrices ? (
             <div className="flex gap-2">
               <Button disabled={busy} onClick={() => void savePrices()}>
-                حفظ الأسعار
+                {t('حفظ الأسعار')}
               </Button>
               <Button
                 variant="outline"
@@ -320,12 +326,12 @@ export default function ContractPage() {
                   setEditPrices(false);
                 }}
               >
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           ) : (
             <Button variant="outline" onClick={() => setEditPrices(true)}>
-              تعديل الأسعار
+              {t('تعديل الأسعار')}
             </Button>
           ))
         }
@@ -339,19 +345,19 @@ export default function ContractPage() {
         />
       </Card>
 
-      <Card title={`المرفقات (${c.attachments.length})`}>
+      <Card title={t('المرفقات ({0})', c.attachments.length)}>
         {canManage && (
           <div className="mb-4 flex flex-wrap items-end gap-2">
             <div className="w-64">
               <Input
-                label="وصف المرفق"
-                placeholder="مثلاً: العقد الموقّع"
+                label={t('وصف المرفق')}
+                placeholder={t('مثلاً: العقد الموقّع')}
                 value={attLabel}
                 onChange={(e) => setAttLabel(e.target.value)}
               />
             </div>
             <Button variant="gold" disabled={busy} onClick={() => fileInput.current?.click()}>
-              رفع ملف (PDF أو صورة)
+              {t('رفع ملف (PDF أو صورة)')}
             </Button>
             <input
               ref={fileInput}
@@ -376,11 +382,11 @@ export default function ContractPage() {
                   className="text-brand-brown underline"
                   onClick={() =>
                     void openPrivateFile(a.fileId).catch((err) =>
-                      setError(errorMessage(err, 'تعذّر فتح الملف')),
+                      setError(errorMessage(err, t('تعذّر فتح الملف'))),
                     )
                   }
                 >
-                  فتح
+                  {t('فتح')}
                 </button>
                 {canManage && (
                   <button
@@ -388,17 +394,19 @@ export default function ContractPage() {
                     onClick={() =>
                       void run(
                         () => api(`/api/contracts/${id}/attachments/${a.id}`, { method: 'DELETE' }),
-                        'تعذّر حذف المرفق',
+                        t('تعذّر حذف المرفق'),
                       )
                     }
                   >
-                    حذف
+                    {t('حذف')}
                   </button>
                 )}
               </div>
             </li>
           ))}
-          {c.attachments.length === 0 && <li className="py-3 text-brand-muted">لا توجد مرفقات</li>}
+          {c.attachments.length === 0 && (
+            <li className="py-3 text-brand-muted">{t('لا توجد مرفقات')}</li>
+          )}
         </ul>
       </Card>
     </div>

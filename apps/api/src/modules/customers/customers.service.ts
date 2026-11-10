@@ -4,6 +4,7 @@ import { branches, customerCategories, customers, tradeNames } from '../../db/sc
 import { AppError, notFound } from '../../lib/errors.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import { clean, type Conn, type Tx } from '../../lib/db-utils.js';
+import { t } from '../../lib/i18n.js';
 
 export type CategoryInput = { name: string; nameEn?: string | null; isActive?: boolean };
 
@@ -50,7 +51,7 @@ const customerCodeFor = (n: number) => `C${String(n).padStart(4, '0')}`;
 const branchCodeFor = (customerCode: string, n: number) =>
   `${customerCode}-${String(n).padStart(2, '0')}`;
 
-const codeTaken = () => new AppError(409, 'CODE_TAKEN', 'الكود مستخدم مسبقاً');
+const codeTaken = () => new AppError(409, 'CODE_TAKEN', t('الكود مستخدم مسبقاً'));
 
 export function createCustomersService(db: Db) {
   async function customerCodeExists(conn: Conn, code: string, exceptId?: string) {
@@ -100,13 +101,13 @@ export function createCustomersService(db: Db) {
     const cat = await conn.query.customerCategories.findFirst({
       where: eq(customerCategories.id, categoryId),
     });
-    if (!cat) throw new AppError(400, 'BAD_CATEGORY', 'الفئة غير موجودة');
+    if (!cat) throw new AppError(400, 'BAD_CATEGORY', t('الفئة غير موجودة'));
   }
 
   async function assertTradeName(conn: Conn, tradeNameId: string | null | undefined) {
     if (!tradeNameId) return;
     const tn = await conn.query.tradeNames.findFirst({ where: eq(tradeNames.id, tradeNameId) });
-    if (!tn) throw new AppError(400, 'BAD_TRADE_NAME', 'الاسم التجاري غير موجود');
+    if (!tn) throw new AppError(400, 'BAD_TRADE_NAME', t('الاسم التجاري غير موجود'));
   }
 
   async function insertBranch(
@@ -146,7 +147,7 @@ export function createCustomersService(db: Db) {
       const exists = await db.query.customerCategories.findFirst({
         where: eq(customerCategories.name, name),
       });
-      if (exists) throw new AppError(409, 'NAME_TAKEN', 'اسم الفئة موجود مسبقاً');
+      if (exists) throw new AppError(409, 'NAME_TAKEN', t('اسم الفئة موجود مسبقاً'));
       return db.transaction(async (tx) => {
         const [created] = await tx
           .insert(customerCategories)
@@ -173,7 +174,7 @@ export function createCustomersService(db: Db) {
         const clash = await db.query.customerCategories.findFirst({
           where: and(eq(customerCategories.name, fields.name), ne(customerCategories.id, id)),
         });
-        if (clash) throw new AppError(409, 'NAME_TAKEN', 'اسم الفئة موجود مسبقاً');
+        if (clash) throw new AppError(409, 'NAME_TAKEN', t('اسم الفئة موجود مسبقاً'));
       }
       return db.transaction(async (tx) => {
         const [after] = await tx

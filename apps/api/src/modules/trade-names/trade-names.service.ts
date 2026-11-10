@@ -5,6 +5,7 @@ import { AppError, notFound } from '../../lib/errors.js';
 import { clean, type Tx } from '../../lib/db-utils.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { FilesService } from '../files/files.service.js';
+import { t } from '../../lib/i18n.js';
 
 export type TradeNameInput = {
   name: string;
@@ -30,13 +31,14 @@ export function createTradeNamesService(db: Db, filesSvc: FilesService) {
       const clash = await db.query.tradeNames.findFirst({
         where: and(eq(tradeNames.name, input.name), notSelf),
       });
-      if (clash) throw new AppError(409, 'NAME_TAKEN', 'الاسم التجاري موجود مسبقاً');
+      if (clash) throw new AppError(409, 'NAME_TAKEN', t('الاسم التجاري موجود مسبقاً'));
     }
     if (input.invoicePrefix) {
       const clash = await db.query.tradeNames.findFirst({
         where: and(eq(tradeNames.invoicePrefix, input.invoicePrefix), notSelf),
       });
-      if (clash) throw new AppError(409, 'PREFIX_TAKEN', 'بادئة الفواتير مستخدمة لاسم تجاري آخر');
+      if (clash)
+        throw new AppError(409, 'PREFIX_TAKEN', t('بادئة الفواتير مستخدمة لاسم تجاري آخر'));
     }
   }
 
@@ -94,7 +96,10 @@ export function createTradeNamesService(db: Db, filesSvc: FilesService) {
         throw new AppError(
           409,
           'INVOICE_SEQUENCE_BACKWARDS',
-          `لا يمكن إرجاع رقم الفاتورة التالي لأقل من ${before.nextInvoiceNumber} حتى لا تتكرر الأرقام`,
+          t(
+            'لا يمكن إرجاع رقم الفاتورة التالي لأقل من {0} حتى لا تتكرر الأرقام',
+            before.nextInvoiceNumber,
+          ),
         );
       return db.transaction(async (tx) => {
         const [after] = Object.keys(fields).length
@@ -126,7 +131,7 @@ export function createTradeNamesService(db: Db, filesSvc: FilesService) {
           isActive: tradeNames.isActive,
         });
       if (!row) throw notFound('Trade name');
-      if (!row.isActive) throw new AppError(409, 'TRADE_NAME_INACTIVE', 'الاسم التجاري موقوف');
+      if (!row.isActive) throw new AppError(409, 'TRADE_NAME_INACTIVE', t('الاسم التجاري موقوف'));
       const number = row.next - 1;
       return { number, formatted: formatInvoiceNumber(row.prefix, number) };
     },

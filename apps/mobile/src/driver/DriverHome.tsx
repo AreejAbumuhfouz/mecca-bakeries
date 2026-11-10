@@ -11,11 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { DELIVERY_STATUS_LABELS_AR, formatJod, type DeliveryStatus } from '@mecca/shared';
 import { useAuth } from '../auth';
-import { Button, Empty } from '../components';
+import { Button, Empty, LanguageButton } from '../components';
 import { colors, ui, useTheme } from '../theme';
 import { discard, loadDay, loadQueue, pendingIds, sync } from './offline';
 import { StopScreen } from './StopScreen';
 import type { DriverDay, Queued, Stop } from './types';
+import { t } from '../i18n';
 
 const tone = (s: DeliveryStatus | 'queued'): [string, string] =>
   ({
@@ -83,7 +84,7 @@ export function DriverHome() {
 
   const waiting = pendingIds(queue);
   const problems = queue.filter((q) => q.error);
-  const stops = day?.trips.flatMap((t) => t.stops) ?? [];
+  const stops = day?.trips.flatMap((tr) => tr.stops) ?? [];
   const done = stops.filter((s) => s.status !== 'pending' || waiting.has(s.deliveryId)).length;
 
   return (
@@ -94,13 +95,14 @@ export function DriverHome() {
     >
       <View style={ui.between}>
         <View>
-          <Text style={ui.h1}>توزيع اليوم</Text>
+          <Text style={ui.h1}>{t('توزيع اليوم')}</Text>
           <Text style={ui.muted}>
             {user?.name} — {day?.date ?? ''}
           </Text>
         </View>
         <View style={ui.row}>
-          <Pressable accessibilityLabel="تغيير المظهر" onPress={toggle} style={{ padding: 8 }}>
+          <LanguageButton signedIn compact />
+          <Pressable accessibilityLabel={t('تغيير المظهر')} onPress={toggle} style={{ padding: 8 }}>
             <Ionicons
               name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'}
               size={22}
@@ -108,7 +110,7 @@ export function DriverHome() {
             />
           </Pressable>
           <Pressable
-            accessibilityLabel="تسجيل الخروج"
+            accessibilityLabel={t('تسجيل الخروج')}
             onPress={() => void logout()}
             style={{ padding: 8 }}
           >
@@ -125,16 +127,16 @@ export function DriverHome() {
         />
         <View style={{ flex: 1 }}>
           <Text style={[ui.text, { fontWeight: '700' }]}>
-            {online ? 'متصل' : 'بدون إنترنت — التطبيق يعمل والتأكيدات محفوظة'}
+            {online ? t('متصل') : t('بدون إنترنت — التطبيق يعمل والتأكيدات محفوظة')}
           </Text>
           <Text style={ui.muted}>
-            {waiting.size ? `${waiting.size} تأكيد بانتظار الإرسال` : 'كل التأكيدات أُرسلت'}
+            {waiting.size ? t('{0} تأكيد بانتظار الإرسال', waiting.size) : t('كل التأكيدات أُرسلت')}
           </Text>
         </View>
         {syncing ? (
           <ActivityIndicator color={colors.gold} />
         ) : (
-          <Pressable onPress={() => void refresh()} accessibilityLabel="مزامنة الآن">
+          <Pressable onPress={() => void refresh()} accessibilityLabel={t('مزامنة الآن')}>
             <Ionicons name="sync" size={22} color={colors.gold} />
           </Pressable>
         )}
@@ -143,11 +145,11 @@ export function DriverHome() {
       {problems.map((q) => (
         <View key={q.deliveryId} style={[ui.card, { borderColor: colors.red }]}>
           <Text style={[ui.text, { fontWeight: '700', color: colors.red }]}>
-            لم يُقبل تأكيد: {q.label}
+            {t('لم يُقبل تأكيد: {0}', q.label)}
           </Text>
           <Text style={ui.muted}>{q.error?.message}</Text>
           <Button
-            title="إزالته من الهاتف"
+            title={t('إزالته من الهاتف')}
             variant="outline"
             onPress={() => void discard(q.deliveryId).then(() => refresh())}
           />
@@ -155,17 +157,17 @@ export function DriverHome() {
       ))}
 
       {loading && !day ? <ActivityIndicator color={colors.gold} size="large" /> : null}
-      {day && day.trips.length === 0 && <Empty>لا يوجد مسار لك اليوم.</Empty>}
+      {day && day.trips.length === 0 && <Empty>{t('لا يوجد مسار لك اليوم.')}</Empty>}
 
-      {day?.trips.map((t) => (
-        <View key={t.id} style={{ gap: 10 }}>
+      {day?.trips.map((tr) => (
+        <View key={tr.id} style={{ gap: 10 }}>
           <View style={ui.between}>
-            <Text style={ui.h2}>{t.route.name}</Text>
+            <Text style={ui.h2}>{tr.route.name}</Text>
             <Text style={ui.muted}>
-              {done}/{stops.length} — {t.vehicle?.name ?? ''}
+              {done}/{stops.length} — {tr.vehicle?.name ?? ''}
             </Text>
           </View>
-          {t.stops.map((s) => {
+          {tr.stops.map((s) => {
             const st: DeliveryStatus | 'queued' =
               s.status === 'pending' && waiting.has(s.deliveryId) ? 'queued' : s.status;
             const [bg, fg] = tone(st);
@@ -192,24 +194,28 @@ export function DriverHome() {
                       fontWeight: '700',
                     }}
                   >
-                    {st === 'queued' ? 'بانتظار الإرسال' : DELIVERY_STATUS_LABELS_AR[st]}
+                    {st === 'queued' ? t('بانتظار الإرسال') : t(DELIVERY_STATUS_LABELS_AR[st])}
                   </Text>
                 </View>
                 <Text style={ui.text}>{s.branch.name}</Text>
                 {s.branch.address ? <Text style={ui.muted}>{s.branch.address}</Text> : null}
                 <View style={ui.between}>
                   <Text style={ui.muted}>
-                    {s.items.length} صنف — {formatJod(s.order.total)}
+                    {t('{0} صنف — {1}', s.items.length, formatJod(s.order.total))}
                   </Text>
                   {s.balance > 0 && (
                     <Text style={{ color: colors.red, fontSize: 13 }}>
-                      رصيد {formatJod(s.balance)}
+                      {t('رصيد {0}', formatJod(s.balance))}
                     </Text>
                   )}
                 </View>
                 {s.result?.invoice && (
                   <Text style={ui.muted}>
-                    فاتورة {s.result.invoice.number} — {formatJod(s.result.invoice.total)}
+                    {t(
+                      'فاتورة {0} — {1}',
+                      s.result.invoice.number,
+                      formatJod(s.result.invoice.total),
+                    )}
                   </Text>
                 )}
               </Pressable>

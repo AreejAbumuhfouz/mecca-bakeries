@@ -6,6 +6,7 @@ import { addDays, ammanDate } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Entry = {
   id: number;
@@ -21,44 +22,44 @@ type Entry = {
 
 /** What each part of the system is called in the log. */
 const ENTITY_AR: Record<string, string> = {
-  user: 'مستخدم',
-  customer: 'عميل',
-  branch: 'فرع',
-  customer_category: 'تصنيف عملاء',
-  trade_name: 'اسم تجاري',
-  item: 'صنف',
-  item_section: 'قسم',
-  contract: 'عقد',
-  order: 'طلب',
-  production_day: 'يوم إنتاج',
-  production_line: 'خط إنتاج',
-  vehicle: 'سيارة',
-  supplier: 'مورد',
-  purchase_order: 'طلب شراء',
-  route: 'مسار',
-  trip: 'رحلة',
-  trip_day: 'مسارات اليوم',
-  delivery: 'تسليم',
-  invoice: 'فاتورة',
-  payment: 'دفعة',
-  settings: 'إعدادات',
-  file: 'ملف',
-  system: 'النظام',
+  user: t('مستخدم'),
+  customer: t('عميل'),
+  branch: t('فرع'),
+  customer_category: t('تصنيف عملاء'),
+  trade_name: t('اسم تجاري'),
+  item: t('صنف'),
+  item_section: t('قسم'),
+  contract: t('عقد'),
+  order: t('طلب'),
+  production_day: t('يوم إنتاج'),
+  production_line: t('خط إنتاج'),
+  vehicle: t('سيارة'),
+  supplier: t('مورد'),
+  purchase_order: t('طلب شراء'),
+  route: t('مسار'),
+  trip: t('رحلة'),
+  trip_day: t('مسارات اليوم'),
+  delivery: t('تسليم'),
+  invoice: t('فاتورة'),
+  payment: t('دفعة'),
+  settings: t('إعدادات'),
+  file: t('ملف'),
+  system: t('النظام'),
 };
 const VERB_AR: [RegExp, string][] = [
-  [/\.create$|\.opening$/, 'إضافة'],
-  [/\.update$|\.edit|\.stops$|\.items$|\.loads$/, 'تعديل'],
-  [/\.delete$|\.remove/, 'حذف'],
-  [/\.approve/, 'اعتماد'],
-  [/\.reject/, 'رفض'],
-  [/\.cancel/, 'إلغاء'],
-  [/\.confirm/, 'تأكيد'],
-  [/\.close$/, 'إغلاق'],
-  [/\.generate$/, 'تجهيز'],
-  [/\.send/, 'إرسال'],
-  [/login/, 'دخول'],
-  [/logout/, 'خروج'],
-  [/export/, 'تصدير'],
+  [/\.create$|\.opening$/, t('إضافة')],
+  [/\.update$|\.edit|\.stops$|\.items$|\.loads$/, t('تعديل')],
+  [/\.delete$|\.remove/, t('حذف')],
+  [/\.approve/, t('اعتماد')],
+  [/\.reject/, t('رفض')],
+  [/\.cancel/, t('إلغاء')],
+  [/\.confirm/, t('تأكيد')],
+  [/\.close$/, t('إغلاق')],
+  [/\.generate$/, t('تجهيز')],
+  [/\.send/, t('إرسال')],
+  [/login/, t('دخول')],
+  [/logout/, t('خروج')],
+  [/export/, t('تصدير')],
 ];
 const verb = (a: string) => VERB_AR.find(([re]) => re.test(a))?.[1] ?? a;
 
@@ -106,37 +107,37 @@ export default function AuditPage() {
         setRows(r);
         setMore(r.length === 100);
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [query]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-brand-brown">
-          <History size={24} /> سجل التدقيق
+          <History size={24} /> {t('سجل التدقيق')}
         </h1>
         <p className="text-sm text-brand-muted">
-          كل تعديل في النظام: من، ومتى، وما الذي تغيّر. السجل للقراءة فقط ولا يمكن تعديله.
+          {t('كل تعديل في النظام: من، ومتى، وما الذي تغيّر. السجل للقراءة فقط ولا يمكن تعديله.')}
         </p>
       </div>
       <Card>
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          من{' '}
+          {t('من')}{' '}
           <input
             type="date"
             className={field}
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
-          إلى{' '}
+          {t('إلى')}{' '}
           <input type="date" className={field} value={to} onChange={(e) => setTo(e.target.value)} />
           <select
             className={field}
             value={entity}
             onChange={(e) => setEntity(e.target.value)}
-            aria-label="النوع"
+            aria-label={t('النوع')}
           >
-            <option value="">كل الأنواع</option>
+            <option value="">{t('كل الأنواع')}</option>
             {Object.entries(ENTITY_AR).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
@@ -146,20 +147,20 @@ export default function AuditPage() {
         </div>
       </Card>
       <ErrorBox message={error} />
-      <Card title={`${rows.length} عملية`}>
+      <Card title={t('{0} عملية', rows.length)}>
         <ul className="divide-y divide-stone-100 text-sm">
           {rows.map((r) => {
             const diff = changes(r.before, r.after);
             return (
               <li key={r.id} className="py-2">
                 <button
-                  className="flex w-full flex-wrap items-center gap-3 text-right"
+                  className="flex w-full flex-wrap items-center gap-3 text-start"
                   onClick={() => setOpen(open === r.id ? null : r.id)}
                 >
                   <span className="w-36 shrink-0 text-brand-muted tabular-nums">
                     {formatAmman(r.createdAt)}
                   </span>
-                  <b className="w-40 shrink-0 truncate">{r.userName ?? '—'}</b>
+                  <b className="w-40 shrink-0 truncate">{r.userName ? t(r.userName) : '—'}</b>
                   <span className="rounded-full bg-brand-gold-light px-2 py-0.5 text-xs font-bold text-brand-brown">
                     {verb(r.action)}
                   </span>
@@ -169,38 +170,40 @@ export default function AuditPage() {
                       {diff
                         .slice(0, 3)
                         .map((d) => d.key)
-                        .join('، ')}
+                        .join(t('، '))}
                     </span>
                   )}
-                  <span className="mr-auto font-mono text-xs text-brand-muted" dir="ltr">
+                  <span className="ms-auto font-mono text-xs text-brand-muted" dir="ltr">
                     {r.action}
                   </span>
                 </button>
                 {open === r.id && (
                   <div className="mt-2 space-y-2 rounded-lg bg-brand-cream/60 p-3 text-xs">
                     {diff && diff.length > 0 ? (
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-right text-brand-muted">
-                            <th>الحقل</th>
-                            <th>قبل</th>
-                            <th>بعد</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {diff.map((d) => (
-                            <tr key={d.key}>
-                              <td className="py-1 font-mono">{d.key}</td>
-                              <td className="text-red-800" dir="ltr">
-                                {short(d.from)}
-                              </td>
-                              <td className="text-green-800" dir="ltr">
-                                {short(d.to)}
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-start text-brand-muted">
+                              <th>{t('الحقل')}</th>
+                              <th>{t('قبل')}</th>
+                              <th>{t('بعد')}</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {diff.map((d) => (
+                              <tr key={d.key}>
+                                <td className="py-1 font-mono">{d.key}</td>
+                                <td className="text-red-800" dir="ltr">
+                                  {short(d.from)}
+                                </td>
+                                <td className="text-green-800" dir="ltr">
+                                  {short(d.to)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     ) : (
                       <pre className="overflow-x-auto whitespace-pre-wrap" dir="ltr">
                         {JSON.stringify({ before: r.before, after: r.after }, null, 2)}
@@ -215,7 +218,7 @@ export default function AuditPage() {
             );
           })}
           {rows.length === 0 && (
-            <li className="py-4 text-brand-muted">لا توجد عمليات في هذه الفترة</li>
+            <li className="py-4 text-brand-muted">{t('لا توجد عمليات في هذه الفترة')}</li>
           )}
         </ul>
         {more && rows.length > 0 && (
@@ -229,7 +232,7 @@ export default function AuditPage() {
               })
             }
           >
-            عرض المزيد
+            {t('عرض المزيد')}
           </Button>
         )}
       </Card>

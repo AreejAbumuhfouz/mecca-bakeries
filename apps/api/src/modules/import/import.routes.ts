@@ -9,6 +9,7 @@ import {
   IMPORT_LABELS_AR,
   type ImportService,
 } from './import.service.js';
+import { t } from '../../lib/i18n.js';
 
 const Kind = z.object({ kind: z.enum(IMPORT_KINDS) });
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -22,7 +23,7 @@ export function importRouter(svc: ImportService, authenticate: RequestHandler): 
     limits: { fileSize: 10 * 1024 * 1024, files: 1 },
   });
   const file = (req: { file?: Express.Multer.File }) => {
-    if (!req.file) throw new AppError(422, 'NO_FILE', 'اختر ملف Excel');
+    if (!req.file) throw new AppError(422, 'NO_FILE', t('اختر ملف Excel'));
     return req.file.buffer;
   };
 
@@ -31,10 +32,10 @@ export function importRouter(svc: ImportService, authenticate: RequestHandler): 
       ok: true,
       data: IMPORT_KINDS.map((k) => ({
         kind: k,
-        label: IMPORT_LABELS_AR[k],
+        label: t(IMPORT_LABELS_AR[k]),
         columns: IMPORT_COLUMNS[k].map((c) => ({
           key: c.key,
-          label: c.label,
+          label: t(c.label),
           required: Boolean(c.required),
         })),
       })),

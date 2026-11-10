@@ -4,9 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatJod } from '@mecca/shared';
 import { api, errorText } from '../api';
 import { useAuth } from '../auth';
-import { Button } from '../components';
+import { Button, LanguageButton } from '../components';
 import { colors, ui, useTheme } from '../theme';
 import type { Me } from '../types';
+import { t } from '../i18n';
 
 export function AccountScreen() {
   const { user, logout } = useAuth();
@@ -17,13 +18,13 @@ export function AccountScreen() {
   useEffect(() => {
     void api<Me>('/api/app/me')
       .then(setMe)
-      .catch((err) => setError(errorText(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorText(err, t('تعذّر التحميل'))));
   }, []);
 
   const c = me?.credit;
   return (
     <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
-      <Text style={ui.h1}>حسابي</Text>
+      <Text style={ui.h1}>{t('حسابي')}</Text>
       <View style={ui.card}>
         <Text style={ui.h2}>{user?.name}</Text>
         <Text style={ui.muted}>{user?.email}</Text>
@@ -31,29 +32,29 @@ export function AccountScreen() {
       {error ? <Text style={ui.error}>{error}</Text> : null}
       {c && (
         <View style={ui.card}>
-          <Text style={ui.h2}>العقد والرصيد</Text>
-          <Row label="رقم العقد" value={c.contract ? c.contract.number : 'لا يوجد عقد'} />
-          {c.contract && <Row label="ينتهي في" value={c.contract.endDate} />}
-          <Row label="الرصيد المستحق" value={formatJod(c.outstanding)} />
+          <Text style={ui.h2}>{t('العقد والرصيد')}</Text>
+          <Row label={t('رقم العقد')} value={c.contract ? c.contract.number : t('لا يوجد عقد')} />
+          {c.contract && <Row label={t('ينتهي في')} value={c.contract.endDate} />}
+          <Row label={t('الرصيد المستحق')} value={formatJod(c.outstanding)} />
           <Row
-            label="متأخر السداد"
+            label={t('متأخر السداد')}
             value={formatJod(c.overdueAmount)}
             danger={c.overdueAmount > 0}
           />
           <Row
-            label="الائتمان المتاح"
-            value={c.available === null ? 'نقدي' : formatJod(Math.max(0, c.available))}
+            label={t('الائتمان المتاح')}
+            value={c.available === null ? t('نقدي') : formatJod(Math.max(0, c.available))}
           />
           {c.reasons.map((r) => (
             <Text key={r.code} style={ui.error}>
-              {r.message}
+              {t(r.key ?? r.message, ...(r.args ?? []))}
             </Text>
           ))}
         </View>
       )}
       {me && (
         <View style={ui.card}>
-          <Text style={ui.h2}>الفروع</Text>
+          <Text style={ui.h2}>{t('الفروع')}</Text>
           {me.branches.map((b) => (
             <Text key={b.id} style={ui.text}>
               • {b.name} <Text style={ui.muted}>{b.code}</Text>
@@ -64,20 +65,23 @@ export function AccountScreen() {
       <Pressable onPress={toggle} style={[ui.card, ui.between]} accessibilityRole="switch">
         <View style={ui.row}>
           <Ionicons name={mode === 'dark' ? 'moon' : 'sunny'} size={20} color={colors.gold} />
-          <Text style={ui.text}>المظهر</Text>
+          <Text style={ui.text}>{t('المظهر')}</Text>
         </View>
-        <Text style={[ui.text, { fontWeight: '700' }]}>{mode === 'dark' ? 'داكن' : 'فاتح'}</Text>
+        <Text style={[ui.text, { fontWeight: '700' }]}>
+          {mode === 'dark' ? t('داكن') : t('فاتح')}
+        </Text>
       </Pressable>
-      <Button title="تسجيل الخروج" variant="outline" onPress={() => void logout()} />
+      <LanguageButton signedIn />
+      <Button title={t('تسجيل الخروج')} variant="outline" onPress={() => void logout()} />
       {process.env.EXPO_PUBLIC_PRIVACY_URL ? (
         <Pressable onPress={() => void Linking.openURL(process.env.EXPO_PUBLIC_PRIVACY_URL!)}>
           <Text style={[ui.muted, { textAlign: 'center', textDecorationLine: 'underline' }]}>
-            سياسة الخصوصية
+            {t('سياسة الخصوصية')}
           </Text>
         </Pressable>
       ) : null}
       <Text style={[ui.muted, { textAlign: 'center', color: colors.muted }]}>
-        مخابز مكة — الإصدار 1.0.0
+        {t('مخابز مكة — الإصدار 1.0.0')}
       </Text>
     </ScrollView>
   );

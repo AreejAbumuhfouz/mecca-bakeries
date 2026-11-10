@@ -1,12 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { cutoffAt, filsToJodString } from '@mecca/shared';
 import type { Db } from '../../db/client.js';
-import { branches, customers, orders } from '../../db/schema/index.js';
+import { branches, customers, orders, users } from '../../db/schema/index.js';
 import { logger } from '../../lib/logger.js';
 import type { SettingsService } from '../settings/settings.service.js';
 import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import type { TemplateName } from '../whatsapp/templates.js';
 import type { PushService } from './push.js';
+import { t, withLocale } from '../../lib/i18n.js';
 
 export type OrderNotice = {
   type:
@@ -42,7 +43,7 @@ function formatCutoff(at: Date) {
     hourCycle: 'h23',
   }).format(at);
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Amman' }).format(at);
-  return `${time} يوم ${day}`;
+  return t('{0} يوم {1}', time, day);
 }
 
 const TEMPLATE_BY_TYPE: Record<OrderNotice['type'], TemplateName> = {
@@ -74,8 +75,25 @@ export function createNotifier(deps: {
 }): Notifier {
   const { db, settings, whatsapp, push } = deps;
 
+  /** App notifications go out in the language the restaurant's account uses. */
+  async function customerLocale(customerId: string) {
+    const [u] = await db
+      .select({ locale: users.locale })
+      .from(users)
+      .where(eq(users.customerId, customerId))
+      .limit(1);
+    return u?.locale ?? 'ar';
+  }
+
   return {
-    async order(notice) {
+    // WhatsApp templates are registered in Arabic, so their values are Arabic too,
+    // whoever triggered the message.
+    order: (notice) => withLocale('ar', () => sendOrder(notice)),
+    reminder: (target, deliveryDate) => withLocale('ar', () => sendReminder(target, deliveryDate)),
+  };
+
+  async function sendOrder(notice: OrderNotice) {
+    {
       try {
         const [row] = await db
           .select({ order: orders, branch: branches, customer: customers })
@@ -91,7 +109,7 @@ export function createNotifier(deps: {
         const params: Record<OrderNotice['type'], string[]> = {
           order_placed: [...base, filsToJodString(order.total), cutoff],
           order_updated: [...base, filsToJodString(order.total)],
-          order_on_hold: [...base, (order.creditReasons ?? []).map((r) => r.message).join('، ')],
+          order_on_hold: [...base, (order.creditReasons ?? []).map((r) => r.message).join(t('، '))],
           order_approved: base,
           order_rejected: base,
           order_cancelled: base,
@@ -105,18 +123,24 @@ export function createNotifier(deps: {
               orderId: order.id,
             });
         }
-        if (s.pushEnabled)
-          await push.toCustomer(customer.id, {
-            title: PUSH_TITLE[notice.type],
-            body: `${branch.name} — ${order.deliveryDate} — ${order.number}`,
-            data: { orderId: order.id },
-          });
+        if (s.pushEnabled) {
+          const locale = await customerLocale(customer.id);
+          await withLocale(locale, () =>
+            push.toCustomer(customer.id, {
+              title: t(PUSH_TITLE[notice.type]),
+              body: `${branch.name} — ${order.deliveryDate} — ${order.number}`,
+              data: { orderId: order.id },
+            }),
+          );
+        }
       } catch (err) {
         logger.error({ err }, `notification ${notice.type} failed`);
       }
-    },
+    }
+  }
 
-    async reminder(target, deliveryDate) {
+  async function sendReminder(target: ReminderTarget, deliveryDate: string) {
+    {
       try {
         const s = await settings.getOrderSettings();
         const cutoff = formatCutoff(cutoffAt(deliveryDate, s.cutoffTime));
@@ -130,16 +154,25 @@ export function createNotifier(deps: {
               { customerId: target.customerId },
             );
         }
-        if (s.pushEnabled)
-          await push.toCustomer(target.customerId, {
-            title: 'تذكير بطلب الغد',
-            body: `لم يصلنا طلب ${target.branchName} ليوم ${deliveryDate}. آخر موعد ${cutoff}`,
-          });
+        if (s.pushEnabled) {
+          const locale = await customerLocale(target.customerId);
+          await withLocale(locale, () =>
+            push.toCustomer(target.customerId, {
+              title: t('تذكير بطلب الغد'),
+              body: t(
+                'لم يصلنا طلب {0} ليوم {1}. آخر موعد {2}',
+                target.branchName,
+                deliveryDate,
+                formatCutoff(cutoffAt(deliveryDate, s.cutoffTime)),
+              ),
+            }),
+          );
+        }
       } catch (err) {
         logger.error({ err }, 'reminder failed');
       }
-    },
-  };
+    }
+  }
 }
 
 /** Collects notices instead of sending them (tests). */

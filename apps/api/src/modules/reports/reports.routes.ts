@@ -16,6 +16,7 @@ import {
   type ReportKey,
   type ReportsService,
 } from './reports.service.js';
+import { t, tr } from '../../lib/i18n.js';
 
 const Query = z.object({
   from: isoDate.optional(),
@@ -23,6 +24,8 @@ const Query = z.object({
   groupBy: z.string().max(20).optional(),
   format: z.enum(['json', 'xlsx', 'pdf']).default('json'),
 });
+/** Texts the report queries use for missing values. */
+const PLACEHOLDERS = new Set(['بدون اسم تجاري', 'بدون خط', 'بدون سائق', 'غير محدد']);
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 export function reportsRouter(
@@ -43,8 +46,8 @@ export function reportsRouter(
       ok: true,
       data: Object.entries(REPORTS).map(([key, r]) => ({
         key,
-        title: r.title,
-        groups: r.groups.map((g) => ({ key: g, label: GROUP_LABELS_AR[g] })),
+        title: t(r.title),
+        groups: r.groups.map((g) => ({ key: g, label: t(GROUP_LABELS_AR[g] ?? g) })),
       })),
     });
   });
@@ -70,7 +73,24 @@ export function reportsRouter(
     const q = Query.parse(req.query);
     const to = q.to ?? ammanDate();
     const from = q.from ?? addDays(to, -29);
-    const table = await svc.run(key, { from, to, groupBy: q.groupBy });
+    // Titles and column names are Arabic keys. Row values are data (customer and item
+    // names) and stay as they are, except the placeholders the queries fill in.
+    const raw = await svc.run(key, { from, to, groupBy: q.groupBy });
+    const table = {
+      ...raw,
+      title: t(raw.title),
+      subtitle: t(raw.subtitle),
+      columns: raw.columns.map((c) => ({ ...c, label: t(c.label) })),
+      rows: raw.rows.map((r) =>
+        Object.fromEntries(
+          Object.entries(r).map(([k, v]) => [
+            k,
+            typeof v === 'string' && PLACEHOLDERS.has(v) ? t(v) : v,
+          ]),
+        ),
+      ),
+      totals: raw.totals && tr(raw.totals),
+    };
     const file = `${key}-${from}_${to}`;
     if (q.format === 'xlsx') {
       res.setHeader('Content-Type', XLSX);

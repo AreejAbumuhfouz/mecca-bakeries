@@ -13,6 +13,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { formatAmman, STATUS_TONE, type OrderRow } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Page = { items: OrderRow[]; total: number };
 type Window = { deliveryDate: string; cutoffAt: string };
@@ -33,7 +34,7 @@ export default function OrdersPage() {
         setWin(w);
         setDate(w.deliveryDate);
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, []);
 
   const load = useCallback(async () => {
@@ -46,7 +47,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const id = setTimeout(
-      () => void load().catch((err) => setError(errorMessage(err, 'تعذّر تحميل الطلبات'))),
+      () => void load().catch((err) => setError(errorMessage(err, t('تعذّر تحميل الطلبات')))),
       250,
     );
     return () => clearTimeout(id);
@@ -64,23 +65,24 @@ export default function OrdersPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">الطلبات</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('الطلبات')}</h1>
           {win && (
             <p className="text-sm text-brand-muted">
-              الطلبات مفتوحة الآن ليوم <b>{win.deliveryDate}</b> وتُغلق {formatAmman(win.cutoffAt)}
+              {t('الطلبات مفتوحة الآن ليوم')} <b>{win.deliveryDate}</b>{' '}
+              {t('وتُغلق {0}', formatAmman(win.cutoffAt))}
             </p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/orders/summary?date=${date}`}>
-            <Button variant="outline">الكشف المبدئي</Button>
+            <Button variant="outline">{t('الكشف المبدئي')}</Button>
           </Link>
           <Link href="/orders/approvals">
-            <Button variant="outline">الموافقات والمسودات</Button>
+            <Button variant="outline">{t('الموافقات والمسودات')}</Button>
           </Link>
           {can('orders.manage') && (
             <Link href={`/orders/new?date=${date}`}>
-              <Button>+ طلب جديد</Button>
+              <Button>{t('+ طلب جديد')}</Button>
             </Link>
           )}
         </div>
@@ -90,21 +92,21 @@ export default function OrdersPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {(['submitted', 'confirmed', 'pending_approval', 'draft'] as OrderStatus[]).map((s) => (
-          <button key={s} onClick={() => setStatus(status === s ? '' : s)} className="text-right">
+          <button key={s} onClick={() => setStatus(status === s ? '' : s)} className="text-start">
             <Card>
-              <div className="text-xs text-brand-muted">{ORDER_STATUS_LABELS_AR[s]}</div>
+              <div className="text-xs text-brand-muted">{t(ORDER_STATUS_LABELS_AR[s])}</div>
               <div className="text-2xl font-bold text-brand-brown">{counts[s] ?? 0}</div>
             </Card>
           </button>
         ))}
         <Card>
-          <div className="text-xs text-brand-muted">مجموع الطلبات</div>
+          <div className="text-xs text-brand-muted">{t('مجموع الطلبات')}</div>
           <div className="text-xl font-bold text-brand-brown">{formatJod(total)}</div>
         </Card>
       </div>
 
       <Card
-        title={`طلبات يوم ${date || '…'}${data ? ` (${data.total})` : ''}`}
+        title={t('طلبات يوم {0}{1}', date || '…', data ? ` (${data.total})` : '')}
         actions={
           <div className="flex flex-wrap gap-2">
             <input
@@ -118,16 +120,16 @@ export default function OrdersPage() {
               value={status}
               onChange={(e) => setStatus(e.target.value as '' | OrderStatus)}
             >
-              <option value="">كل الحالات</option>
+              <option value="">{t('كل الحالات')}</option>
               {ORDER_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {ORDER_STATUS_LABELS_AR[s]}
+                  {t(ORDER_STATUS_LABELS_AR[s])}
                 </option>
               ))}
             </select>
             <input
               className={`${filterClass} w-52`}
-              placeholder="رقم الطلب أو العميل"
+              placeholder={t('رقم الطلب أو العميل')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -137,20 +139,20 @@ export default function OrdersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">رقم الطلب</th>
-                <th>العميل</th>
-                <th>الفرع</th>
-                <th>الأصناف</th>
-                <th>المجموع</th>
-                <th>المصدر</th>
-                <th>الحالة</th>
+              <tr className="border-b border-brand-line text-start text-brand-muted">
+                <th className="py-2">{t('رقم الطلب')}</th>
+                <th>{t('العميل')}</th>
+                <th>{t('الفرع')}</th>
+                <th>{t('الأصناف')}</th>
+                <th>{t('المجموع')}</th>
+                <th>{t('المصدر')}</th>
+                <th>{t('الحالة')}</th>
               </tr>
             </thead>
             <tbody>
               {data?.items.map((o) => (
                 <tr key={o.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/orders/${o.id}`} className="text-brand-brown underline">
                       {o.number}
                     </Link>
@@ -162,16 +164,18 @@ export default function OrdersPage() {
                   </td>
                   <td>{o.itemCount}</td>
                   <td className="font-bold">{formatJod(o.total)}</td>
-                  <td className="text-brand-muted">{ORDER_SOURCE_LABELS_AR[o.source]}</td>
+                  <td className="text-brand-muted">{t(ORDER_SOURCE_LABELS_AR[o.source])}</td>
                   <td>
-                    <Badge tone={STATUS_TONE[o.status]}>{ORDER_STATUS_LABELS_AR[o.status]}</Badge>
+                    <Badge tone={STATUS_TONE[o.status]}>
+                      {t(ORDER_STATUS_LABELS_AR[o.status])}
+                    </Badge>
                   </td>
                 </tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-6 text-center text-brand-muted">
-                    لا توجد طلبات لهذا اليوم
+                    {t('لا توجد طلبات لهذا اليوم')}
                   </td>
                 </tr>
               )}

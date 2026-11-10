@@ -36,6 +36,7 @@ import { clean, type Tx } from '../../lib/db-utils.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { FilesService } from '../files/files.service.js';
 import { effectivePrice, evaluateCredit, type OpenInvoice } from '../credit/credit-engine.js';
+import { t } from '../../lib/i18n.js';
 
 export type ContractTerms = {
   startDate: string;
@@ -87,7 +88,7 @@ export function createContractsService(deps: {
 
   function assertDates(startDate: string, endDate: string) {
     if (endDate < startDate)
-      throw new AppError(400, 'BAD_DATES', 'تاريخ نهاية العقد قبل تاريخ بدايته');
+      throw new AppError(400, 'BAD_DATES', t('تاريخ نهاية العقد قبل تاريخ بدايته'));
   }
 
   /** A customer may not have two non-terminated contracts covering the same day. */
@@ -111,17 +112,22 @@ export function createContractsService(deps: {
       throw new AppError(
         409,
         'CONTRACT_OVERLAP',
-        `يوجد عقد آخر لهذا العميل في نفس الفترة (${clash.number}: ${clash.startDate} إلى ${clash.endDate})`,
+        t(
+          'يوجد عقد آخر لهذا العميل في نفس الفترة ({0}: {1} إلى {2})',
+          clash.number,
+          clash.startDate,
+          clash.endDate,
+        ),
       );
   }
 
   async function assertItems(prices: PriceInput[]) {
     const ids = [...new Set(prices.map((p) => p.itemId))];
     if (ids.length !== prices.length)
-      throw new AppError(400, 'DUPLICATE_ITEM', 'الصنف مكرر في قائمة الأسعار');
+      throw new AppError(400, 'DUPLICATE_ITEM', t('الصنف مكرر في قائمة الأسعار'));
     if (!ids.length) return;
     const found = await db.select({ id: items.id }).from(items).where(inArray(items.id, ids));
-    if (found.length !== ids.length) throw new AppError(400, 'BAD_ITEM', 'صنف غير موجود');
+    if (found.length !== ids.length) throw new AppError(400, 'BAD_ITEM', t('صنف غير موجود'));
   }
 
   async function nextNumber(tx: Tx) {
@@ -290,7 +296,7 @@ export function createContractsService(deps: {
       const customer = await db.query.customers.findFirst({
         where: eq(customers.id, input.customerId),
       });
-      if (!customer) throw new AppError(400, 'BAD_CUSTOMER', 'العميل غير موجود');
+      if (!customer) throw new AppError(400, 'BAD_CUSTOMER', t('العميل غير موجود'));
       await assertItems(input.prices ?? []);
       return db.transaction(async (tx) => {
         // Lock the customer row so two simultaneous creates cannot both pass the overlap check.
@@ -304,7 +310,7 @@ export function createContractsService(deps: {
       const before = await db.query.contracts.findFirst({ where: eq(contracts.id, id) });
       if (!before) throw notFound('Contract');
       if (before.status === 'terminated')
-        throw new AppError(409, 'CONTRACT_TERMINATED', 'لا يمكن تعديل عقد ملغى');
+        throw new AppError(409, 'CONTRACT_TERMINATED', t('لا يمكن تعديل عقد ملغى'));
       const fields = clean(patch);
       const startDate = fields.startDate ?? before.startDate;
       const endDate = fields.endDate ?? before.endDate;
@@ -430,7 +436,7 @@ export function createContractsService(deps: {
       const old = await db.query.contracts.findFirst({ where: eq(contracts.id, id) });
       if (!old) throw notFound('Contract');
       if (old.status === 'terminated')
-        throw new AppError(409, 'CONTRACT_TERMINATED', 'لا يمكن تجديد عقد ملغى');
+        throw new AppError(409, 'CONTRACT_TERMINATED', t('لا يمكن تجديد عقد ملغى'));
       const startDate = input.startDate ?? addDays(old.endDate, 1);
       assertDates(startDate, input.endDate);
       const prices = await db

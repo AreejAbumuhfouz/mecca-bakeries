@@ -8,6 +8,7 @@ import { Button, Card, ErrorBox, Input, Select } from '@/components/ui';
 import { OrderLinesEditor, toLines, type Quantities } from '@/components/order-lines-editor';
 import type { CustomerRow, Customer } from '@/lib/customers';
 import type { CatalogItem } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 function NewOrder() {
   const router = useRouter();
@@ -26,7 +27,7 @@ function NewOrder() {
   useEffect(() => {
     void api<{ items: CustomerRow[] }>('/api/customers?pageSize=100&isActive=true')
       .then((r) => setCustomers(r.items))
-      .catch(() => setError('تعذّر تحميل العملاء'));
+      .catch(() => setError(t('تعذّر تحميل العملاء')));
   }, []);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ function NewOrder() {
     const qs = new URLSearchParams({ branchId, ...(date ? { date } : {}) });
     void api<CatalogItem[]>(`/api/orders/catalog?${qs}`)
       .then(setCatalog)
-      .catch((err) => setError(errorMessage(err, 'تعذّر تحميل الأسعار')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر تحميل الأسعار'))));
   }, [branchId, date]);
 
   async function save() {
@@ -66,9 +67,9 @@ function NewOrder() {
     } catch (err) {
       const existing =
         err instanceof ApiRequestError && err.code === 'ORDER_EXISTS'
-          ? ' — افتحي الطلب الموجود من قائمة الطلبات لتعديله'
+          ? t(' — افتح الطلب الموجود من قائمة الطلبات لتعديله')
           : '';
-      setError(errorMessage(err, 'تعذّر حفظ الطلب') + existing);
+      setError(errorMessage(err, t('تعذّر حفظ الطلب')) + existing);
       setBusy(false);
     }
   }
@@ -77,11 +78,15 @@ function NewOrder() {
     <div className="space-y-6">
       <div>
         <Link href="/orders" className="text-sm text-brand-muted underline">
-          ← الطلبات
+          {t('← الطلبات')}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-brand-brown">طلب جديد (من لوحة التحكم)</h1>
+        <h1 className="mt-1 text-2xl font-bold text-brand-brown">
+          {t('طلب جديد (من لوحة التحكم)')}
+        </h1>
         <p className="text-sm text-brand-muted">
-          للطلبات الهاتفية أو الإضافات المتأخرة. السعر من عقد العميل ويُطبق فحص الائتمان نفسه.
+          {t(
+            'للطلبات الهاتفية أو الإضافات المتأخرة. السعر من عقد العميل ويُطبق فحص الائتمان نفسه.',
+          )}
         </p>
       </div>
 
@@ -89,8 +94,12 @@ function NewOrder() {
 
       <Card>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Select label="العميل" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-            <option value="">— اختر —</option>
+          <Select
+            label={t('العميل')}
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
+          >
+            <option value="">{t('— اختر —')}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code} — {c.name}
@@ -98,12 +107,12 @@ function NewOrder() {
             ))}
           </Select>
           <Select
-            label="الفرع"
+            label={t('الفرع')}
             value={branchId}
             onChange={(e) => setBranchId(e.target.value)}
             disabled={!customer}
           >
-            <option value="">— اختر —</option>
+            <option value="">{t('— اختر —')}</option>
             {customer?.branches
               .filter((b) => b.isActive)
               .map((b) => (
@@ -113,21 +122,21 @@ function NewOrder() {
               ))}
           </Select>
           <Input
-            label="تاريخ التسليم"
+            label={t('تاريخ التسليم')}
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <Input label="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Input label={t('ملاحظات')} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </Card>
 
       {branchId && (
-        <Card title="الأصناف">
+        <Card title={t('الأصناف')}>
           <OrderLinesEditor catalog={catalog} quantities={quantities} onChange={setQuantities} />
           <div className="mt-4">
             <Button disabled={busy || toLines(quantities).length === 0} onClick={() => void save()}>
-              {busy ? 'جارٍ الحفظ…' : 'حفظ الطلب'}
+              {busy ? t('جارٍ الحفظ…') : t('حفظ الطلب')}
             </Button>
           </div>
         </Card>

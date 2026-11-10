@@ -13,6 +13,7 @@ import { api, errorMessage, fileUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Select, Textarea } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
+import { t } from '@/lib/i18n';
 
 type Section = {
   id: string;
@@ -107,10 +108,10 @@ export default function ItemsPage() {
   }, [search, sectionFilter, status]);
 
   useEffect(() => {
-    void loadSections().catch(() => setError('تعذّر تحميل الأقسام'));
+    void loadSections().catch(() => setError(t('تعذّر تحميل الأقسام')));
   }, [loadSections]);
   useEffect(() => {
-    const id = setTimeout(() => void load().catch(() => setError('تعذّر تحميل الأصناف')), 250);
+    const id = setTimeout(() => void load().catch(() => setError(t('تعذّر تحميل الأصناف'))), 250);
     return () => clearTimeout(id);
   }, [load]);
 
@@ -135,7 +136,7 @@ export default function ItemsPage() {
     e.preventDefault();
     const basePrice = parseJod(form.price);
     if (basePrice === null) {
-      setError('السعر غير صالح — اكتبيه بالدينار مثل 0.350');
+      setError(t('السعر غير صالح — اكتبه بالدينار مثل 0.350'));
       return;
     }
     const body = JSON.stringify({
@@ -154,7 +155,7 @@ export default function ItemsPage() {
         editing === 'new'
           ? api('/api/items', { method: 'POST', body })
           : api(`/api/items/${editing}`, { method: 'PATCH', body }),
-      'تعذّر حفظ الصنف',
+      t('تعذّر حفظ الصنف'),
     );
     if (ok) {
       setEditing(null);
@@ -170,7 +171,7 @@ export default function ItemsPage() {
             method: 'PATCH',
             body: JSON.stringify({ isActive: !i.isActive }),
           }),
-        'تعذّر التحديث',
+        t('تعذّر التحديث'),
       )
     )
       await load();
@@ -184,7 +185,7 @@ export default function ItemsPage() {
           method: 'POST',
           body: JSON.stringify({ name: newSection, sortOrder: sections.length + 1 }),
         }),
-      'تعذّر حفظ القسم',
+      t('تعذّر حفظ القسم'),
     );
     if (ok) {
       setNewSection('');
@@ -200,7 +201,7 @@ export default function ItemsPage() {
             method: 'PATCH',
             body: JSON.stringify({ isActive: !s.isActive }),
           }),
-        'تعذّر تحديث القسم',
+        t('تعذّر تحديث القسم'),
       )
     )
       await loadSections();
@@ -212,15 +213,15 @@ export default function ItemsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">الأصناف والأسعار</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('الأصناف والأسعار')}</h1>
           <p className="text-sm text-brand-muted">
-            السعر الأساسي هنا هو سعر القائمة. الأسعار الخاصة لكل عميل تُحدد في عقده.
+            {t('السعر الأساسي هنا هو سعر القائمة. الأسعار الخاصة لكل عميل تُحدد في عقده.')}
           </p>
         </div>
         {canManage && editing === null && (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowSections((v) => !v)}>
-              الأقسام
+              {t('الأقسام')}
             </Button>
             <Button
               onClick={() => {
@@ -228,7 +229,7 @@ export default function ItemsPage() {
                 setEditing('new');
               }}
             >
-              + صنف جديد
+              {t('+ صنف جديد')}
             </Button>
           </div>
         )}
@@ -237,18 +238,18 @@ export default function ItemsPage() {
       <ErrorBox message={error} />
 
       {showSections && canManage && (
-        <Card title="أقسام الأصناف">
+        <Card title={t('أقسام الأصناف')}>
           <form onSubmit={addSection} className="mb-4 flex gap-2">
             <input
               className={`${filterClass} w-64`}
-              placeholder="اسم القسم (مثلاً: معجنات)"
+              placeholder={t('اسم القسم (مثلاً: معجنات)')}
               required
               minLength={2}
               value={newSection}
               onChange={(e) => setNewSection(e.target.value)}
             />
             <Button type="submit" variant="gold" disabled={busy}>
-              إضافة
+              {t('إضافة')}
             </Button>
           </form>
           <div className="flex flex-wrap gap-2">
@@ -256,7 +257,7 @@ export default function ItemsPage() {
               <button
                 key={s.id}
                 onClick={() => void toggleSection(s)}
-                title={s.isActive ? 'اضغط للإيقاف' : 'اضغط للتفعيل'}
+                title={s.isActive ? t('اضغط للإيقاف') : t('اضغط للتفعيل')}
                 className={`rounded-full border px-3 py-1 text-sm ${
                   s.isActive
                     ? 'border-brand-gold bg-brand-gold-light text-brand-brown'
@@ -271,49 +272,54 @@ export default function ItemsPage() {
       )}
 
       {editing !== null && (
-        <Card title={editing === 'new' ? 'صنف جديد' : 'تعديل الصنف'}>
+        <Card title={editing === 'new' ? t('صنف جديد') : t('تعديل الصنف')}>
           {sections.length === 0 ? (
-            <p className="text-sm text-brand-muted">أضيفي قسماً أولاً من زر «الأقسام».</p>
+            <p className="text-sm text-brand-muted">{t('أضف قسماً أولاً من زر «الأقسام».')}</p>
           ) : (
             <form onSubmit={saveItem} className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <Input
-                  label="اسم الصنف"
+                  label={t('اسم الصنف')}
                   required
                   minLength={2}
                   value={form.name}
                   onChange={set('name')}
                 />
                 <Input
-                  label="الاسم بالإنجليزية"
+                  label={t('الاسم بالإنجليزية')}
                   dir="ltr"
                   value={form.nameEn}
                   onChange={set('nameEn')}
                 />
                 <Input
-                  label="الكود"
+                  label={t('الكود')}
                   dir="ltr"
-                  placeholder={editing === 'new' ? 'يُولَّد تلقائياً' : undefined}
+                  placeholder={editing === 'new' ? t('يُولَّد تلقائياً') : undefined}
                   value={form.code}
                   onChange={set('code')}
                 />
-                <Select label="القسم" required value={form.sectionId} onChange={set('sectionId')}>
-                  <option value="">— اختر —</option>
+                <Select
+                  label={t('القسم')}
+                  required
+                  value={form.sectionId}
+                  onChange={set('sectionId')}
+                >
+                  <option value="">{t('— اختر —')}</option>
                   {activeSections.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
                     </option>
                   ))}
                 </Select>
-                <Select label="الوحدة" value={form.unit} onChange={set('unit')}>
+                <Select label={t('الوحدة')} value={form.unit} onChange={set('unit')}>
                   {ITEM_UNITS.map((u) => (
                     <option key={u} value={u}>
-                      {ITEM_UNIT_LABELS_AR[u]}
+                      {t(ITEM_UNIT_LABELS_AR[u])}
                     </option>
                   ))}
                 </Select>
                 <Input
-                  label="السعر الأساسي (دينار)"
+                  label={t('السعر الأساسي (دينار)')}
                   dir="ltr"
                   inputMode="decimal"
                   placeholder="0.350"
@@ -322,7 +328,7 @@ export default function ItemsPage() {
                   onChange={set('price')}
                 />
                 <Input
-                  label="ترتيب العرض"
+                  label={t('ترتيب العرض')}
                   type="number"
                   min={0}
                   dir="ltr"
@@ -330,20 +336,24 @@ export default function ItemsPage() {
                   onChange={set('sortOrder')}
                 />
                 <ImageUpload
-                  label="صورة الصنف (للتطبيق)"
+                  label={t('صورة الصنف (للتطبيق)')}
                   value={form.imageFileId}
                   onChange={(imageFileId) => setForm({ ...form, imageFileId })}
                 />
                 <div className="md:col-span-4">
-                  <Textarea label="الوصف" value={form.description} onChange={set('description')} />
+                  <Textarea
+                    label={t('الوصف')}
+                    value={form.description}
+                    onChange={set('description')}
+                  />
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={busy}>
-                  {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+                  {busy ? t('جارٍ الحفظ…') : t('حفظ')}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                  إلغاء
+                  {t('إلغاء')}
                 </Button>
               </div>
             </form>
@@ -352,12 +362,12 @@ export default function ItemsPage() {
       )}
 
       <Card
-        title={`الأصناف${data ? ` (${data.total})` : ''}`}
+        title={t('الأصناف{0}', data ? ` (${data.total})` : '')}
         actions={
           <div className="flex flex-wrap gap-2">
             <input
               className={`${filterClass} w-52`}
-              placeholder="بحث بالكود أو الاسم"
+              placeholder={t('بحث بالكود أو الاسم')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -366,7 +376,7 @@ export default function ItemsPage() {
               value={sectionFilter}
               onChange={(e) => setSectionFilter(e.target.value)}
             >
-              <option value="">كل الأقسام</option>
+              <option value="">{t('كل الأقسام')}</option>
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -378,9 +388,9 @@ export default function ItemsPage() {
               value={status}
               onChange={(e) => setStatus(e.target.value as '' | 'true' | 'false')}
             >
-              <option value="true">الفعّالة</option>
-              <option value="false">الموقوفة</option>
-              <option value="">الكل</option>
+              <option value="true">{t('الفعّالة')}</option>
+              <option value="false">{t('الموقوفة')}</option>
+              <option value="">{t('الكل')}</option>
             </select>
           </div>
         }
@@ -388,21 +398,21 @@ export default function ItemsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2" />
-                <th>الكود</th>
-                <th>الصنف</th>
-                <th>القسم</th>
-                <th>الوحدة</th>
-                <th>السعر الأساسي</th>
-                <th>الحالة</th>
+                <th>{t('الكود')}</th>
+                <th>{t('الصنف')}</th>
+                <th>{t('القسم')}</th>
+                <th>{t('الوحدة')}</th>
+                <th>{t('السعر الأساسي')}</th>
+                <th>{t('الحالة')}</th>
                 {canManage && <th />}
               </tr>
             </thead>
             <tbody>
               {data?.items.map((i) => (
                 <tr key={i.id} className="border-b border-stone-100">
-                  <td className="py-2 pl-3">
+                  <td className="py-2 pe-3">
                     <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-brand-line bg-brand-cream">
                       {i.imageFileId ? (
                         <img
@@ -415,27 +425,27 @@ export default function ItemsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="pl-4 font-mono">{i.code}</td>
+                  <td className="pe-4 font-mono">{i.code}</td>
                   <td className="font-bold">
                     {i.name}
                     {i.nameEn && (
                       <div
                         className="text-xs font-normal text-brand-muted"
                         dir="ltr"
-                        style={{ textAlign: 'right' }}
+                        style={{ textAlign: 'start' }}
                       >
                         {i.nameEn}
                       </div>
                     )}
                   </td>
                   <td>{i.sectionName}</td>
-                  <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
+                  <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
                   <td className="font-bold">{formatJod(i.basePrice)}</td>
                   <td>
                     {i.isActive ? (
-                      <Badge tone="green">فعّال</Badge>
+                      <Badge tone="green">{t('فعّال')}</Badge>
                     ) : (
-                      <Badge tone="red">موقوف</Badge>
+                      <Badge tone="red">{t('موقوف')}</Badge>
                     )}
                   </td>
                   {canManage && (
@@ -449,13 +459,13 @@ export default function ItemsPage() {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                         >
-                          تعديل
+                          {t('تعديل')}
                         </button>
                         <button
                           className="text-brand-brown underline"
                           onClick={() => void toggleItem(i)}
                         >
-                          {i.isActive ? 'إيقاف' : 'تفعيل'}
+                          {i.isActive ? t('إيقاف') : t('تفعيل')}
                         </button>
                       </div>
                     </td>
@@ -465,7 +475,7 @@ export default function ItemsPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-6 text-center text-brand-muted">
-                    لا توجد أصناف
+                    {t('لا توجد أصناف')}
                   </td>
                 </tr>
               )}

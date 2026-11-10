@@ -12,6 +12,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox, Input, Select } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 type UserDetail = {
   id: string;
@@ -56,7 +57,7 @@ export function UserEditor({
         setCustomerId(u.customerId ?? '');
         setOverrides(Object.fromEntries(u.overrides.map((o) => [o.permission, o.allowed])));
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر تحميل المستخدم')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر تحميل المستخدم'))));
   }, [userId]);
 
   useEffect(() => {
@@ -100,7 +101,7 @@ export function UserEditor({
       });
       onSaved();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر حفظ المستخدم'));
+      setError(errorMessage(err, t('تعذّر حفظ المستخدم')));
     } finally {
       setBusy(false);
     }
@@ -113,27 +114,27 @@ export function UserEditor({
   ).length;
 
   return (
-    <Card title={`تعديل: ${user.email}`}>
+    <Card title={t('تعديل: {0}', user.email)}>
       <form onSubmit={save} className="space-y-5">
         <ErrorBox message={error} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Input
-            label="الاسم"
+            label={t('الاسم')}
             required
             minLength={2}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <Input
-            label="الهاتف"
+            label={t('الهاتف')}
             dir="ltr"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          <Select label="الدور" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+          <Select label={t('الدور')} value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {ROLE_VALUES.map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABELS_AR[r]}
+                {t(ROLE_LABELS_AR[r])}
               </option>
             ))}
           </Select>
@@ -141,14 +142,14 @@ export function UserEditor({
 
         {role === 'restaurant' && (
           <label className="block max-w-md">
-            <span className="mb-1 block text-sm font-bold text-brand-brown">العميل</span>
+            <span className="mb-1 block text-sm font-bold text-brand-brown">{t('العميل')}</span>
             <select
               required
               className="w-full rounded-lg border border-brand-line bg-surface px-3 py-2.5 text-sm"
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
             >
-              <option value="">— اختر العميل —</option>
+              <option value="">{t('— اختر العميل —')}</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.code} — {c.name}
@@ -159,13 +160,13 @@ export function UserEditor({
         )}
 
         {role === 'super_admin' ? (
-          <p className="text-sm text-brand-muted">المدير العام يملك كل الصلاحيات.</p>
+          <p className="text-sm text-brand-muted">{t('المدير العام يملك كل الصلاحيات.')}</p>
         ) : (
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-bold text-brand-brown">الصلاحيات</h3>
+              <h3 className="font-bold text-brand-brown">{t('الصلاحيات')}</h3>
               <span className="text-xs text-brand-muted">
-                المعلَّم بلون ذهبي مختلف عن صلاحيات الدور ({customCount})
+                {t('المعلَّم بلون ذهبي مختلف عن صلاحيات الدور ({0})', customCount)}
               </span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -184,7 +185,7 @@ export function UserEditor({
                       checked={effective(p)}
                       onChange={() => toggle(p)}
                     />
-                    {PERMISSION_LABELS_AR[p]}
+                    {t(PERMISSION_LABELS_AR[p])}
                   </label>
                 );
               })}
@@ -194,10 +195,10 @@ export function UserEditor({
 
         <div className="flex gap-2">
           <Button type="submit" disabled={busy}>
-            {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+            {busy ? t('جارٍ الحفظ…') : t('حفظ')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
-            إلغاء
+            {t('إلغاء')}
           </Button>
         </div>
       </form>

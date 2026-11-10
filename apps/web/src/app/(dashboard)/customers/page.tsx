@@ -13,6 +13,7 @@ import {
   type TradeNameOption,
 } from '@/lib/customers';
 import { CustomerFields } from './customer-fields';
+import { t } from '@/lib/i18n';
 
 type Page = { items: CustomerRow[]; total: number; page: number; pageSize: number };
 const PAGE_SIZE = 25;
@@ -49,14 +50,14 @@ export default function CustomersPage() {
   }, [search, categoryId, status, page]);
 
   useEffect(() => {
-    void loadCategories().catch(() => setError('تعذّر تحميل الفئات'));
+    void loadCategories().catch(() => setError(t('تعذّر تحميل الفئات')));
     void api<TradeNameOption[]>('/api/trade-names')
       .then(setTradeNames)
       .catch(() => undefined);
   }, [loadCategories]);
 
   useEffect(() => {
-    const id = setTimeout(() => void load().catch(() => setError('تعذّر تحميل العملاء')), 250);
+    const id = setTimeout(() => void load().catch(() => setError(t('تعذّر تحميل العملاء'))), 250);
     return () => clearTimeout(id);
   }, [load]);
 
@@ -70,7 +71,7 @@ export default function CustomersPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(errMsg(err, 'تعذّر حفظ العميل'));
+      setError(errMsg(err, t('تعذّر حفظ العميل')));
     } finally {
       setBusy(false);
     }
@@ -87,7 +88,7 @@ export default function CustomersPage() {
       setNewCategory('');
       await loadCategories();
     } catch (err) {
-      setError(errMsg(err, 'تعذّر حفظ الفئة'));
+      setError(errMsg(err, t('تعذّر حفظ الفئة')));
     }
   }
 
@@ -100,7 +101,7 @@ export default function CustomersPage() {
       });
       await loadCategories();
     } catch (err) {
-      setError(errMsg(err, 'تعذّر تحديث الفئة'));
+      setError(errMsg(err, t('تعذّر تحديث الفئة')));
     }
   }
 
@@ -111,18 +112,18 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">المطاعم والعملاء</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('المطاعم والعملاء')}</h1>
           <p className="text-sm text-brand-muted">
-            كل عميل له كود ثابت، ولكل فرع كود خاص يُستخدم في الطلبات والتوزيع.
+            {t('كل عميل له كود ثابت، ولكل فرع كود خاص يُستخدم في الطلبات والتوزيع.')}
           </p>
         </div>
         {canManage && (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowCategories((v) => !v)}>
-              الفئات
+              {t('الفئات')}
             </Button>
             <Button onClick={() => setShowForm((v) => !v)}>
-              {showForm ? 'إلغاء' : '+ عميل جديد'}
+              {showForm ? t('إلغاء') : t('+ عميل جديد')}
             </Button>
           </div>
         )}
@@ -131,18 +132,18 @@ export default function CustomersPage() {
       <ErrorBox message={error} />
 
       {showCategories && canManage && (
-        <Card title="فئات العملاء">
+        <Card title={t('فئات العملاء')}>
           <form onSubmit={addCategory} className="mb-4 flex gap-2">
             <input
               className={`${filterClass} w-64`}
-              placeholder="اسم الفئة (مثلاً: فنادق)"
+              placeholder={t('اسم الفئة (مثلاً: فنادق)')}
               value={newCategory}
               minLength={2}
               required
               onChange={(e) => setNewCategory(e.target.value)}
             />
             <Button type="submit" variant="gold">
-              إضافة
+              {t('إضافة')}
             </Button>
           </form>
           <div className="flex flex-wrap gap-2">
@@ -150,7 +151,7 @@ export default function CustomersPage() {
               <button
                 key={c.id}
                 onClick={() => void toggleCategory(c)}
-                title={c.isActive ? 'اضغط للتعطيل' : 'اضغط للتفعيل'}
+                title={c.isActive ? t('اضغط للتعطيل') : t('اضغط للتفعيل')}
                 className={`rounded-full border px-3 py-1 text-sm ${
                   c.isActive
                     ? 'border-brand-gold bg-brand-gold-light text-brand-brown'
@@ -161,39 +162,41 @@ export default function CustomersPage() {
               </button>
             ))}
             {categories.length === 0 && (
-              <span className="text-sm text-brand-muted">لا توجد فئات بعد</span>
+              <span className="text-sm text-brand-muted">{t('لا توجد فئات بعد')}</span>
             )}
           </div>
         </Card>
       )}
 
       {showForm && (
-        <Card title="عميل جديد">
+        <Card title={t('عميل جديد')}>
           <form onSubmit={onCreate} className="space-y-4">
             <CustomerFields
               form={form}
               setForm={setForm}
               categories={categories}
               tradeNames={tradeNames}
-              codeHint="يُولَّد تلقائياً"
+              codeHint={t('يُولَّد تلقائياً')}
             />
             <p className="text-xs text-brand-muted">
-              يُنشأ «الفرع الرئيسي» تلقائياً بنفس العنوان والهاتف، ويمكن إضافة فروع أخرى لاحقاً.
+              {t(
+                'يُنشأ «الفرع الرئيسي» تلقائياً بنفس العنوان والهاتف، ويمكن إضافة فروع أخرى لاحقاً.',
+              )}
             </p>
             <Button type="submit" disabled={busy}>
-              {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+              {busy ? t('جارٍ الحفظ…') : t('حفظ')}
             </Button>
           </form>
         </Card>
       )}
 
       <Card
-        title={`العملاء${data ? ` (${data.total})` : ''}`}
+        title={t('العملاء{0}', data ? ` (${data.total})` : '')}
         actions={
           <div className="flex flex-wrap gap-2">
             <input
               className={`${filterClass} w-56`}
-              placeholder="بحث بالكود أو الاسم أو الهاتف"
+              placeholder={t('بحث بالكود أو الاسم أو الهاتف')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -208,7 +211,7 @@ export default function CustomersPage() {
                 setPage(1);
               }}
             >
-              <option value="">كل الفئات</option>
+              <option value="">{t('كل الفئات')}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -223,9 +226,9 @@ export default function CustomersPage() {
                 setPage(1);
               }}
             >
-              <option value="true">الفعّالون</option>
-              <option value="false">الموقوفون</option>
-              <option value="">الكل</option>
+              <option value="true">{t('الفعّالون')}</option>
+              <option value="false">{t('الموقوفون')}</option>
+              <option value="">{t('الكل')}</option>
             </select>
           </div>
         }
@@ -233,21 +236,21 @@ export default function CustomersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الكود</th>
-                <th>الاسم</th>
-                <th>الفئة</th>
-                <th>الاسم التجاري</th>
-                <th>المسؤول</th>
-                <th>الهاتف</th>
-                <th>الفروع</th>
-                <th>الحالة</th>
+              <tr className="border-b border-brand-line text-start text-brand-muted">
+                <th className="py-2">{t('الكود')}</th>
+                <th>{t('الاسم')}</th>
+                <th>{t('الفئة')}</th>
+                <th>{t('الاسم التجاري')}</th>
+                <th>{t('المسؤول')}</th>
+                <th>{t('الهاتف')}</th>
+                <th>{t('الفروع')}</th>
+                <th>{t('الحالة')}</th>
               </tr>
             </thead>
             <tbody>
               {data?.items.map((c) => (
                 <tr key={c.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/customers/${c.id}`} className="text-brand-brown underline">
                       {c.code}
                     </Link>
@@ -258,15 +261,15 @@ export default function CustomersPage() {
                   <td>{c.categoryName ?? '—'}</td>
                   <td>{c.tradeName ?? '—'}</td>
                   <td>{c.contactName ?? '—'}</td>
-                  <td dir="ltr" className="text-right">
+                  <td dir="ltr" className="text-start">
                     {c.phone ?? '—'}
                   </td>
                   <td>{c.branchCount}</td>
                   <td>
                     {c.isActive ? (
-                      <Badge tone="green">فعّال</Badge>
+                      <Badge tone="green">{t('فعّال')}</Badge>
                     ) : (
-                      <Badge tone="red">موقوف</Badge>
+                      <Badge tone="red">{t('موقوف')}</Badge>
                     )}
                   </td>
                 </tr>
@@ -274,7 +277,7 @@ export default function CustomersPage() {
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-6 text-center text-brand-muted">
-                    لا يوجد عملاء
+                    {t('لا يوجد عملاء')}
                   </td>
                 </tr>
               )}
@@ -284,13 +287,11 @@ export default function CustomersPage() {
         {pages > 1 && (
           <div className="mt-4 flex items-center justify-center gap-3 text-sm">
             <Button variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-              السابق
+              {t('السابق')}
             </Button>
-            <span>
-              صفحة {page} من {pages}
-            </span>
+            <span>{t('صفحة {0} من {1}', page, pages)}</span>
             <Button variant="outline" disabled={page >= pages} onClick={() => setPage(page + 1)}>
-              التالي
+              {t('التالي')}
             </Button>
           </div>
         )}

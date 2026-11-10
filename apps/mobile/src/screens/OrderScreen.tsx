@@ -5,6 +5,7 @@ import { api, ApiError, errorText } from '../api';
 import { Button, StatusBadge } from '../components';
 import { colors, ui } from '../theme';
 import type { CatalogItem, Order } from '../types';
+import { t } from '../i18n';
 
 type Quantities = Record<string, number>;
 
@@ -40,7 +41,7 @@ export function OrderScreen({
         const date = o ? `&date=${o.deliveryDate}` : '';
         setCatalog(await api<CatalogItem[]>(`/api/app/catalog?branchId=${branchId}${date}`));
       } catch (err) {
-        setError(errorText(err, 'تعذّر التحميل'));
+        setError(errorText(err, t('تعذّر التحميل')));
       }
     })();
   }, [branchId, orderId]);
@@ -76,7 +77,7 @@ export function OrderScreen({
         const existing = (err.details as { orderId?: string } | undefined)?.orderId;
         if (existing) setOrderId(existing);
       }
-      setError(errorText(err, 'تعذّر حفظ الطلب'));
+      setError(errorText(err, t('تعذّر حفظ الطلب')));
     } finally {
       setBusy(false);
     }
@@ -89,7 +90,7 @@ export function OrderScreen({
       await api(`/api/app/orders/${order.id}/cancel`, { method: 'POST', body: {} });
       onClose(true);
     } catch (err) {
-      setError(errorText(err, 'تعذّر الإلغاء'));
+      setError(errorText(err, t('تعذّر الإلغاء')));
       setBusy(false);
     }
   }
@@ -108,33 +109,33 @@ export function OrderScreen({
         ]}
       >
         <Pressable onPress={() => onClose(saved)} hitSlop={12}>
-          <Text style={{ color: colors.brown, fontSize: 16 }}>→ رجوع</Text>
+          <Text style={{ color: colors.brown, fontSize: 16 }}>{t('→ رجوع')}</Text>
         </Pressable>
-        <Text style={ui.h2}>{order ? order.number : 'طلب جديد'}</Text>
+        <Text style={ui.h2}>{order ? order.number : t('طلب جديد')}</Text>
         {order ? <StatusBadge status={order.status} /> : <View style={{ width: 40 }} />}
       </View>
 
       <ScrollView contentContainerStyle={ui.content}>
         {order && (
           <Text style={ui.muted}>
-            {order.branchName} — تسليم يوم {order.deliveryDate}
+            {t('{0} — تسليم يوم {1}', order.branchName, order.deliveryDate)}
           </Text>
         )}
         {saved && order && (
           <Text style={[ui.error, { backgroundColor: colors.greenBg, color: colors.green }]}>
             {order.status === 'pending_approval'
-              ? 'تم الحفظ — الطلب بانتظار موافقة الإدارة'
-              : 'تم إرسال الطلب ✓ يمكنك تعديله حتى موعد الإغلاق'}
+              ? t('تم الحفظ — الطلب بانتظار موافقة الإدارة')
+              : t('تم إرسال الطلب ✓ يمكنك تعديله حتى موعد الإغلاق')}
           </Text>
         )}
         {order?.status === 'pending_approval' &&
           order.creditReasons?.map((r) => (
             <Text key={r.code} style={ui.error}>
-              {r.message}
+              {t(r.key ?? r.message, ...(r.args ?? []))}
             </Text>
           ))}
         {!editable && (
-          <Text style={ui.error}>انتهى وقت تعديل هذا الطلب. للتغيير تواصل مع المخبز.</Text>
+          <Text style={ui.error}>{t('انتهى وقت تعديل هذا الطلب. للتغيير تواصل مع المخبز.')}</Text>
         )}
         {error ? <Text style={ui.error}>{error}</Text> : null}
 
@@ -156,8 +157,8 @@ export function OrderScreen({
                     <View style={{ flex: 1 }}>
                       <Text style={[ui.text, { fontWeight: '700' }]}>{i.name}</Text>
                       <Text style={ui.muted}>
-                        {formatJod(i.price)} / {ITEM_UNIT_LABELS_AR[i.unit]}
-                        {i.source === 'contract' ? ' — سعرك الخاص' : ''}
+                        {formatJod(i.price)} / {t(ITEM_UNIT_LABELS_AR[i.unit])}
+                        {i.source === 'contract' ? t(' — سعرك الخاص') : ''}
                       </Text>
                     </View>
                     {editable ? (
@@ -169,7 +170,7 @@ export function OrderScreen({
                           keyboardType="number-pad"
                           onChangeText={(v) => change(i.id, Number(v.replace(/\D/g, '')) || 0)}
                           style={[ui.input, { width: 64, textAlign: 'center', paddingVertical: 8 }]}
-                          accessibilityLabel={`كمية ${i.name}`}
+                          accessibilityLabel={t('كمية {0}', i.name)}
                         />
                         <Stepper label="+" onPress={() => change(i.id, q + 1)} />
                       </View>
@@ -187,17 +188,17 @@ export function OrderScreen({
             style={[ui.input, { minHeight: 60 }]}
             value={notes}
             onChangeText={setNotes}
-            placeholder="ملاحظات للمخبز (اختياري)"
+            placeholder={t('ملاحظات للمخبز (اختياري)')}
             multiline
           />
         )}
 
         {order && order.events.length > 0 && (
           <View style={ui.card}>
-            <Text style={ui.h2}>سجل الطلب</Text>
+            <Text style={ui.h2}>{t('سجل الطلب')}</Text>
             {order.events.map((e) => (
               <Text key={e.id} style={ui.muted}>
-                {ORDER_EVENT_LABELS_AR[e.type]} — {new Date(e.createdAt).toLocaleString('ar-JO')}
+                {t(ORDER_EVENT_LABELS_AR[e.type])} — {new Date(e.createdAt).toLocaleString('ar-JO')}
               </Text>
             ))}
           </View>
@@ -208,13 +209,17 @@ export function OrderScreen({
           order.status !== 'draft' &&
           (confirmCancel ? (
             <Button
-              title="تأكيد إلغاء الطلب"
+              title={t('تأكيد إلغاء الطلب')}
               variant="danger"
               busy={busy}
               onPress={() => void cancel()}
             />
           ) : (
-            <Button title="إلغاء الطلب" variant="outline" onPress={() => setConfirmCancel(true)} />
+            <Button
+              title={t('إلغاء الطلب')}
+              variant="outline"
+              onPress={() => setConfirmCancel(true)}
+            />
           ))}
       </ScrollView>
 
@@ -229,12 +234,16 @@ export function OrderScreen({
           }}
         >
           <View style={ui.between}>
-            <Text style={ui.text}>{lines.length} أصناف</Text>
+            <Text style={ui.text}>{t('{0} أصناف', lines.length)}</Text>
             <Text style={ui.h2}>{formatJod(total)}</Text>
           </View>
           <Button
             title={
-              order ? (order.status === 'draft' ? 'تأكيد الطلب' : 'حفظ التعديل') : 'إرسال الطلب'
+              order
+                ? order.status === 'draft'
+                  ? t('تأكيد الطلب')
+                  : t('حفظ التعديل')
+                : t('إرسال الطلب')
             }
             onPress={() => void save()}
             busy={busy}

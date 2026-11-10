@@ -2,7 +2,8 @@ import {
   addDays,
   applyDiscount,
   contractState,
-  formatJod,
+  filsToJodString,
+  translate,
   isContractInForce,
   type ContractState,
   type ContractStatus,
@@ -37,7 +38,23 @@ export type CreditReasonCode =
   | 'OVERDUE_DEBT'
   | 'CREDIT_LIMIT_EXCEEDED';
 
-export type CreditReason = { code: CreditReasonCode; message: string };
+/**
+ * `message` is Arabic and is what gets stored on held orders; screens show it in the
+ * user's language from `key` + `args` (the Arabic template and its values).
+ */
+export type CreditReason = {
+  code: CreditReasonCode;
+  message: string;
+  key?: string;
+  args?: string[];
+};
+
+const reason = (code: CreditReasonCode, key: string, ...args: string[]): CreditReason => ({
+  code,
+  message: translate('ar', key, args),
+  key,
+  args,
+});
 
 export type CreditInput = {
   today: string;
@@ -58,10 +75,10 @@ export type CreditDecision = {
 };
 
 const STATE_REASONS: Partial<Record<ContractState, CreditReason>> = {
-  not_started: { code: 'CONTRACT_NOT_STARTED', message: 'العقد لم يبدأ بعد' },
-  expired: { code: 'CONTRACT_EXPIRED', message: 'العقد منتهي ويحتاج إلى تجديد' },
-  suspended: { code: 'CONTRACT_SUSPENDED', message: 'العقد موقوف' },
-  terminated: { code: 'CONTRACT_TERMINATED', message: 'العقد ملغى' },
+  not_started: reason('CONTRACT_NOT_STARTED', 'العقد لم يبدأ بعد'),
+  expired: reason('CONTRACT_EXPIRED', 'العقد منتهي ويحتاج إلى تجديد'),
+  suspended: reason('CONTRACT_SUSPENDED', 'العقد موقوف'),
+  terminated: reason('CONTRACT_TERMINATED', 'العقد ملغى'),
 };
 
 export function evaluateCredit(input: CreditInput): CreditDecision {
@@ -75,7 +92,7 @@ export function evaluateCredit(input: CreditInput): CreditDecision {
       outstanding,
       overdueAmount: 0,
       available: null,
-      reasons: [{ code: 'NO_CONTRACT', message: 'لا يوجد عقد لهذا العميل' }],
+      reasons: [reason('NO_CONTRACT', 'لا يوجد عقد لهذا العميل')],
     };
   }
 
@@ -90,20 +107,22 @@ export function evaluateCredit(input: CreditInput): CreditDecision {
   );
   const overdueAmount = overdue.reduce((sum, i) => sum + i.balance, 0);
   if (overdueAmount > 0) {
-    reasons.push({
-      code: 'OVERDUE_DEBT',
-      message: `يوجد ذمم متأخرة بقيمة ${formatJod(overdueAmount)}`,
-    });
+    reasons.push(
+      reason('OVERDUE_DEBT', 'يوجد ذمم متأخرة بقيمة {0} د.أ', filsToJodString(overdueAmount)),
+    );
   }
 
   let available: number | null = null;
   if (contract.paymentType === 'credit') {
     available = contract.creditLimit - outstanding;
     if (outstanding + orderAmount > contract.creditLimit) {
-      reasons.push({
-        code: 'CREDIT_LIMIT_EXCEEDED',
-        message: `الطلب يتجاوز سقف الائتمان (المتاح ${formatJod(Math.max(0, available))})`,
-      });
+      reasons.push(
+        reason(
+          'CREDIT_LIMIT_EXCEEDED',
+          'الطلب يتجاوز سقف الائتمان (المتاح {0} د.أ)',
+          filsToJodString(Math.max(0, available)),
+        ),
+      );
     }
   }
 

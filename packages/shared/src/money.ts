@@ -1,3 +1,5 @@
+import { activeLocale } from './i18n/translate.js';
+
 /** Money is stored as integer fils: 1 JOD = 1000 fils. Never use floats for amounts. */
 export const FILS_PER_JOD = 1000;
 
@@ -21,8 +23,9 @@ export function filsToJodString(fils: number): string {
   return `${sign}${Math.floor(abs / FILS_PER_JOD)}.${String(abs % FILS_PER_JOD).padStart(3, '0')}`;
 }
 
-/** 1250 → "1.250 د.أ" */
-export const formatJod = (fils: number) => `${filsToJodString(fils)} د.أ`;
+/** 1250 → "1.250 د.أ" (or "1.250 JOD" in English). */
+export const formatJod = (fils: number) =>
+  `${filsToJodString(fils)} ${activeLocale() === 'en' ? 'JOD' : 'د.أ'}`;
 
 /**
  * Applies a percentage discount given in basis points (100 bps = 1%).

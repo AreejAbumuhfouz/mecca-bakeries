@@ -17,6 +17,7 @@ import {
 } from '@mecca/shared';
 import type { Db } from '../../db/client.js';
 import type { BillingService } from '../billing/billing.service.js';
+import { t } from '../../lib/i18n.js';
 
 /** Every report is a table: the screen, Excel and PDF all render the same shape. */
 export type ColumnKind = 'text' | 'int' | 'money' | 'percent' | 'date';
@@ -62,7 +63,7 @@ const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 1000) / 10 : 0);
 const sumBy = (rows: Row[], keys: string[]) =>
   Object.fromEntries(keys.map((k) => [k, rows.reduce((s, r) => s + n(r[k]), 0)]));
-const unitAr = (u: string) => (ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u;
+const unitAr = (u: string) => t((ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u);
 
 export function createReportsService(deps: {
   db: Db;
@@ -79,8 +80,8 @@ export function createReportsService(deps: {
   async function sales({ from, to, groupBy = 'customer' }: ReportParams): Promise<ReportTable> {
     const base = {
       key: 'sales' as const,
-      title: 'المبيعات',
-      subtitle: `من ${from} إلى ${to} — حسب ${GROUP_LABELS_AR[groupBy] ?? ''}`,
+      title: t('المبيعات'),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
     };
     if (groupBy === 'item') {
       const rows = await q<Row>(sql`
@@ -106,18 +107,18 @@ export function createReportsService(deps: {
       return {
         ...base,
         columns: [
-          { key: 'code', label: 'الكود', kind: 'text' },
-          { key: 'name', label: 'الصنف', kind: 'text' },
-          { key: 'unit', label: 'الوحدة', kind: 'text' },
-          { key: 'qty', label: 'الكمية المباعة', kind: 'int' },
-          { key: 'sales', label: 'المبيعات', kind: 'money' },
-          { key: 'returned_qty', label: 'كمية المرتجع', kind: 'int' },
-          { key: 'returns', label: 'قيمة المرتجع', kind: 'money' },
-          { key: 'net', label: 'الصافي', kind: 'money' },
+          { key: 'code', label: t('الكود'), kind: 'text' },
+          { key: 'name', label: t('الصنف'), kind: 'text' },
+          { key: 'unit', label: t('الوحدة'), kind: 'text' },
+          { key: 'qty', label: t('الكمية المباعة'), kind: 'int' },
+          { key: 'sales', label: t('المبيعات'), kind: 'money' },
+          { key: 'returned_qty', label: t('كمية المرتجع'), kind: 'int' },
+          { key: 'returns', label: t('قيمة المرتجع'), kind: 'money' },
+          { key: 'net', label: t('الصافي'), kind: 'money' },
         ],
         rows: out,
         totals: {
-          name: 'المجموع',
+          name: t('المجموع'),
           ...sumBy(out, ['qty', 'sales', 'returned_qty', 'returns', 'net']),
         },
         chart: { label: 'name', value: 'net' },
@@ -155,25 +156,25 @@ export function createReportsService(deps: {
     const columns: Column[] = [
       {
         key: 'name',
-        label: GROUP_LABELS_AR[groupBy] ?? 'البند',
+        label: t(GROUP_LABELS_AR[groupBy] ?? 'البند'),
         kind: groupBy === 'day' ? 'date' : 'text',
       },
-      { key: 'invoices', label: 'الفواتير', kind: 'int' },
+      { key: 'invoices', label: t('الفواتير'), kind: 'int' },
       ...(groupBy === 'customer'
         ? []
-        : [{ key: 'customers', label: 'العملاء', kind: 'int' as const }]),
-      { key: 'sales', label: 'المبيعات بعد خصم العقد', kind: 'money' },
-      { key: 'discount1', label: 'خصم العقد', kind: 'money' },
-      { key: 'discount2', label: 'الخصم الثاني', kind: 'money' },
-      { key: 'returns', label: 'المرتجعات', kind: 'money' },
-      { key: 'net', label: 'الصافي', kind: 'money' },
+        : [{ key: 'customers', label: t('العملاء'), kind: 'int' as const }]),
+      { key: 'sales', label: t('المبيعات بعد خصم العقد'), kind: 'money' },
+      { key: 'discount1', label: t('خصم العقد'), kind: 'money' },
+      { key: 'discount2', label: t('الخصم الثاني'), kind: 'money' },
+      { key: 'returns', label: t('المرتجعات'), kind: 'money' },
+      { key: 'net', label: t('الصافي'), kind: 'money' },
     ];
     return {
       ...base,
       columns,
       rows: out,
       totals: {
-        name: 'المجموع',
+        name: t('المجموع'),
         ...sumBy(out, ['invoices', 'sales', 'discount1', 'discount2', 'returns', 'net']),
       },
       chart: { label: 'name', value: 'net' },
@@ -215,7 +216,7 @@ export function createReportsService(deps: {
         code: k.code,
         name: k.name,
         contract: k.number,
-        payment: k.payment_type === 'cash' ? 'نقدي' : 'آجل',
+        payment: k.payment_type === 'cash' ? t('نقدي') : t('آجل'),
         limit,
         balance,
         usage: limit ? pct(balance, limit) : 0,
@@ -223,33 +224,33 @@ export function createReportsService(deps: {
         overdue,
         state:
           over && overdue
-            ? 'متجاوز ومتأخر'
+            ? t('متجاوز ومتأخر')
             : over
-              ? 'متجاوز السقف'
+              ? t('متجاوز السقف')
               : overdue
-                ? 'عليه متأخرات'
-                : 'ضمن الحد',
+                ? t('عليه متأخرات')
+                : t('ضمن الحد'),
       });
     }
     rows.sort((a, b) => n(b.usage) - n(a.usage));
     return {
       key: 'credit',
-      title: 'حدود الائتمان والعملاء المتجاوزون',
-      subtitle: `العقود السارية في ${today}`,
+      title: t('حدود الائتمان والعملاء المتجاوزون'),
+      subtitle: t('العقود السارية في {0}', today),
       columns: [
-        { key: 'code', label: 'الكود', kind: 'text' },
-        { key: 'name', label: 'العميل', kind: 'text' },
-        { key: 'contract', label: 'العقد', kind: 'text' },
-        { key: 'payment', label: 'الدفع', kind: 'text' },
-        { key: 'limit', label: 'سقف الائتمان', kind: 'money' },
-        { key: 'balance', label: 'الرصيد', kind: 'money' },
-        { key: 'usage', label: 'نسبة الاستخدام', kind: 'percent' },
-        { key: 'available', label: 'المتاح', kind: 'money' },
-        { key: 'overdue', label: 'المتأخر', kind: 'money' },
-        { key: 'state', label: 'الحالة', kind: 'text' },
+        { key: 'code', label: t('الكود'), kind: 'text' },
+        { key: 'name', label: t('العميل'), kind: 'text' },
+        { key: 'contract', label: t('العقد'), kind: 'text' },
+        { key: 'payment', label: t('الدفع'), kind: 'text' },
+        { key: 'limit', label: t('سقف الائتمان'), kind: 'money' },
+        { key: 'balance', label: t('الرصيد'), kind: 'money' },
+        { key: 'usage', label: t('نسبة الاستخدام'), kind: 'percent' },
+        { key: 'available', label: t('المتاح'), kind: 'money' },
+        { key: 'overdue', label: t('المتأخر'), kind: 'money' },
+        { key: 'state', label: t('الحالة'), kind: 'text' },
       ],
       rows,
-      totals: { name: 'المجموع', ...sumBy(rows, ['limit', 'balance', 'available', 'overdue']) },
+      totals: { name: t('المجموع'), ...sumBy(rows, ['limit', 'balance', 'available', 'overdue']) },
       chart: { label: 'name', value: 'usage' },
     };
   }
@@ -268,24 +269,24 @@ export function createReportsService(deps: {
     }));
     return {
       key: 'aging',
-      title: 'أعمار الذمم',
-      subtitle: `حتى ${ammanDate(now())}`,
+      title: t('أعمار الذمم'),
+      subtitle: t('حتى {0}', ammanDate(now())),
       columns: [
-        { key: 'code', label: 'الكود', kind: 'text' },
-        { key: 'name', label: 'العميل', kind: 'text' },
-        { key: 'trade_name', label: 'الاسم التجاري', kind: 'text' },
-        { key: 'balance', label: 'الرصيد', kind: 'money' },
-        { key: 'overdue', label: 'المتأخر', kind: 'money' },
+        { key: 'code', label: t('الكود'), kind: 'text' },
+        { key: 'name', label: t('العميل'), kind: 'text' },
+        { key: 'trade_name', label: t('الاسم التجاري'), kind: 'text' },
+        { key: 'balance', label: t('الرصيد'), kind: 'money' },
+        { key: 'overdue', label: t('المتأخر'), kind: 'money' },
         ...AGING_BUCKETS.map((b) => ({
           key: b,
-          label: AGING_LABELS_AR[b],
+          label: t(AGING_LABELS_AR[b]),
           kind: 'money' as const,
         })),
-        { key: 'oldest_due', label: 'أقدم استحقاق', kind: 'date' },
-        { key: 'last_payment', label: 'آخر دفعة', kind: 'date' },
+        { key: 'oldest_due', label: t('أقدم استحقاق'), kind: 'date' },
+        { key: 'last_payment', label: t('آخر دفعة'), kind: 'date' },
       ],
       rows,
-      totals: { name: 'المجموع', ...sumBy(rows, ['balance', 'overdue', ...AGING_BUCKETS]) },
+      totals: { name: t('المجموع'), ...sumBy(rows, ['balance', 'overdue', ...AGING_BUCKETS]) },
       chart: { label: 'name', value: 'balance' },
     };
   }
@@ -315,24 +316,24 @@ export function createReportsService(deps: {
     }));
     return {
       key: 'orders',
-      title: 'الطلبات',
-      subtitle: `تواريخ التسليم من ${from} إلى ${to}`,
+      title: t('الطلبات'),
+      subtitle: t('تواريخ التسليم من {0} إلى {1}', from, to),
       columns: [
         {
           key: 'name',
-          label: GROUP_LABELS_AR[groupBy] ?? 'اليوم',
+          label: t(GROUP_LABELS_AR[groupBy] ?? 'اليوم'),
           kind: groupBy === 'customer' ? 'text' : 'date',
         },
-        { key: 'total', label: 'الطلبات', kind: 'int' },
-        { key: 'confirmed', label: 'مؤكدة', kind: 'int' },
-        { key: 'delivered', label: 'سُلِّمت', kind: 'int' },
-        { key: 'pending', label: 'بانتظار موافقة', kind: 'int' },
-        { key: 'cancelled', label: 'ملغاة/مرفوضة', kind: 'int' },
-        { key: 'value', label: 'قيمة المؤكدة', kind: 'money' },
+        { key: 'total', label: t('الطلبات'), kind: 'int' },
+        { key: 'confirmed', label: t('مؤكدة'), kind: 'int' },
+        { key: 'delivered', label: t('سُلِّمت'), kind: 'int' },
+        { key: 'pending', label: t('بانتظار موافقة'), kind: 'int' },
+        { key: 'cancelled', label: t('ملغاة/مرفوضة'), kind: 'int' },
+        { key: 'value', label: t('قيمة المؤكدة'), kind: 'money' },
       ],
       rows: out,
       totals: {
-        name: 'المجموع',
+        name: t('المجموع'),
         ...sumBy(out, ['total', 'confirmed', 'delivered', 'pending', 'cancelled', 'value']),
       },
       chart: { label: 'name', value: 'value' },
@@ -369,26 +370,26 @@ export function createReportsService(deps: {
     });
     return {
       key: 'delivery',
-      title: 'التسليم',
-      subtitle: `من ${from} إلى ${to} — حسب ${GROUP_LABELS_AR[groupBy] ?? ''}`,
+      title: t('التسليم'),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
       columns: [
         {
           key: 'name',
-          label: GROUP_LABELS_AR[groupBy] ?? 'اليوم',
+          label: t(GROUP_LABELS_AR[groupBy] ?? 'اليوم'),
           kind: groupBy === 'route' ? 'text' : 'date',
         },
-        { key: 'stops', label: 'التوصيلات', kind: 'int' },
-        { key: 'full', label: 'كامل', kind: 'int' },
-        { key: 'partial', label: 'ناقص', kind: 'int' },
-        { key: 'failed', label: 'لم يُسلَّم', kind: 'int' },
-        { key: 'pending', label: 'معلّق', kind: 'int' },
-        { key: 'success', label: 'نسبة النجاح', kind: 'percent' },
-        { key: 'collected', label: 'المحصّل', kind: 'money' },
-        { key: 'located', label: 'بموقع مسجّل', kind: 'int' },
+        { key: 'stops', label: t('التوصيلات'), kind: 'int' },
+        { key: 'full', label: t('كامل'), kind: 'int' },
+        { key: 'partial', label: t('ناقص'), kind: 'int' },
+        { key: 'failed', label: t('لم يُسلَّم'), kind: 'int' },
+        { key: 'pending', label: t('معلّق'), kind: 'int' },
+        { key: 'success', label: t('نسبة النجاح'), kind: 'percent' },
+        { key: 'collected', label: t('المحصّل'), kind: 'money' },
+        { key: 'located', label: t('بموقع مسجّل'), kind: 'int' },
       ],
       rows: out,
       totals: {
-        name: 'المجموع',
+        name: t('المجموع'),
         ...sumBy(out, ['stops', 'full', 'partial', 'failed', 'pending', 'collected', 'located']),
       },
       chart: { label: 'name', value: 'stops' },
@@ -423,22 +424,22 @@ export function createReportsService(deps: {
     }));
     return {
       key: 'drivers',
-      title: 'إنتاجية السائقين',
-      subtitle: `من ${from} إلى ${to}`,
+      title: t('إنتاجية السائقين'),
+      subtitle: t('من {0} إلى {1}', from, to),
       columns: [
-        { key: 'name', label: 'السائق', kind: 'text' },
-        { key: 'trips', label: 'الرحلات', kind: 'int' },
-        { key: 'stops', label: 'التوصيلات', kind: 'int' },
-        { key: 'delivered', label: 'سُلِّمت', kind: 'int' },
-        { key: 'failed', label: 'لم تُسلَّم', kind: 'int' },
-        { key: 'success', label: 'نسبة النجاح', kind: 'percent' },
-        { key: 'invoiced', label: 'قيمة الفواتير', kind: 'money' },
-        { key: 'collected', label: 'المحصّل', kind: 'money' },
-        { key: 'trip_minutes', label: 'متوسط الرحلة (دقيقة)', kind: 'int' },
+        { key: 'name', label: t('السائق'), kind: 'text' },
+        { key: 'trips', label: t('الرحلات'), kind: 'int' },
+        { key: 'stops', label: t('التوصيلات'), kind: 'int' },
+        { key: 'delivered', label: t('سُلِّمت'), kind: 'int' },
+        { key: 'failed', label: t('لم تُسلَّم'), kind: 'int' },
+        { key: 'success', label: t('نسبة النجاح'), kind: 'percent' },
+        { key: 'invoiced', label: t('قيمة الفواتير'), kind: 'money' },
+        { key: 'collected', label: t('المحصّل'), kind: 'money' },
+        { key: 'trip_minutes', label: t('متوسط الرحلة (دقيقة)'), kind: 'int' },
       ],
       rows: out,
       totals: {
-        name: 'المجموع',
+        name: t('المجموع'),
         ...sumBy(out, ['trips', 'stops', 'delivered', 'failed', 'invoiced', 'collected']),
       },
       chart: { label: 'name', value: 'delivered' },
@@ -471,7 +472,7 @@ export function createReportsService(deps: {
     const out = rows.map((r) => ({
       name:
         groupBy === 'reason'
-          ? (DELIVERY_REASON_LABELS_AR[r.name as DeliveryReason] ?? String(r.name))
+          ? t(DELIVERY_REASON_LABELS_AR[r.name as DeliveryReason] ?? String(r.name))
           : String(r.name),
       qty: n(r.qty),
       customers: n(r.customers),
@@ -479,19 +480,19 @@ export function createReportsService(deps: {
     }));
     return {
       key: 'returns',
-      title: 'المرتجعات',
-      subtitle: `من ${from} إلى ${to} — حسب ${GROUP_LABELS_AR[groupBy] ?? ''}`,
+      title: t('المرتجعات'),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
       columns: [
-        { key: 'name', label: GROUP_LABELS_AR[groupBy] ?? 'الصنف', kind: 'text' },
-        { key: 'qty', label: 'الكمية المرتجعة', kind: 'int' },
-        { key: 'customers', label: 'عدد العملاء', kind: 'int' },
+        { key: 'name', label: t(GROUP_LABELS_AR[groupBy] ?? 'الصنف'), kind: 'text' },
+        { key: 'qty', label: t('الكمية المرتجعة'), kind: 'int' },
+        { key: 'customers', label: t('عدد العملاء'), kind: 'int' },
         ...(groupBy === 'reason'
           ? []
-          : [{ key: 'value', label: 'القيمة', kind: 'money' as const }]),
+          : [{ key: 'value', label: t('القيمة'), kind: 'money' as const }]),
       ],
       rows: out,
       totals: {
-        name: 'المجموع',
+        name: t('المجموع'),
         ...sumBy(out, ['qty', ...(groupBy === 'reason' ? [] : ['value'])]),
       },
       chart: { label: 'name', value: 'qty' },
@@ -516,7 +517,7 @@ export function createReportsService(deps: {
     const out = rows.map((r) => {
       const name =
         groupBy === 'reason'
-          ? (STOCK_LOSS_REASON_LABELS_AR[r.name as StockLossReason] ?? String(r.name))
+          ? t(STOCK_LOSS_REASON_LABELS_AR[r.name as StockLossReason] ?? String(r.name))
           : String(r.name);
       const made = groupBy === 'item' ? (prodOf.get(String(r.name)) ?? 0) : null;
       return {
@@ -530,22 +531,22 @@ export function createReportsService(deps: {
     });
     return {
       key: 'waste',
-      title: 'الهدر والتالف',
-      subtitle: `أيام الإنتاج من ${from} إلى ${to}`,
+      title: t('الهدر والتالف'),
+      subtitle: t('أيام الإنتاج من {0} إلى {1}', from, to),
       columns: [
-        { key: 'name', label: GROUP_LABELS_AR[groupBy] ?? 'الصنف', kind: 'text' },
-        { key: 'waste', label: 'التالف', kind: 'int' },
-        { key: 'returned', label: 'المرتجع للمخبز', kind: 'int' },
-        { key: 'days', label: 'عدد الأيام', kind: 'int' },
+        { key: 'name', label: t(GROUP_LABELS_AR[groupBy] ?? 'الصنف'), kind: 'text' },
+        { key: 'waste', label: t('التالف'), kind: 'int' },
+        { key: 'returned', label: t('المرتجع للمخبز'), kind: 'int' },
+        { key: 'days', label: t('عدد الأيام'), kind: 'int' },
         ...(groupBy === 'item'
           ? [
-              { key: 'produced', label: 'المنتج', kind: 'int' as const },
-              { key: 'rate', label: 'نسبة الهدر', kind: 'percent' as const },
+              { key: 'produced', label: t('المنتج'), kind: 'int' as const },
+              { key: 'rate', label: t('نسبة الهدر'), kind: 'percent' as const },
             ]
           : []),
       ],
       rows: out,
-      totals: { name: 'المجموع', ...sumBy(out, ['waste', 'returned']) },
+      totals: { name: t('المجموع'), ...sumBy(out, ['waste', 'returned']) },
       chart: { label: 'name', value: 'waste' },
     };
   }
@@ -570,21 +571,21 @@ export function createReportsService(deps: {
       diff: r.produced === null ? null : n(r.produced) - n(r.planned),
       loaded: n(r.loaded),
       waste: n(r.waste),
-      approval: r.approval ? `${r.approval} — ${r.approved_by ?? ''}` : 'غير معتمد',
+      approval: r.approval ? `${r.approval} — ${r.approved_by ?? ''}` : t('غير معتمد'),
     }));
     return {
       key: 'variances',
-      title: 'فروقات الإنتاج اليومية',
-      subtitle: `من ${from} إلى ${to}`,
+      title: t('فروقات الإنتاج اليومية'),
+      subtitle: t('من {0} إلى {1}', from, to),
       columns: [
-        { key: 'day', label: 'اليوم', kind: 'date' },
-        { key: 'name', label: 'الصنف', kind: 'text' },
-        { key: 'planned', label: 'المخطط', kind: 'int' },
-        { key: 'produced', label: 'المنتج', kind: 'int' },
-        { key: 'diff', label: 'الفرق', kind: 'int' },
-        { key: 'loaded', label: 'المحمّل', kind: 'int' },
-        { key: 'waste', label: 'التالف', kind: 'int' },
-        { key: 'approval', label: 'الاعتماد', kind: 'text' },
+        { key: 'day', label: t('اليوم'), kind: 'date' },
+        { key: 'name', label: t('الصنف'), kind: 'text' },
+        { key: 'planned', label: t('المخطط'), kind: 'int' },
+        { key: 'produced', label: t('المنتج'), kind: 'int' },
+        { key: 'diff', label: t('الفرق'), kind: 'int' },
+        { key: 'loaded', label: t('المحمّل'), kind: 'int' },
+        { key: 'waste', label: t('التالف'), kind: 'int' },
+        { key: 'approval', label: t('الاعتماد'), kind: 'text' },
       ],
       rows: out,
       totals: null,
@@ -615,21 +616,21 @@ export function createReportsService(deps: {
     }));
     return {
       key: 'lines',
-      title: 'إنتاجية خطوط الإنتاج',
-      subtitle: `من ${from} إلى ${to}`,
+      title: t('إنتاجية خطوط الإنتاج'),
+      subtitle: t('من {0} إلى {1}', from, to),
       columns: [
-        { key: 'name', label: 'خط الإنتاج', kind: 'text' },
-        { key: 'days', label: 'الأيام', kind: 'int' },
-        { key: 'ordered', label: 'المطلوب', kind: 'int' },
-        { key: 'planned', label: 'المخطط', kind: 'int' },
-        { key: 'produced', label: 'المنتج', kind: 'int' },
-        { key: 'achievement', label: 'نسبة الإنجاز', kind: 'percent' },
-        { key: 'waste', label: 'التالف', kind: 'int' },
-        { key: 'waste_rate', label: 'نسبة الهدر', kind: 'percent' },
-        { key: 'per_day', label: 'متوسط يومي', kind: 'int' },
+        { key: 'name', label: t('خط الإنتاج'), kind: 'text' },
+        { key: 'days', label: t('الأيام'), kind: 'int' },
+        { key: 'ordered', label: t('المطلوب'), kind: 'int' },
+        { key: 'planned', label: t('المخطط'), kind: 'int' },
+        { key: 'produced', label: t('المنتج'), kind: 'int' },
+        { key: 'achievement', label: t('نسبة الإنجاز'), kind: 'percent' },
+        { key: 'waste', label: t('التالف'), kind: 'int' },
+        { key: 'waste_rate', label: t('نسبة الهدر'), kind: 'percent' },
+        { key: 'per_day', label: t('متوسط يومي'), kind: 'int' },
       ],
       rows: out,
-      totals: { name: 'المجموع', ...sumBy(out, ['ordered', 'planned', 'produced', 'waste']) },
+      totals: { name: t('المجموع'), ...sumBy(out, ['ordered', 'planned', 'produced', 'waste']) },
       chart: { label: 'name', value: 'produced' },
     };
   }
@@ -705,7 +706,7 @@ export function createReportsService(deps: {
         receivables: rec.totals.balance,
         overdue: rec.totals.overdue,
         overdueCustomers: rec.items.filter((c) => c.overdue > 0).length,
-        trend: trend.map((t) => ({ day: String(t.day), sales: n(t.sales) })),
+        trend: trend.map((tr) => ({ day: String(tr.day), sales: n(tr.sales) })),
       };
     }
     if (can('production.view')) {

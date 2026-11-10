@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { requestId } from './middleware/request-id.js';
+import { localeMiddleware } from './lib/i18n.js';
 import { createErrorAlerts } from './lib/alerts.js';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
@@ -62,6 +63,7 @@ import { createReportsService } from './modules/reports/reports.service.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
 import { createImportService } from './modules/import/import.service.js';
 import { importRouter } from './modules/import/import.routes.js';
+import { t } from './lib/i18n.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -113,6 +115,7 @@ export function createApp(deps: AppDeps) {
   );
   app.use(cookieParser());
   app.use(requestId);
+  app.use(localeMiddleware);
   app.use(auditContext);
   if (env.NODE_ENV !== 'test')
     app.use(
@@ -125,7 +128,7 @@ export function createApp(deps: AppDeps) {
         skip: (req) => req.path.startsWith('/health'),
         message: {
           ok: false,
-          error: { code: 'RATE_LIMITED', message: 'طلبات كثيرة، حاول بعد دقيقة' },
+          error: { code: 'RATE_LIMITED', message: t('طلبات كثيرة، حاول بعد دقيقة') },
         },
       }),
     );

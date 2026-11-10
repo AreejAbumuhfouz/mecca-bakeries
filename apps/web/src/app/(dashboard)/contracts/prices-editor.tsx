@@ -10,6 +10,7 @@ import {
   type ItemUnit,
 } from '@mecca/shared';
 import { api } from '@/lib/api';
+import { t } from '@/lib/i18n';
 
 export type CatalogItem = {
   id: string;
@@ -63,7 +64,7 @@ export function PricesEditor({
       <div className="flex flex-wrap items-center gap-3">
         <input
           className="w-56 rounded-lg border border-brand-line px-3 py-2 text-sm"
-          placeholder="بحث عن صنف"
+          placeholder={t('بحث عن صنف')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -74,70 +75,74 @@ export function PricesEditor({
             onChange={(e) => setOnlySpecial(e.target.checked)}
             className="accent-brand-gold"
           />
-          الأصناف ذات السعر الخاص فقط ({Object.values(draft).filter(Boolean).length})
+          {t('الأصناف ذات السعر الخاص فقط ({0})', Object.values(draft).filter(Boolean).length)}
         </label>
       </div>
       <div className="max-h-[480px] overflow-auto rounded-xl border border-brand-line">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-brand-cream">
-            <tr className="text-right text-brand-muted">
-              <th className="px-3 py-2">الكود</th>
-              <th>الصنف</th>
-              <th>الوحدة</th>
-              <th>السعر الأساسي</th>
-              <th>بعد الخصم العام</th>
-              <th className="w-40">السعر الخاص (دينار)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((i) => (
-              <tr key={i.id} className="border-t border-stone-100">
-                <td className="px-3 py-2 font-mono">{i.code}</td>
-                <td className="font-bold">
-                  {i.name}
-                  <span className="mr-2 text-xs font-normal text-brand-muted">{i.sectionName}</span>
-                </td>
-                <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
-                <td>{formatJod(i.basePrice)}</td>
-                <td className="text-brand-muted">
-                  {discountBps > 0 ? formatJod(applyDiscount(i.basePrice, discountBps)) : '—'}
-                </td>
-                <td className="py-1 pl-3">
-                  {readOnly ? (
-                    <span className="font-bold text-brand-brown">
-                      {draft[i.id] ? `${draft[i.id]} د.أ` : '—'}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-brand-cream">
+              <tr className="text-start text-brand-muted">
+                <th className="px-3 py-2">{t('الكود')}</th>
+                <th>{t('الصنف')}</th>
+                <th>{t('الوحدة')}</th>
+                <th>{t('السعر الأساسي')}</th>
+                <th>{t('بعد الخصم العام')}</th>
+                <th className="w-40">{t('السعر الخاص (دينار)')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((i) => (
+                <tr key={i.id} className="border-t border-stone-100">
+                  <td className="px-3 py-2 font-mono">{i.code}</td>
+                  <td className="font-bold">
+                    {i.name}
+                    <span className="ms-2 text-xs font-normal text-brand-muted">
+                      {i.sectionName}
                     </span>
-                  ) : (
-                    <input
-                      dir="ltr"
-                      inputMode="decimal"
-                      placeholder={filsToJodString(i.basePrice)}
-                      className={`w-full rounded-lg border px-2 py-1.5 text-sm ${
-                        draft[i.id]
-                          ? 'border-brand-gold bg-brand-gold-light/40 font-bold'
-                          : 'border-brand-line'
-                      }`}
-                      value={draft[i.id] ?? ''}
-                      onChange={(e) => {
-                        const next = { ...draft };
-                        if (e.target.value.trim()) next[i.id] = e.target.value;
-                        else delete next[i.id];
-                        setDraft(next);
-                      }}
-                    />
-                  )}
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-brand-muted">
-                  لا توجد أصناف
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </td>
+                  <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
+                  <td>{formatJod(i.basePrice)}</td>
+                  <td className="text-brand-muted">
+                    {discountBps > 0 ? formatJod(applyDiscount(i.basePrice, discountBps)) : '—'}
+                  </td>
+                  <td className="py-1 pe-3">
+                    {readOnly ? (
+                      <span className="font-bold text-brand-brown">
+                        {draft[i.id] ? t('{0} د.أ', draft[i.id]) : '—'}
+                      </span>
+                    ) : (
+                      <input
+                        dir="ltr"
+                        inputMode="decimal"
+                        placeholder={filsToJodString(i.basePrice)}
+                        className={`w-full rounded-lg border px-2 py-1.5 text-sm ${
+                          draft[i.id]
+                            ? 'border-brand-gold bg-brand-gold-light/40 font-bold'
+                            : 'border-brand-line'
+                        }`}
+                        value={draft[i.id] ?? ''}
+                        onChange={(e) => {
+                          const next = { ...draft };
+                          if (e.target.value.trim()) next[i.id] = e.target.value;
+                          else delete next[i.id];
+                          setDraft(next);
+                        }}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-brand-muted">
+                    {t('لا توجد أصناف')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -148,7 +153,7 @@ export function draftToPrices(draft: PriceDraft): { itemId: string; price: numbe
   const out: { itemId: string; price: number }[] = [];
   for (const [itemId, value] of Object.entries(draft)) {
     const price = parseJod(value);
-    if (price === null) return `سعر خاص غير صالح: ${value}`;
+    if (price === null) return t('سعر خاص غير صالح: {0}', value);
     out.push({ itemId, price });
   }
   return out;

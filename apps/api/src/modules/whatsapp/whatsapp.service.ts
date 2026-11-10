@@ -5,6 +5,7 @@ import { customers, whatsappMessages } from '../../db/schema/index.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 import { normalizePhone, renderTemplate, type TemplateName } from './templates.js';
+import { t } from '../../lib/i18n.js';
 
 export type WhatsAppConfig = {
   token: string;
@@ -223,7 +224,7 @@ export function createWhatsAppService(deps: {
     /** Free text reply from the dashboard (only delivered within 24h of the customer's last message). */
     async sendText(to: string, text: string, sentBy: string) {
       const phone = normalizePhone(to);
-      if (!phone) throw new AppError(400, 'BAD_PHONE', 'رقم الهاتف غير صالح');
+      if (!phone) throw new AppError(400, 'BAD_PHONE', t('رقم الهاتف غير صالح'));
       return send({ text }, phone, { customerId: await customerByPhone(phone), sentBy });
     },
 

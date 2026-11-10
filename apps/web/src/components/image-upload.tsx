@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { errorMessage, fileUrl, uploadFile } from '@/lib/api';
+import { t } from '@/lib/i18n';
 
 /** Picks an image, uploads it as a public file and returns its id. */
 export function ImageUpload({
@@ -24,7 +25,7 @@ export function ImageUpload({
     try {
       onChange((await uploadFile(file, true)).id);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر رفع الصورة'));
+      setError(errorMessage(err, t('تعذّر رفع الصورة')));
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
@@ -39,7 +40,7 @@ export function ImageUpload({
           {value ? (
             <img src={fileUrl(value)} alt="" className="h-full w-full object-contain" />
           ) : (
-            <span className="text-xs text-brand-muted">لا يوجد</span>
+            <span className="text-xs text-brand-muted">{t('لا يوجد')}</span>
           )}
         </div>
         <div className="flex flex-col items-start gap-1 text-xs">
@@ -49,14 +50,14 @@ export function ImageUpload({
             disabled={busy}
             onClick={() => input.current?.click()}
           >
-            {busy ? 'جارٍ الرفع…' : value ? 'تغيير الصورة' : 'رفع صورة'}
+            {busy ? t('جارٍ الرفع…') : value ? t('تغيير الصورة') : t('رفع صورة')}
           </button>
           {value && (
             <button type="button" className="text-red-700 underline" onClick={() => onChange(null)}>
-              إزالة
+              {t('إزالة')}
             </button>
           )}
-          <span className="text-brand-muted">PNG / JPG / WEBP — حتى 5 ميغابايت</span>
+          <span className="text-brand-muted">{t('PNG / JPG / WEBP — حتى 5 ميغابايت')}</span>
         </div>
       </div>
       <input

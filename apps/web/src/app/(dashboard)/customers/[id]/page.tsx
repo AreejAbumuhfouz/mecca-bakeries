@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Badge, Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
 import {
   emptyBranchForm,
   toBody,
@@ -19,6 +19,7 @@ import {
 import { CONTRACT_STATE_LABELS_AR, formatJod } from '@mecca/shared';
 import { STATE_TONE, type ContractRow } from '@/lib/contracts';
 import { CustomerFields } from '../customer-fields';
+import { arrow, t } from '@/lib/i18n';
 
 const errMsg = (err: unknown, fallback: string) =>
   err instanceof ApiRequestError ? err.message : fallback;
@@ -51,7 +52,7 @@ function Info({ label, value, ltr }: { label: string; value: string | null; ltr?
   return (
     <div>
       <div className="text-xs text-brand-muted">{label}</div>
-      <div className="font-bold" dir={ltr ? 'ltr' : undefined} style={{ textAlign: 'right' }}>
+      <div className="font-bold" dir={ltr ? 'ltr' : undefined} style={{ textAlign: 'start' }}>
         {value || '—'}
       </div>
     </div>
@@ -85,7 +86,7 @@ export default function CustomerPage() {
   }, [id, canContracts]);
 
   useEffect(() => {
-    void load().catch((err) => setError(errMsg(err, 'تعذّر تحميل العميل')));
+    void load().catch((err) => setError(errMsg(err, t('تعذّر تحميل العميل'))));
     void api<TradeNameOption[]>('/api/trade-names')
       .then(setTradeNames)
       .catch(() => undefined);
@@ -114,7 +115,7 @@ export default function CustomerPage() {
     if (!form) return;
     const ok = await run(
       () => api(`/api/customers/${id}`, { method: 'PATCH', body: JSON.stringify(toBody(form)) }),
-      'تعذّر حفظ التعديلات',
+      t('تعذّر حفظ التعديلات'),
     );
     if (ok) setEditing(false);
   }
@@ -127,7 +128,7 @@ export default function CustomerPage() {
           method: 'PATCH',
           body: JSON.stringify({ isActive: !customer.isActive }),
         }),
-      'تعذّر تحديث الحالة',
+      t('تعذّر تحديث الحالة'),
     );
 
   async function saveBranch(e: FormEvent) {
@@ -138,7 +139,7 @@ export default function CustomerPage() {
         branchEdit === 'new'
           ? api(`/api/customers/${id}/branches`, { method: 'POST', body })
           : api(`/api/customers/${id}/branches/${branchEdit}`, { method: 'PATCH', body }),
-      'تعذّر حفظ الفرع',
+      t('تعذّر حفظ الفرع'),
     );
     if (ok) setBranchEdit(null);
   }
@@ -150,14 +151,14 @@ export default function CustomerPage() {
           method: 'PATCH',
           body: JSON.stringify({ isActive: !b.isActive }),
         }),
-      'تعذّر تحديث الفرع',
+      t('تعذّر تحديث الفرع'),
     );
 
   if (!customer) {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">جارٍ التحميل…</p>}
+        {!error && <PageSkeleton />}
       </div>
     );
   }
@@ -170,7 +171,7 @@ export default function CustomerPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/customers" className="text-sm text-brand-muted underline">
-            ← العملاء
+            {t('← العملاء')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
             {customer.name}{' '}
@@ -180,16 +181,16 @@ export default function CustomerPage() {
           </h1>
           <div className="mt-1">
             {customer.isActive ? (
-              <Badge tone="green">فعّال</Badge>
+              <Badge tone="green">{t('فعّال')}</Badge>
             ) : (
-              <Badge tone="red">موقوف</Badge>
+              <Badge tone="red">{t('موقوف')}</Badge>
             )}
           </div>
         </div>
         {canManage && !editing && (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => void toggleCustomer()} disabled={busy}>
-              {customer.isActive ? 'إيقاف العميل' : 'تفعيل العميل'}
+              {customer.isActive ? t('إيقاف العميل') : t('تفعيل العميل')}
             </Button>
             <Button
               onClick={() => {
@@ -197,7 +198,7 @@ export default function CustomerPage() {
                 setEditing(true);
               }}
             >
-              تعديل البيانات
+              {t('تعديل البيانات')}
             </Button>
           </div>
         )}
@@ -205,7 +206,7 @@ export default function CustomerPage() {
 
       <ErrorBox message={error} />
 
-      <Card title="بيانات العميل">
+      <Card title={t('بيانات العميل')}>
         {editing && form ? (
           <form onSubmit={saveCustomer} className="space-y-4">
             <CustomerFields
@@ -216,35 +217,35 @@ export default function CustomerPage() {
             />
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
-                {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+                {busy ? t('جارٍ الحفظ…') : t('حفظ')}
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditing(false)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </form>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Info label="الاسم بالإنجليزية" value={customer.nameEn} ltr />
-            <Info label="الفئة" value={customer.category?.name ?? null} />
-            <Info label="الاسم التجاري" value={customer.tradeName?.name ?? null} />
-            <Info label="الشخص المسؤول" value={customer.contactName} />
-            <Info label="الهاتف" value={customer.phone} ltr />
-            <Info label="البريد الإلكتروني" value={customer.email} ltr />
-            <Info label="المدينة" value={customer.city} />
-            <Info label="العنوان" value={customer.address} />
-            <Info label="ملاحظات" value={customer.notes} />
+            <Info label={t('الاسم بالإنجليزية')} value={customer.nameEn} ltr />
+            <Info label={t('الفئة')} value={customer.category?.name ?? null} />
+            <Info label={t('الاسم التجاري')} value={customer.tradeName?.name ?? null} />
+            <Info label={t('الشخص المسؤول')} value={customer.contactName} />
+            <Info label={t('الهاتف')} value={customer.phone} ltr />
+            <Info label={t('البريد الإلكتروني')} value={customer.email} ltr />
+            <Info label={t('المدينة')} value={customer.city} />
+            <Info label={t('العنوان')} value={customer.address} />
+            <Info label={t('ملاحظات')} value={customer.notes} />
           </div>
         )}
       </Card>
 
       {contracts && (
         <Card
-          title={`العقود (${contracts.length})`}
+          title={t('العقود ({0})', contracts.length)}
           actions={
             can('contracts.manage') && (
               <Link href={`/contracts/new?customerId=${customer.id}`}>
-                <Button variant="gold">+ عقد جديد</Button>
+                <Button variant="gold">{t('+ عقد جديد')}</Button>
               </Link>
             )
           }
@@ -256,17 +257,17 @@ export default function CustomerPage() {
                   {c.number}
                 </Link>
                 <span className="font-mono text-brand-muted">
-                  {c.startDate} ← {c.endDate}
+                  {c.startDate} {arrow()} {c.endDate}
                 </span>
                 <span>
-                  {c.paymentType === 'credit' ? `سقف ${formatJod(c.creditLimit)}` : 'نقدي'}
+                  {c.paymentType === 'credit' ? t('سقف {0}', formatJod(c.creditLimit)) : t('نقدي')}
                 </span>
-                <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+                <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
               </li>
             ))}
             {contracts.length === 0 && (
               <li className="py-3 text-brand-muted">
-                لا يوجد عقد — لا يستطيع العميل الطلب حتى يُضاف له عقد.
+                {t('لا يوجد عقد — لا يستطيع العميل الطلب حتى يُضاف له عقد.')}
               </li>
             )}
           </ul>
@@ -274,7 +275,7 @@ export default function CustomerPage() {
       )}
 
       <Card
-        title={`الفروع (${customer.branches.length})`}
+        title={t('الفروع ({0})', customer.branches.length)}
         actions={
           canManage &&
           branchEdit === null && (
@@ -285,7 +286,7 @@ export default function CustomerPage() {
                 setBranchEdit('new');
               }}
             >
-              + فرع جديد
+              {t('+ فرع جديد')}
             </Button>
           )
         }
@@ -296,34 +297,39 @@ export default function CustomerPage() {
             className="mb-5 space-y-4 rounded-xl border border-brand-line bg-brand-cream/40 p-4"
           >
             <h3 className="font-bold text-brand-brown">
-              {branchEdit === 'new' ? 'فرع جديد' : 'تعديل الفرع'}
+              {branchEdit === 'new' ? t('فرع جديد') : t('تعديل الفرع')}
             </h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Input
-                label="اسم الفرع"
+                label={t('اسم الفرع')}
                 required
                 minLength={2}
                 value={branchForm.name}
                 onChange={setB('name')}
               />
               <Input
-                label="كود الفرع"
+                label={t('كود الفرع')}
                 dir="ltr"
-                placeholder={branchEdit === 'new' ? 'يُولَّد تلقائياً' : undefined}
+                placeholder={branchEdit === 'new' ? t('يُولَّد تلقائياً') : undefined}
                 value={branchForm.code}
                 onChange={setB('code')}
               />
               <Input
-                label="الشخص المسؤول"
+                label={t('الشخص المسؤول')}
                 value={branchForm.contactName}
                 onChange={setB('contactName')}
               />
-              <Input label="الهاتف" dir="ltr" value={branchForm.phone} onChange={setB('phone')} />
-              <Input label="المدينة" value={branchForm.city} onChange={setB('city')} />
-              <Input label="العنوان" value={branchForm.address} onChange={setB('address')} />
+              <Input
+                label={t('الهاتف')}
+                dir="ltr"
+                value={branchForm.phone}
+                onChange={setB('phone')}
+              />
+              <Input label={t('المدينة')} value={branchForm.city} onChange={setB('city')} />
+              <Input label={t('العنوان')} value={branchForm.address} onChange={setB('address')} />
               <div className="md:col-span-3">
                 <Input
-                  label="ملاحظات التسليم للسائق"
+                  label={t('ملاحظات التسليم للسائق')}
                   value={branchForm.deliveryNotes}
                   onChange={setB('deliveryNotes')}
                 />
@@ -331,10 +337,10 @@ export default function CustomerPage() {
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
-                {busy ? 'جارٍ الحفظ…' : 'حفظ الفرع'}
+                {busy ? t('جارٍ الحفظ…') : t('حفظ الفرع')}
               </Button>
               <Button type="button" variant="outline" onClick={() => setBranchEdit(null)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </form>
@@ -343,20 +349,20 @@ export default function CustomerPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الكود</th>
-                <th>الفرع</th>
-                <th>المسؤول</th>
-                <th>الهاتف</th>
-                <th>العنوان</th>
-                <th>الحالة</th>
+              <tr className="border-b border-brand-line text-start text-brand-muted">
+                <th className="py-2">{t('الكود')}</th>
+                <th>{t('الفرع')}</th>
+                <th>{t('المسؤول')}</th>
+                <th>{t('الهاتف')}</th>
+                <th>{t('العنوان')}</th>
+                <th>{t('الحالة')}</th>
                 {canManage && <th />}
               </tr>
             </thead>
             <tbody>
               {customer.branches.map((b) => (
                 <tr key={b.id} className="border-b border-stone-100">
-                  <td className="py-2.5 pl-4 font-mono">{b.code}</td>
+                  <td className="py-2.5 pe-4 font-mono">{b.code}</td>
                   <td className="font-bold">
                     {b.name}
                     {b.deliveryNotes && (
@@ -364,15 +370,15 @@ export default function CustomerPage() {
                     )}
                   </td>
                   <td>{b.contactName ?? '—'}</td>
-                  <td dir="ltr" style={{ textAlign: 'right' }}>
+                  <td dir="ltr" style={{ textAlign: 'start' }}>
                     {b.phone ?? '—'}
                   </td>
                   <td>{[b.city, b.address].filter(Boolean).join(' - ') || '—'}</td>
                   <td>
                     {b.isActive ? (
-                      <Badge tone="green">فعّال</Badge>
+                      <Badge tone="green">{t('فعّال')}</Badge>
                     ) : (
-                      <Badge tone="red">موقوف</Badge>
+                      <Badge tone="red">{t('موقوف')}</Badge>
                     )}
                   </td>
                   {canManage && (
@@ -385,13 +391,13 @@ export default function CustomerPage() {
                             setBranchEdit(b.id);
                           }}
                         >
-                          تعديل
+                          {t('تعديل')}
                         </button>
                         <button
                           className="text-brand-brown underline"
                           onClick={() => void toggleBranch(b)}
                         >
-                          {b.isActive ? 'إيقاف' : 'تفعيل'}
+                          {b.isActive ? t('إيقاف') : t('تفعيل')}
                         </button>
                       </div>
                     </td>
@@ -401,7 +407,7 @@ export default function CustomerPage() {
               {customer.branches.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-6 text-center text-brand-muted">
-                    لا توجد فروع — أضف فرعاً حتى يمكن استقبال الطلبات لهذا العميل
+                    {t('لا توجد فروع — أضف فرعاً حتى يمكن استقبال الطلبات لهذا العميل')}
                   </td>
                 </tr>
               )}

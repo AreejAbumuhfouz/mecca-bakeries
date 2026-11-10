@@ -8,6 +8,7 @@ import {
   type ItemUnit,
   type PaymentType,
 } from '@mecca/shared';
+import { t } from '@/lib/i18n';
 
 export type ContractRow = {
   id: string;
@@ -111,11 +112,11 @@ export const termsToForm = (c: Contract): TermsForm => ({
 /** Converts the form to the API body, or returns an Arabic error message. */
 export function termsToBody(f: TermsForm): Record<string, unknown> | string {
   const creditLimit = f.paymentType === 'cash' ? 0 : parseJod(f.creditLimit);
-  if (creditLimit === null) return 'سقف الائتمان غير صالح';
+  if (creditLimit === null) return t('سقف الائتمان غير صالح');
   const discountBps = parsePercentToBps(f.discount || '0');
-  if (discountBps === null) return 'نسبة الخصم غير صالحة';
+  if (discountBps === null) return t('نسبة الخصم غير صالحة');
   const maxReturnBps = f.allowReturns ? parsePercentToBps(f.maxReturn || '0') : 0;
-  if (maxReturnBps === null) return 'نسبة المرتجعات غير صالحة';
+  if (maxReturnBps === null) return t('نسبة المرتجعات غير صالحة');
   const int = (v: string) => Math.max(0, Math.trunc(Number(v) || 0));
   return {
     startDate: f.startDate,

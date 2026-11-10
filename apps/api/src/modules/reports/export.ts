@@ -5,6 +5,7 @@ import type { Db } from '../../db/client.js';
 import { embeddedFontCss, escapeHtml as e } from '../../lib/pdf.js';
 import type { BrandHeader } from '../../lib/brand-header.js';
 import type { Column, ReportTable, Row } from './reports.service.js';
+import { currentLocale, isRtlNow, t } from '../../lib/i18n.js';
 
 const BROWN = 'FF3E2A1C';
 const CREAM = 'FFFBF7F0';
@@ -24,7 +25,7 @@ function addTableSheet(
   table: Pick<ReportTable, 'title' | 'subtitle' | 'columns' | 'rows' | 'totals'>,
 ) {
   const ws = wb.addWorksheet(name.slice(0, 31), {
-    views: [{ rightToLeft: true, state: 'frozen', ySplit: 3 }],
+    views: [{ rightToLeft: isRtlNow(), state: 'frozen', ySplit: 3 }],
   });
   ws.mergeCells(1, 1, 1, Math.max(1, table.columns.length));
   ws.getCell(1, 1).value = table.title;
@@ -51,17 +52,17 @@ function addTableSheet(
   header.height = 30;
   for (const r of table.rows) ws.addRow(table.columns.map((c) => cellValue(c, r[c.key])));
   if (table.totals) {
-    const t = ws.addRow(
+    const tr = ws.addRow(
       table.columns.map((c, i) =>
         i === 0
-          ? String(table.totals![c.key] ?? 'المجموع')
+          ? String(table.totals![c.key] ?? t('المجموع'))
           : c.kind === 'percent'
             ? null
             : cellValue(c, table.totals![c.key]),
       ),
     );
-    t.font = { bold: true };
-    t.eachCell(
+    tr.font = { bold: true };
+    tr.eachCell(
       (cell) => (cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: CREAM } }),
     );
   }
@@ -70,7 +71,7 @@ function addTableSheet(
 
 export async function reportXlsx(table: ReportTable) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'مخابز مكة';
+  wb.creator = t('مخابز مكة');
   addTableSheet(wb, table.title, table);
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
@@ -93,23 +94,23 @@ export function reportHtml(table: ReportTable, brand: BrandHeader, printedAt: st
     )
     .join('');
   const totals = table.totals
-    ? `<tr class="t">${table.columns.map((c, i) => `<td class="${num(c) ? 'n' : ''}">${i === 0 ? e(String(table.totals![c.key] ?? 'المجموع')) : c.kind === 'percent' ? '' : e(fmt(c, table.totals![c.key]))}</td>`).join('')}</tr>`
+    ? `<tr class="t">${table.columns.map((c, i) => `<td class="${num(c) ? 'n' : ''}">${i === 0 ? e(String(table.totals![c.key] ?? t('المجموع'))) : c.kind === 'percent' ? '' : e(fmt(c, table.totals![c.key]))}</td>`).join('')}</tr>`
     : '';
   const landscape = table.columns.length > 7;
-  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${e(table.title)}</title><style>
+  return `<!doctype html><html lang="${currentLocale()}" dir="${isRtlNow() ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${e(table.title)}</title><style>
 ${embeddedFontCss()}
 @page{size:A4 ${landscape ? 'landscape' : 'portrait'};margin:14mm 10mm}
 body{font-family:Cairo,sans-serif;color:#3E2A1C;font-size:10.5px;margin:0}
 header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #C8862A;padding-bottom:8px;margin-bottom:10px}
 header img{height:52px}h1{margin:0;font-size:19px}.m{color:#7A6E62}
-table{width:100%;border-collapse:collapse}th{background:#3E2A1C;color:#fff;padding:6px;text-align:right}
+table{width:100%;border-collapse:collapse}th{background:#3E2A1C;color:#fff;padding:6px;text-align:start}
 td{padding:5px 6px;border-bottom:1px solid #E8DCC8}.n{direction:ltr;text-align:right;white-space:nowrap}
 tr:nth-child(even) td{background:#FBF7F0}tr.t td{font-weight:700;border-top:2px solid #3E2A1C;background:#F7EAD0}
 footer{margin-top:14px;color:#7A6E62;font-size:9px;display:flex;justify-content:space-between}
 </style></head><body>
 <header><div><h1>${e(table.title)}</h1><div class="m">${e(table.subtitle)}</div></div>${brand.logoDataUrl ? `<img src="${brand.logoDataUrl}" alt="">` : `<b>${e(brand.name)}</b>`}</header>
-<table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${table.columns.length}" class="m">لا توجد بيانات في هذه الفترة</td></tr>`}${totals}</tbody></table>
-<footer><span>${e(brand.name)} — المبالغ بالدينار الأردني</span><span>طُبع ${e(printedAt)}</span></footer>
+<table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${table.columns.length}" class="m">${t('لا توجد بيانات في هذه الفترة')}</td></tr>`}${totals}</tbody></table>
+<footer><span>${t('{0} — المبالغ بالدينار الأردني', e(brand.name))}</span><span>${t('طُبع {0}', e(printedAt))}</span></footer>
 </body></html>`;
 }
 
@@ -154,16 +155,16 @@ const HIDDEN = new Set(['signature_svg', 'google_sub']);
 
 export async function fullExportXlsx(db: Db) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'مخابز مكة';
+  wb.creator = t('مخابز مكة');
   for (const [table, label] of EXPORT_TABLES) {
     const rows = (await db.execute(
       sql.raw(`select * from ${table} order by 1 limit 200000`),
     )) as unknown as Record<string, unknown>[];
     const ws = wb.addWorksheet(label.slice(0, 31), {
-      views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }],
+      views: [{ rightToLeft: isRtlNow(), state: 'frozen', ySplit: 1 }],
     });
     const cols = rows[0] ? Object.keys(rows[0]).filter((k) => !HIDDEN.has(k)) : [];
-    ws.addRow(cols.length ? cols : ['(فارغ)']).font = { bold: true };
+    ws.addRow(cols.length ? cols : [t('(فارغ)')]).font = { bold: true };
     for (const r of rows)
       ws.addRow(
         cols.map((k) => {

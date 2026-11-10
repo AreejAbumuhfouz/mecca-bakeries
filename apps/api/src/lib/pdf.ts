@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { chromium, type Browser } from 'playwright-core';
 import { AppError } from './errors.js';
 import { logger } from './logger.js';
+import { t } from './i18n.js';
 
 /** Turns an HTML document into PDF bytes. Replaceable in tests. */
 export type PdfRenderer = (html: string) => Promise<Buffer>;
@@ -62,7 +63,7 @@ export function createChromePdfRenderer(): PdfRenderer {
         throw new AppError(
           503,
           'PDF_UNAVAILABLE',
-          'إنشاء PDF يحتاج متصفح Chrome على الجهاز (أو CHROME_PATH)',
+          t('إنشاء PDF يحتاج متصفح Chrome على الجهاز (أو CHROME_PATH)'),
         );
       const b = await chromium.launch({
         executablePath,
@@ -91,7 +92,7 @@ export function createChromePdfRenderer(): PdfRenderer {
       });
     } catch (err) {
       logger.error({ err }, 'PDF rendering failed');
-      throw new AppError(500, 'PDF_FAILED', 'تعذّر إنشاء ملف PDF');
+      throw new AppError(500, 'PDF_FAILED', t('تعذّر إنشاء ملف PDF'));
     } finally {
       await page.close().catch(() => undefined);
     }

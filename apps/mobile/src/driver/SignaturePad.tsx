@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { PanResponder, Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors, ui } from '../theme';
+import { t } from '../i18n';
 
 export type SignatureValue = { width: number; height: number; paths: string[] };
 
@@ -75,7 +76,7 @@ export function SignaturePad({ onChange }: { onChange: (v: SignatureValue | null
         </Svg>
         {paths.length === 0 && !current && (
           <Text style={{ position: 'absolute', top: 66, alignSelf: 'center', color: '#9A8E82' }}>
-            وقّع هنا بإصبعك
+            {t('وقّع هنا بإصبعك')}
           </Text>
         )}
       </View>
@@ -87,7 +88,7 @@ export function SignaturePad({ onChange }: { onChange: (v: SignatureValue | null
             onChange(null);
           }}
         >
-          <Text style={[ui.muted, { textDecorationLine: 'underline' }]}>مسح التوقيع</Text>
+          <Text style={[ui.muted, { textDecorationLine: 'underline' }]}>{t('مسح التوقيع')}</Text>
         </Pressable>
       )}
     </View>

@@ -27,7 +27,7 @@ export type Me = {
     outstanding: number;
     overdueAmount: number;
     available: number | null;
-    reasons: { code: string; message: string }[];
+    reasons: { code: string; message: string; key?: string; args?: string[] }[];
     contract: { number: string; endDate: string } | null;
   };
 };
@@ -49,7 +49,7 @@ export type Order = DayOrder & {
   notes: string | null;
   cutoffAt: string;
   editableByRestaurant: boolean;
-  creditReasons: { code: string; message: string }[] | null;
+  creditReasons: { code: string; message: string; key?: string; args?: string[] }[] | null;
   lines: {
     itemId: string;
     quantity: number;

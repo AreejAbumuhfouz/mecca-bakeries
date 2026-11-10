@@ -3,9 +3,13 @@ import { ZodError } from 'zod';
 import type { ApiError } from '@mecca/shared';
 import { AppError } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
+import { t } from '../lib/i18n.js';
 
 export const notFoundHandler: RequestHandler = (_req, res) => {
-  const body: ApiError = { ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } };
+  const body: ApiError = {
+    ok: false,
+    error: { code: 'NOT_FOUND', message: t('الصفحة غير موجودة') },
+  };
   res.status(404).json(body);
 };
 
@@ -28,15 +32,23 @@ function handle(
   if (err instanceof AppError) {
     const body: ApiError = {
       ok: false,
-      error: { code: err.code, message: err.message, details: err.details },
+      // Messages written at module level (or passed through) are still Arabic keys.
+      error: { code: err.code, message: t(err.message), details: err.details },
     };
     res.status(err.status).json(body);
     return;
   }
   if (err instanceof ZodError) {
+    // Our own field messages are Arabic keys; zod's built-in ones are English and generic.
+    const own = err.issues.map((i) => i.message).find((m) => /[\u0600-\u06FF]/.test(m));
+    const flat = err.flatten((i) => t(i.message));
     const body: ApiError = {
       ok: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Invalid request', details: err.flatten() },
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: own ? t(own) : t('البيانات المُدخلة غير صحيحة'),
+        details: flat,
+      },
     };
     res.status(400).json(body);
     return;
@@ -46,7 +58,9 @@ function handle(
     (err as { status?: number; statusCode?: number }).status ??
     (err as { statusCode?: number }).statusCode;
   if (status && status >= 400 && status < 500) {
-    res.status(status).json({ ok: false, error: { code: 'BAD_REQUEST', message: 'Bad request' } });
+    res
+      .status(status)
+      .json({ ok: false, error: { code: 'BAD_REQUEST', message: t('الطلب غير صالح') } });
     return;
   }
   const ctx = {
@@ -61,7 +75,7 @@ function handle(
     ok: false,
     error: {
       code: 'INTERNAL_ERROR',
-      message: 'Something went wrong',
+      message: t('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'),
       details: { requestId: req.requestId },
     },
   };

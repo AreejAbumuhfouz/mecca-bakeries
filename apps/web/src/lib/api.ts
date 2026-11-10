@@ -1,4 +1,5 @@
 import type { ApiResponse, LoginResult } from '@mecca/shared';
+import { getLocale, t } from '@/lib/i18n';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -25,14 +26,18 @@ export const setSessionExpiredHandler = (fn: (() => void) | null) => {
 
 async function parse<T>(res: Response): Promise<T> {
   const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
-  if (!body) throw new ApiRequestError(res.status, 'BAD_RESPONSE', 'تعذّر الاتصال بالخادم');
+  if (!body) throw new ApiRequestError(res.status, 'BAD_RESPONSE', t('تعذّر الاتصال بالخادم'));
   if (!body.ok) throw new ApiRequestError(res.status, body.error.code, body.error.message);
   return body.data;
 }
 
 /** Uses the httpOnly refresh cookie to get a new access token. Concurrent callers share one request. */
 export function refreshSession(): Promise<LoginResult | null> {
-  refreshing ??= fetch(`${API_URL}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
+  refreshing ??= fetch(`${API_URL}/api/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-Locale': getLocale() },
+  })
     .then((res) => (res.ok ? parse<LoginResult>(res) : null))
     .then((result) => {
       setAccessToken(result?.accessToken ?? null);
@@ -52,6 +57,7 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
   if (typeof init.body === 'string' && !headers.has('Content-Type'))
     headers.set('Content-Type', 'application/json');
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+  headers.set('X-Locale', getLocale());
   const res = await fetch(`${API_URL}${path}`, { ...init, headers, credentials: 'include' });
   if (res.status === 401 && retry && !path.startsWith('/api/auth/')) {
     const refreshed = await refreshSession();
@@ -87,17 +93,19 @@ export const fileUrl = (id: string) => `${API_URL}/api/files/${id}`;
 /** Opens a private file (contract attachment) in a new tab using the current session. */
 export const openPrivateFile = (id: string) => openAuthed(`/api/files/${id}`);
 
-/** Opens any protected API file (e.g. a purchase order PDF) in a new tab. */
 /** Downloads a protected file (PDF, signature…) with the session token. */
 export async function fetchAuthedBlob(path: string) {
   const load = () =>
     fetch(`${API_URL}${path}`, {
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      headers: {
+        'X-Locale': getLocale(),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       credentials: 'include',
     });
   let res = await load();
   if (res.status === 401 && (await refreshSession())) res = await load();
-  if (!res.ok) throw new ApiRequestError(res.status, 'FILE_ERROR', 'تعذّر فتح الملف');
+  if (!res.ok) throw new ApiRequestError(res.status, 'FILE_ERROR', t('تعذّر فتح الملف'));
   return res.blob();
 }
 

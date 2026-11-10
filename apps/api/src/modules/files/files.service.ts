@@ -6,6 +6,7 @@ import type { Db } from '../../db/client.js';
 import { files } from '../../db/schema/index.js';
 import { AppError, notFound } from '../../lib/errors.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
+import { t } from '../../lib/i18n.js';
 
 /** Allowed uploads and the extension stored on disk. */
 export const ALLOWED_TYPES: Record<string, string> = {
@@ -32,7 +33,11 @@ export function createFilesService(db: Db, uploadDir: string) {
     async save(input: UploadInput, ctx: AuditContext) {
       const ext = ALLOWED_TYPES[input.mimeType];
       if (!ext)
-        throw new AppError(400, 'BAD_FILE_TYPE', 'نوع الملف غير مسموح (PNG أو JPG أو WEBP أو PDF)');
+        throw new AppError(
+          400,
+          'BAD_FILE_TYPE',
+          t('نوع الملف غير مسموح (PNG أو JPG أو WEBP أو PDF)'),
+        );
       // Public images may be shown on invoices and in the app; PDFs are always private.
       const isPublic = input.isPublic && IMAGE_TYPES.includes(input.mimeType);
       const storageKey = `${randomUUID()}${ext}`;
@@ -70,9 +75,9 @@ export function createFilesService(db: Db, uploadDir: string) {
     async assertUsable(id: string | null | undefined, opts: { image?: boolean } = {}) {
       if (!id) return;
       const row = await db.query.files.findFirst({ where: eq(files.id, id) });
-      if (!row) throw new AppError(400, 'BAD_FILE', 'الملف غير موجود');
+      if (!row) throw new AppError(400, 'BAD_FILE', t('الملف غير موجود'));
       if (opts.image && !IMAGE_TYPES.includes(row.mimeType))
-        throw new AppError(400, 'BAD_FILE', 'يجب أن يكون الملف صورة');
+        throw new AppError(400, 'BAD_FILE', t('يجب أن يكون الملف صورة'));
     },
   };
 }

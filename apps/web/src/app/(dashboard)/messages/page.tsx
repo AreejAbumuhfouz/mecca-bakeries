@@ -5,6 +5,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Message = {
   id: string;
@@ -19,13 +20,13 @@ type Message = {
 };
 
 const STATUS_LABELS: Record<string, [string, 'green' | 'gold' | 'red' | 'neutral']> = {
-  queued: ['في الانتظار', 'neutral'],
-  skipped: ['لم يُرسل (واتساب غير مربوط)', 'neutral'],
-  sent: ['أُرسل', 'gold'],
-  delivered: ['وصل', 'green'],
-  read: ['قُرئ', 'green'],
-  failed: ['فشل', 'red'],
-  received: ['وارد', 'gold'],
+  queued: [t('في الانتظار'), 'neutral'],
+  skipped: [t('لم يُرسل (واتساب غير مربوط)'), 'neutral'],
+  sent: [t('أُرسل'), 'gold'],
+  delivered: [t('وصل'), 'green'],
+  read: [t('قُرئ'), 'green'],
+  failed: [t('فشل'), 'red'],
+  received: [t('وارد'), 'gold'],
 };
 
 export default function MessagesPage() {
@@ -50,7 +51,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const id = setTimeout(
-      () => void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل'))),
+      () => void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل')))),
       250,
     );
     return () => clearTimeout(id);
@@ -65,7 +66,7 @@ export default function MessagesPage() {
       setText('');
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الإرسال'));
+      setError(errorMessage(err, t('تعذّر الإرسال')));
     } finally {
       setBusy(false);
     }
@@ -74,17 +75,19 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-brown">رسائل واتساب</h1>
-        <p className="text-sm text-brand-muted">كل الرسائل الصادرة والواردة مع حالة الوصول.</p>
+        <h1 className="text-2xl font-bold text-brand-brown">{t('رسائل واتساب')}</h1>
+        <p className="text-sm text-brand-muted">
+          {t('كل الرسائل الصادرة والواردة مع حالة الوصول.')}
+        </p>
       </div>
       <ErrorBox message={error} />
 
       {can('orders.manage') && (
-        <Card title="رد على عميل">
+        <Card title={t('رد على عميل')}>
           <form onSubmit={send} className="flex flex-wrap items-end gap-2">
             <div className="w-44">
               <Input
-                label="الرقم"
+                label={t('الرقم')}
                 dir="ltr"
                 placeholder="0791234567"
                 required
@@ -94,29 +97,29 @@ export default function MessagesPage() {
             </div>
             <div className="min-w-64 flex-1">
               <Input
-                label="الرسالة"
+                label={t('الرسالة')}
                 required
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
             </div>
             <Button type="submit" disabled={busy}>
-              إرسال
+              {t('إرسال')}
             </Button>
           </form>
           <p className="mt-2 text-xs text-brand-muted">
-            الرد الحر يصل فقط خلال 24 ساعة من آخر رسالة من العميل (سياسة واتساب).
+            {t('الرد الحر يصل فقط خلال 24 ساعة من آخر رسالة من العميل (سياسة واتساب).')}
           </p>
         </Card>
       )}
 
       <Card
-        title={`الرسائل (${total})`}
+        title={t('الرسائل ({0})', total)}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               className="w-52 rounded-lg border border-brand-line px-3 py-2 text-sm"
-              placeholder="بحث بالرقم أو النص أو العميل"
+              placeholder={t('بحث بالرقم أو النص أو العميل')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -125,9 +128,9 @@ export default function MessagesPage() {
               value={direction}
               onChange={(e) => setDirection(e.target.value as '' | 'in' | 'out')}
             >
-              <option value="">الكل</option>
-              <option value="out">الصادرة</option>
-              <option value="in">الواردة</option>
+              <option value="">{t('الكل')}</option>
+              <option value="out">{t('الصادرة')}</option>
+              <option value="in">{t('الواردة')}</option>
             </select>
           </div>
         }
@@ -140,7 +143,7 @@ export default function MessagesPage() {
                 <span className="mt-0.5 text-lg">{m.direction === 'in' ? '⬅️' : '➡️'}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <b>{m.customerName ?? 'رقم غير مسجل'}</b>
+                    <b>{m.customerName ?? t('رقم غير مسجل')}</b>
                     <span dir="ltr" className="font-mono text-xs text-brand-muted">
                       +{m.phone}
                     </span>
@@ -153,7 +156,7 @@ export default function MessagesPage() {
               </li>
             );
           })}
-          {items.length === 0 && <li className="py-3 text-brand-muted">لا توجد رسائل</li>}
+          {items.length === 0 && <li className="py-3 text-brand-muted">{t('لا توجد رسائل')}</li>}
         </ul>
       </Card>
     </div>

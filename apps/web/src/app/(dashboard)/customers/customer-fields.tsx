@@ -2,6 +2,7 @@
 
 import { Input, Select, Textarea } from '@/components/ui';
 import type { Category, CustomerForm, TradeNameOption } from '@/lib/customers';
+import { t } from '@/lib/i18n';
 
 export function CustomerFields({
   form,
@@ -20,17 +21,28 @@ export function CustomerFields({
     setForm({ ...form, [key]: e.target.value });
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <Input label="اسم العميل" required minLength={2} value={form.name} onChange={set('name')} />
-      <Input label="الاسم بالإنجليزية" dir="ltr" value={form.nameEn} onChange={set('nameEn')} />
       <Input
-        label="الكود"
+        label={t('اسم العميل')}
+        required
+        minLength={2}
+        value={form.name}
+        onChange={set('name')}
+      />
+      <Input
+        label={t('الاسم بالإنجليزية')}
+        dir="ltr"
+        value={form.nameEn}
+        onChange={set('nameEn')}
+      />
+      <Input
+        label={t('الكود')}
         dir="ltr"
         placeholder={codeHint}
         value={form.code}
         onChange={set('code')}
       />
-      <Select label="الفئة" value={form.categoryId} onChange={set('categoryId')}>
-        <option value="">بدون فئة</option>
+      <Select label={t('الفئة')} value={form.categoryId} onChange={set('categoryId')}>
+        <option value="">{t('بدون فئة')}</option>
         {categories
           .filter((c) => c.isActive || c.id === form.categoryId)
           .map((c) => (
@@ -40,32 +52,32 @@ export function CustomerFields({
           ))}
       </Select>
       <Select
-        label="الاسم التجاري (للفواتير)"
+        label={t('الاسم التجاري (للفواتير)')}
         value={form.tradeNameId}
         onChange={set('tradeNameId')}
       >
-        <option value="">— اختر —</option>
+        <option value="">{t('— اختر —')}</option>
         {tradeNames
-          .filter((t) => t.isActive || t.id === form.tradeNameId)
-          .map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
+          .filter((tr) => tr.isActive || tr.id === form.tradeNameId)
+          .map((tr) => (
+            <option key={tr.id} value={tr.id}>
+              {tr.name}
             </option>
           ))}
       </Select>
-      <Input label="الشخص المسؤول" value={form.contactName} onChange={set('contactName')} />
-      <Input label="الهاتف" dir="ltr" value={form.phone} onChange={set('phone')} />
+      <Input label={t('الشخص المسؤول')} value={form.contactName} onChange={set('contactName')} />
+      <Input label={t('الهاتف')} dir="ltr" value={form.phone} onChange={set('phone')} />
       <Input
-        label="البريد الإلكتروني"
+        label={t('البريد الإلكتروني')}
         type="email"
         dir="ltr"
         value={form.email}
         onChange={set('email')}
       />
-      <Input label="المدينة" value={form.city} onChange={set('city')} />
-      <Input label="العنوان" value={form.address} onChange={set('address')} />
+      <Input label={t('المدينة')} value={form.city} onChange={set('city')} />
+      <Input label={t('العنوان')} value={form.address} onChange={set('address')} />
       <div className="md:col-span-3">
-        <Textarea label="ملاحظات" value={form.notes} onChange={set('notes')} />
+        <Textarea label={t('ملاحظات')} value={form.notes} onChange={set('notes')} />
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { STATE_TONE, type ContractRow } from '@/lib/contracts';
+import { t } from '@/lib/i18n';
 
 type Page = { items: ContractRow[]; total: number };
 const filterClass = 'rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm';
@@ -33,7 +34,7 @@ export default function ContractsPage() {
 
   useEffect(() => {
     const id = setTimeout(
-      () => void load().catch((err) => setError(errorMessage(err, 'تعذّر تحميل العقود'))),
+      () => void load().catch((err) => setError(errorMessage(err, t('تعذّر تحميل العقود')))),
       250,
     );
     return () => clearTimeout(id);
@@ -43,14 +44,14 @@ export default function ContractsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">العقود والائتمان</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('العقود والائتمان')}</h1>
           <p className="text-sm text-brand-muted">
-            الأسعار الخاصة والخصم وسقف الائتمان ومدة السداد والمرتجعات لكل عميل.
+            {t('الأسعار الخاصة والخصم وسقف الائتمان ومدة السداد والمرتجعات لكل عميل.')}
           </p>
         </div>
         {can('contracts.manage') && (
           <Link href="/contracts/new">
-            <Button>+ عقد جديد</Button>
+            <Button>{t('+ عقد جديد')}</Button>
           </Link>
         )}
       </div>
@@ -58,12 +59,12 @@ export default function ContractsPage() {
       <ErrorBox message={error} />
 
       <Card
-        title={`العقود${data ? ` (${data.total})` : ''}`}
+        title={t('العقود{0}', data ? ` (${data.total})` : '')}
         actions={
           <div className="flex flex-wrap gap-2">
             <input
               className={`${filterClass} w-56`}
-              placeholder="بحث برقم العقد أو العميل"
+              placeholder={t('بحث برقم العقد أو العميل')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -72,10 +73,10 @@ export default function ContractsPage() {
               value={state}
               onChange={(e) => setState(e.target.value as '' | ContractState)}
             >
-              <option value="">كل الحالات</option>
+              <option value="">{t('كل الحالات')}</option>
               {CONTRACT_STATES.map((s) => (
                 <option key={s} value={s}>
-                  {CONTRACT_STATE_LABELS_AR[s]}
+                  {t(CONTRACT_STATE_LABELS_AR[s])}
                 </option>
               ))}
             </select>
@@ -85,45 +86,45 @@ export default function ContractsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">رقم العقد</th>
-                <th>العميل</th>
-                <th>من</th>
-                <th>إلى</th>
-                <th>الدفع</th>
-                <th>سقف الائتمان</th>
-                <th>الخصم العام</th>
-                <th>الحالة</th>
+              <tr className="border-b border-brand-line text-start text-brand-muted">
+                <th className="py-2">{t('رقم العقد')}</th>
+                <th>{t('العميل')}</th>
+                <th>{t('من')}</th>
+                <th>{t('إلى')}</th>
+                <th>{t('الدفع')}</th>
+                <th>{t('سقف الائتمان')}</th>
+                <th>{t('الخصم العام')}</th>
+                <th>{t('الحالة')}</th>
               </tr>
             </thead>
             <tbody>
               {data?.items.map((c) => (
                 <tr key={c.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/contracts/${c.id}`} className="text-brand-brown underline">
                       {c.number}
                     </Link>
                   </td>
                   <td className="font-bold">
                     <Link href={`/contracts/${c.id}`}>{c.customerName}</Link>
-                    <span className="mr-2 font-mono text-xs font-normal text-brand-muted">
+                    <span className="ms-2 font-mono text-xs font-normal text-brand-muted">
                       {c.customerCode}
                     </span>
                   </td>
                   <td className="font-mono">{c.startDate}</td>
                   <td className="font-mono">{c.endDate}</td>
-                  <td>{PAYMENT_TYPE_LABELS_AR[c.paymentType]}</td>
+                  <td>{t(PAYMENT_TYPE_LABELS_AR[c.paymentType])}</td>
                   <td>{c.paymentType === 'credit' ? formatJod(c.creditLimit) : '—'}</td>
                   <td>{c.discountBps ? `${c.discountBps / 100}%` : '—'}</td>
                   <td>
-                    <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+                    <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
                   </td>
                 </tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-6 text-center text-brand-muted">
-                    لا توجد عقود
+                    {t('لا توجد عقود')}
                   </td>
                 </tr>
               )}

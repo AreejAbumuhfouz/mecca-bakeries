@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Select } from '@/components/ui';
 import type { RouteRow } from '@/lib/billing';
 import type { Vehicle } from '@/lib/production';
+import { t } from '@/lib/i18n';
 
 type Branch = {
   branchId: string;
@@ -40,7 +41,7 @@ export default function RoutesPage() {
     setVehicles(await api<Vehicle[]>('/api/production/vehicles').catch(() => []));
   }, []);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>) {
@@ -49,7 +50,7 @@ export default function RoutesPage() {
       await fn();
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الحفظ'));
+      setError(errorMessage(err, t('تعذّر الحفظ')));
     }
   }
 
@@ -85,33 +86,33 @@ export default function RoutesPage() {
     <div className="space-y-6">
       <div>
         <Link href="/deliveries" className="text-sm text-brand-muted underline">
-          ← التوزيع
+          {t('← التوزيع')}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-brand-brown">مسارات السائقين</h1>
+        <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('مسارات السائقين')}</h1>
         <p className="text-sm text-brand-muted">
-          كل فرع في مسار واحد بترتيب التوزيع. السائق والسيارة يُنسخان لمسار كل يوم.
+          {t('كل فرع في مسار واحد بترتيب التوزيع. السائق والسيارة يُنسخان لمسار كل يوم.')}
         </p>
       </div>
       <ErrorBox message={error} />
 
       {drivers.length === 0 && (
         <div className="rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          لا يوجد سائقون. أضيفيهم من «المستخدمون» بدور «سائق».
+          {t('لا يوجد سائقون. أضفهم من «المستخدمون» بدور «سائق».')}
         </div>
       )}
 
       {canManage && (
-        <Card title="مسار جديد">
+        <Card title={t('مسار جديد')}>
           <form onSubmit={addRoute} className="grid grid-cols-1 items-end gap-3 md:grid-cols-4">
             <Input
-              label="اسم المسار"
+              label={t('اسم المسار')}
               required
               minLength={2}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <Select
-              label="السائق"
+              label={t('السائق')}
               value={form.driverId}
               onChange={(e) => setForm({ ...form, driverId: e.target.value })}
             >
@@ -123,7 +124,7 @@ export default function RoutesPage() {
               ))}
             </Select>
             <Select
-              label="السيارة"
+              label={t('السيارة')}
               value={form.vehicleId}
               onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
             >
@@ -136,7 +137,7 @@ export default function RoutesPage() {
                   </option>
                 ))}
             </Select>
-            <Button type="submit">+ إضافة</Button>
+            <Button type="submit">{t('+ إضافة')}</Button>
           </form>
         </Card>
       )}
@@ -144,13 +145,13 @@ export default function RoutesPage() {
       {routes.map((r) => (
         <Card
           key={r.id}
-          title={`${r.name} (${r.stops.length} فرع)`}
-          actions={!r.isActive && <Badge tone="red">موقوف</Badge>}
+          title={t('{0} ({1} فرع)', r.name, r.stops.length)}
+          actions={!r.isActive && <Badge tone="red">{t('موقوف')}</Badge>}
         >
           {canManage && (
             <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
               <Select
-                label="السائق"
+                label={t('السائق')}
                 value={r.driverId ?? ''}
                 onChange={(e) => void patch(r, { driverId: e.target.value || null })}
               >
@@ -162,7 +163,7 @@ export default function RoutesPage() {
                 ))}
               </Select>
               <Select
-                label="السيارة"
+                label={t('السيارة')}
                 value={r.vehicleId ?? ''}
                 onChange={(e) => void patch(r, { vehicleId: e.target.value || null })}
               >
@@ -174,14 +175,14 @@ export default function RoutesPage() {
                 ))}
               </Select>
               <Select
-                label="إضافة فرع"
+                label={t('إضافة فرع')}
                 value=""
                 onChange={(e) =>
                   e.target.value &&
                   void setStops(r, [...r.stops.map((s) => s.branchId), e.target.value])
                 }
               >
-                <option value="">— اختاري فرعاً بدون مسار —</option>
+                <option value="">{t('— اختر فرعاً بدون مسار —')}</option>
                 {free.map((b) => (
                   <option key={b.branchId} value={b.branchId}>
                     {b.customerName} — {b.branchName}
@@ -210,7 +211,7 @@ export default function RoutesPage() {
                     <span className="flex gap-1">
                       <button
                         disabled={i === 0}
-                        aria-label="أعلى"
+                        aria-label={t('أعلى')}
                         className="rounded p-1 hover:bg-brand-cream disabled:opacity-30"
                         onClick={() => move(i - 1)}
                       >
@@ -218,14 +219,14 @@ export default function RoutesPage() {
                       </button>
                       <button
                         disabled={i === ids.length - 1}
-                        aria-label="أسفل"
+                        aria-label={t('أسفل')}
                         className="rounded p-1 hover:bg-brand-cream disabled:opacity-30"
                         onClick={() => move(i + 1)}
                       >
                         <ArrowDown size={15} />
                       </button>
                       <button
-                        aria-label="إزالة"
+                        aria-label={t('إزالة')}
                         className="rounded p-1 text-red-700 hover:bg-red-50"
                         onClick={() =>
                           void setStops(
@@ -241,23 +242,23 @@ export default function RoutesPage() {
                 </li>
               );
             })}
-            {r.stops.length === 0 && <li className="py-2 text-brand-muted">لا فروع بعد</li>}
+            {r.stops.length === 0 && <li className="py-2 text-brand-muted">{t('لا فروع بعد')}</li>}
           </ol>
           {canManage && (
             <button
               className="mt-3 text-xs text-brand-brown underline"
               onClick={() => void patch(r, { isActive: !r.isActive })}
             >
-              {r.isActive ? 'إيقاف المسار' : 'تفعيل المسار'}
+              {r.isActive ? t('إيقاف المسار') : t('تفعيل المسار')}
             </button>
           )}
         </Card>
       ))}
 
       {free.length > 0 && (
-        <Card title={`فروع بدون مسار (${free.length})`}>
+        <Card title={t('فروع بدون مسار ({0})', free.length)}>
           <p className="text-sm text-brand-muted">
-            {free.map((b) => `${b.customerName} — ${b.branchName}`).join('، ')}
+            {free.map((b) => `${b.customerName} — ${b.branchName}`).join(t('، '))}
           </p>
         </Card>
       )}

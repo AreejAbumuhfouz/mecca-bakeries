@@ -174,3 +174,21 @@ prices → opening balances. Each file is checked row by row; only a file withou
 Rows that already exist (same name, or an opening balance already recorded) are skipped, so a file
 can be uploaded again safely. «التحقق من الأرصدة الافتتاحية» lists what was imported, for comparing
 with the bakery's books before going live.
+
+## 9. Languages (Arabic / English)
+
+- The dictionary is `packages/shared/src/i18n/en.ts`. The **Arabic text is the key**; `{0}`, `{1}`
+  are filled at run time. Every app calls `t('النص العربي', ...values)`:
+  web `@/lib/i18n`, mobile `src/i18n.ts`, API `src/lib/i18n.ts`.
+- `pnpm i18n:missing` lists Arabic texts without English; `pnpm i18n:check` fails if any is
+  missing (also checked by `test/i18n.test.ts`). New screens: write the Arabic text inside `t()`,
+  then add the English line to `en.ts`. `node scripts/i18n/codemod.cjs web` wraps plain Arabic
+  strings automatically.
+- Dashboard and app send `X-Locale: ar|en` with every request; the API answers errors, PDFs and
+  Excel files in that language. The user's choice is saved in `users.locale`
+  (`PATCH /api/auth/me/locale`); app notifications use the restaurant account's language.
+- Always Arabic, whoever sends them: WhatsApp templates and their values, the statement PDF sent to
+  customers, and the purchase-order PDF sent to suppliers. Data saved in the database (notes,
+  units on invoice lines, credit reasons) is stored in Arabic and translated on screen.
+- Layout direction: Tailwind logical classes (`ms-`, `pe-`, `text-start`, `inset-s-`) so the same
+  markup works RTL and LTR. Mobile uses `I18nManager.forceRTL` and restarts on a language change.

@@ -1,4 +1,5 @@
 import type { ItemUnit, OrderEventType, OrderSource, OrderStatus } from '@mecca/shared';
+import { intlLocale } from '@/lib/i18n';
 
 export type OrderRow = {
   id: string;
@@ -15,7 +16,7 @@ export type OrderRow = {
   total: number;
   itemCount: number;
   notes: string | null;
-  creditReasons: { code: string; message: string }[] | null;
+  creditReasons: { code: string; message: string; key?: string; args?: string[] }[] | null;
   createdAt: string;
 };
 
@@ -70,7 +71,7 @@ export const STATUS_TONE: Record<OrderStatus, 'green' | 'gold' | 'red' | 'neutra
 
 /** "2026-11-11T00:00:00Z" → "03:00 — 11/11" in Amman time. */
 export function formatAmman(iso: string) {
-  return new Intl.DateTimeFormat('ar-JO', {
+  return new Intl.DateTimeFormat(intlLocale(), {
     timeZone: 'Asia/Amman',
     dateStyle: 'short',
     timeStyle: 'short',

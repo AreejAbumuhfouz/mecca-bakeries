@@ -5,6 +5,7 @@ import { BarChart3, FileSpreadsheet, FileText } from 'lucide-react';
 import { addDays, ammanDate, filsToJodString } from '@mecca/shared';
 import { api, errorMessage, fetchAuthedBlob, openAuthed } from '@/lib/api';
 import { Button, Card, ErrorBox } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 type Kind = 'text' | 'int' | 'money' | 'percent' | 'date';
 type Table = {
@@ -42,7 +43,7 @@ export default function ReportsPage() {
   useEffect(() => {
     void api<ReportInfo[]>('/api/reports')
       .then(setList)
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, []);
 
   const info = list.find((r) => r.key === key);
@@ -60,11 +61,11 @@ export default function ReportsPage() {
   useEffect(() => {
     setBusy(true);
     void api<Table>(`/api/reports/${key}?${qs()}`)
-      .then((t) => {
-        setTable(t);
+      .then((tr) => {
+        setTable(tr);
         setError('');
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر تشغيل التقرير')))
+      .catch((err) => setError(errorMessage(err, t('تعذّر تشغيل التقرير'))))
       .finally(() => setBusy(false));
   }, [key, qs]);
 
@@ -77,7 +78,7 @@ export default function ReportsPage() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر التصدير'));
+      setError(errorMessage(err, t('تعذّر التصدير')));
     }
   }
 
@@ -95,9 +96,11 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-brand-brown">
-          <BarChart3 size={24} /> التقارير
+          <BarChart3 size={24} /> {t('التقارير')}
         </h1>
-        <p className="text-sm text-brand-muted">كل تقرير يُصدَّر Excel وPDF. المبالغ بالدينار.</p>
+        <p className="text-sm text-brand-muted">
+          {t('كل تقرير يُصدَّر Excel وPDF. المبالغ بالدينار.')}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -124,7 +127,7 @@ export default function ReportsPage() {
           {!NO_DATES.has(key) && (
             <>
               <label className="flex items-center gap-1">
-                من{' '}
+                {t('من')}{' '}
                 <input
                   type="date"
                   className={field}
@@ -133,7 +136,7 @@ export default function ReportsPage() {
                 />
               </label>
               <label className="flex items-center gap-1">
-                إلى{' '}
+                {t('إلى')}{' '}
                 <input
                   type="date"
                   className={field}
@@ -142,10 +145,10 @@ export default function ReportsPage() {
                 />
               </label>
               {[
-                ['اليوم', 0],
-                ['7 أيام', 6],
-                ['30 يوم', 29],
-                ['90 يوم', 89],
+                [t('اليوم'), 0],
+                [t('7 أيام'), 6],
+                [t('30 يوم'), 29],
+                [t('90 يوم'), 89],
               ].map(([label, days]) => (
                 <button
                   key={label}
@@ -162,7 +165,7 @@ export default function ReportsPage() {
           )}
           {info && info.groups.length > 0 && (
             <label className="flex items-center gap-1">
-              حسب
+              {t('حسب')}
               <select
                 className={field}
                 value={groupBy || info.groups[0]!.key}
@@ -176,7 +179,7 @@ export default function ReportsPage() {
               </select>
             </label>
           )}
-          <span className="mr-auto flex gap-2">
+          <span className="ms-auto flex gap-2">
             <Button variant="outline" onClick={() => void excel()}>
               <span className="flex items-center gap-1.5">
                 <FileSpreadsheet size={15} /> Excel
@@ -186,7 +189,7 @@ export default function ReportsPage() {
               variant="outline"
               onClick={() =>
                 void openAuthed(`/api/reports/${key}?${qs('pdf')}`).catch((err) =>
-                  setError(errorMessage(err, 'تعذّر فتح PDF')),
+                  setError(errorMessage(err, t('تعذّر فتح PDF'))),
                 )
               }
             >
@@ -216,7 +219,7 @@ export default function ReportsPage() {
                         style={{ width: `${(Number(r[chart!.value]) / max) * 100}%` }}
                       />
                     </div>
-                    <span className="text-left font-bold tabular-nums">
+                    <span className="text-end font-bold tabular-nums">
                       {show(chartCol.kind, r[chart!.value])}
                     </span>
                   </div>
@@ -230,7 +233,7 @@ export default function ReportsPage() {
             <div className={`overflow-x-auto ${busy ? 'opacity-50' : ''}`}>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <tr className="border-b border-brand-line text-start text-brand-muted">
                     {table.columns.map((c) => (
                       <th key={c.key} className="px-2 py-2 whitespace-nowrap">
                         {c.label}
@@ -257,7 +260,7 @@ export default function ReportsPage() {
                         colSpan={table.columns.length}
                         className="py-6 text-center text-brand-muted"
                       >
-                        لا توجد بيانات في هذه الفترة
+                        {t('لا توجد بيانات في هذه الفترة')}
                       </td>
                     </tr>
                   )}
@@ -266,7 +269,7 @@ export default function ReportsPage() {
                       {table.columns.map((c, i) => (
                         <td key={c.key} className="px-2 py-2 tabular-nums whitespace-nowrap">
                           {i === 0
-                            ? String(table.totals![c.key] ?? 'المجموع')
+                            ? String(table.totals![c.key] ?? t('المجموع'))
                             : c.kind === 'percent' || table.totals![c.key] == null
                               ? ''
                               : show(c.kind, table.totals![c.key])}

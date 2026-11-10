@@ -6,6 +6,7 @@ import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, Input } from '@/components/ui';
 import { UserEditor } from './user-editor';
+import { intlLocale, t } from '@/lib/i18n';
 
 type UserRow = {
   id: string;
@@ -46,7 +47,10 @@ export default function UsersPage() {
   }, [form.role, customers.length]);
 
   useEffect(() => {
-    const id = setTimeout(() => void load().catch(() => setError('تعذّر تحميل المستخدمين')), 250);
+    const id = setTimeout(
+      () => void load().catch(() => setError(t('تعذّر تحميل المستخدمين'))),
+      250,
+    );
     return () => clearTimeout(id);
   }, [load]);
 
@@ -67,7 +71,7 @@ export default function UsersPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : 'تعذّر حفظ المستخدم');
+      setError(err instanceof ApiRequestError ? err.message : t('تعذّر حفظ المستخدم'));
     } finally {
       setBusy(false);
     }
@@ -82,7 +86,7 @@ export default function UsersPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : 'تعذّر التحديث');
+      setError(err instanceof ApiRequestError ? err.message : t('تعذّر التحديث'));
     }
   }
 
@@ -90,14 +94,14 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">المستخدمون والصلاحيات</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('المستخدمون والصلاحيات')}</h1>
           <p className="text-sm text-brand-muted">
-            الحسابات يضيفها المدير فقط، ويتم الدخول بالبريد ورمز التحقق.
+            {t('الحسابات يضيفها المدير فقط، ويتم الدخول بالبريد ورمز التحقق.')}
           </p>
         </div>
         {canManage && (
           <Button onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'إلغاء' : '+ مستخدم جديد'}
+            {showForm ? t('إلغاء') : t('+ مستخدم جديد')}
           </Button>
         )}
       </div>
@@ -117,16 +121,16 @@ export default function UsersPage() {
       )}
 
       {showForm && (
-        <Card title="مستخدم جديد">
+        <Card title={t('مستخدم جديد')}>
           <form onSubmit={onCreate} className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Input
-              label="الاسم"
+              label={t('الاسم')}
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <Input
-              label="البريد الإلكتروني"
+              label={t('البريد الإلكتروني')}
               type="email"
               dir="ltr"
               required
@@ -134,13 +138,13 @@ export default function UsersPage() {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
             <Input
-              label="الهاتف"
+              label={t('الهاتف')}
               dir="ltr"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
             <label className="block">
-              <span className="mb-1 block text-sm font-bold text-brand-brown">الدور</span>
+              <span className="mb-1 block text-sm font-bold text-brand-brown">{t('الدور')}</span>
               <select
                 className="w-full rounded-lg border border-brand-line bg-surface px-3 py-2.5 text-sm"
                 value={form.role}
@@ -148,7 +152,7 @@ export default function UsersPage() {
               >
                 {ROLE_VALUES.map((r) => (
                   <option key={r} value={r}>
-                    {ROLE_LABELS_AR[r]}
+                    {t(ROLE_LABELS_AR[r])}
                   </option>
                 ))}
               </select>
@@ -156,7 +160,7 @@ export default function UsersPage() {
             {form.role === 'restaurant' && (
               <label className="block md:col-span-2">
                 <span className="mb-1 block text-sm font-bold text-brand-brown">
-                  العميل (حساب المطعم يطلب لكل فروعه)
+                  {t('العميل (حساب المطعم يطلب لكل فروعه)')}
                 </span>
                 <select
                   required
@@ -164,7 +168,7 @@ export default function UsersPage() {
                   value={form.customerId}
                   onChange={(e) => setForm({ ...form, customerId: e.target.value })}
                 >
-                  <option value="">— اختر العميل —</option>
+                  <option value="">{t('— اختر العميل —')}</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.code} — {c.name}
@@ -175,7 +179,7 @@ export default function UsersPage() {
             )}
             <div className="md:col-span-4">
               <Button type="submit" disabled={busy}>
-                {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+                {busy ? t('جارٍ الحفظ…') : t('حفظ')}
               </Button>
             </div>
           </form>
@@ -183,80 +187,86 @@ export default function UsersPage() {
       )}
 
       <Card
-        title={`المستخدمون${data ? ` (${data.total})` : ''}`}
+        title={t('المستخدمون{0}', data ? ` (${data.total})` : '')}
         actions={
           <input
             className="w-64 rounded-lg border border-brand-line px-3 py-2 text-sm"
-            placeholder="بحث بالاسم أو البريد أو الهاتف"
+            placeholder={t('بحث بالاسم أو البريد أو الهاتف')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">الاسم</th>
-              <th>البريد</th>
-              <th>الدور</th>
-              <th>آخر دخول</th>
-              <th>الحالة</th>
-              {canManage && <th />}
-            </tr>
-          </thead>
-          <tbody>
-            {data?.items.map((u) => (
-              <tr key={u.id} className="border-b border-stone-100">
-                <td className="py-2.5 font-bold">{u.name}</td>
-                <td dir="ltr" className="text-right">
-                  {u.email}
-                </td>
-                <td>{ROLE_LABELS_AR[u.role]}</td>
-                <td className="text-brand-muted">
-                  {u.lastLoginAt
-                    ? new Date(u.lastLoginAt).toLocaleString('ar-JO', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                      })
-                    : '—'}
-                </td>
-                <td>
-                  {u.isActive ? <Badge tone="green">مفعّل</Badge> : <Badge tone="red">معطّل</Badge>}
-                </td>
-                {canManage && (
-                  <td className="text-xs">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        className="text-brand-brown underline"
-                        onClick={() => {
-                          setEditingId(u.id);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                      >
-                        تعديل
-                      </button>
-                      {u.id !== me?.id && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-brand-line text-start text-brand-muted">
+                <th className="py-2">{t('الاسم')}</th>
+                <th>{t('البريد')}</th>
+                <th>{t('الدور')}</th>
+                <th>{t('آخر دخول')}</th>
+                <th>{t('الحالة')}</th>
+                {canManage && <th />}
+              </tr>
+            </thead>
+            <tbody>
+              {data?.items.map((u) => (
+                <tr key={u.id} className="border-b border-stone-100">
+                  <td className="py-2.5 font-bold">{u.name}</td>
+                  <td dir="ltr" className="text-start">
+                    {u.email}
+                  </td>
+                  <td>{t(ROLE_LABELS_AR[u.role])}</td>
+                  <td className="text-brand-muted">
+                    {u.lastLoginAt
+                      ? new Date(u.lastLoginAt).toLocaleString(intlLocale(), {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })
+                      : '—'}
+                  </td>
+                  <td>
+                    {u.isActive ? (
+                      <Badge tone="green">{t('مفعّل')}</Badge>
+                    ) : (
+                      <Badge tone="red">{t('معطّل')}</Badge>
+                    )}
+                  </td>
+                  {canManage && (
+                    <td className="text-xs">
+                      <div className="flex justify-end gap-3">
                         <button
                           className="text-brand-brown underline"
-                          onClick={() => void toggleActive(u)}
+                          onClick={() => {
+                            setEditingId(u.id);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                         >
-                          {u.isActive ? 'تعطيل' : 'تفعيل'}
+                          {t('تعديل')}
                         </button>
-                      )}
-                    </div>
+                        {u.id !== me?.id && (
+                          <button
+                            className="text-brand-brown underline"
+                            onClick={() => void toggleActive(u)}
+                          >
+                            {u.isActive ? t('تعطيل') : t('تفعيل')}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-brand-muted">
+                    {t('لا يوجد مستخدمون')}
                   </td>
-                )}
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-brand-muted">
-                  لا يوجد مستخدمون
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );

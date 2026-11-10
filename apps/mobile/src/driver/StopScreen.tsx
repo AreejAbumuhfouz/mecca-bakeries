@@ -16,6 +16,7 @@ import { colors, ui } from '../theme';
 import { SignaturePad, type SignatureValue } from './SignaturePad';
 import { enqueue, newClientRef } from './offline';
 import type { Confirmation, DriverDay, Stop } from './types';
+import { t } from '../i18n';
 
 const SHORT_REASONS: DeliveryReason[] = [
   'bakery_shortage',
@@ -56,7 +57,7 @@ function Chips<T extends string>({
           <Text
             style={{ fontSize: 13, color: colors.brown, fontWeight: value === o ? '700' : '400' }}
           >
-            {labels[o]}
+            {t(labels[o])}
           </Text>
         </Pressable>
       ))}
@@ -77,7 +78,7 @@ function Stepper({
 }) {
   const btn = (icon: 'remove' | 'add', next: number, disabled: boolean) => (
     <Pressable
-      accessibilityLabel={`${icon === 'add' ? 'زيادة' : 'إنقاص'} ${label}`}
+      accessibilityLabel={`${icon === 'add' ? t('زيادة') : t('إنقاص')} ${label}`}
       disabled={disabled}
       onPress={() => onChange(next)}
       style={{
@@ -100,8 +101,8 @@ function Stepper({
         accessibilityLabel={label}
         keyboardType="number-pad"
         value={String(value)}
-        onChangeText={(t) => {
-          const n = Number(t.replace(/[^\d]/g, '') || 0);
+        onChangeText={(tr) => {
+          const n = Number(tr.replace(/[^\d]/g, '') || 0);
           onChange(max !== undefined ? Math.min(max, n) : n);
         }}
         style={[ui.input, { width: 64, paddingVertical: 6, textAlign: 'center' }]}
@@ -171,7 +172,7 @@ export function StopScreen({
 
   function build(outcome: 'delivered' | 'failed'): Confirmation | string {
     if (outcome === 'failed') {
-      if (!failReason) return 'اختر سبب عدم التسليم';
+      if (!failReason) return t('اختر سبب عدم التسليم');
       return {
         clientRef: newClientRef(),
         outcome,
@@ -183,14 +184,14 @@ export function StopScreen({
     }
     for (const i of stop.items)
       if ((delivered[i.itemId] ?? 0) < i.quantity && !shortReason[i.itemId])
-        return `اختر سبب النقص في ${i.name}`;
-    for (const r of returns) if (r.qty > 0 && !r.reason) return 'اختر سبب كل مرتجع';
-    if (receiver.trim().length < 2 && !signature) return 'اكتب اسم المستلم أو خذ توقيعه';
+        return t('اختر سبب النقص في {0}', i.name);
+    for (const r of returns) if (r.qty > 0 && !r.reason) return t('اختر سبب كل مرتجع');
+    if (receiver.trim().length < 2 && !signature) return t('اكتب اسم المستلم أو خذ توقيعه');
     const amount = cash.trim()
-      ? Math.round(Number(cash.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))) * 1000)
+      ? Math.round(Number(cash.replace(/[٠-٩]/g, (d) => String(t('٠١٢٣٤٥٦٧٨٩').indexOf(d)))) * 1000)
       : 0;
-    if (Number.isNaN(amount) || amount < 0) return 'المبلغ المحصّل غير صحيح';
-    if (amount > 0 && method === 'cheque' && !reference.trim()) return 'اكتب رقم الشيك';
+    if (Number.isNaN(amount) || amount < 0) return t('المبلغ المحصّل غير صحيح');
+    if (amount > 0 && method === 'cheque' && !reference.trim()) return t('اكتب رقم الشيك');
     const lines = stop.items.map((i) => ({
       itemId: i.itemId,
       deliveredQty: delivered[i.itemId] ?? 0,
@@ -246,7 +247,7 @@ export function StopScreen({
     >
       <Pressable onPress={() => onClose(false)} style={ui.row}>
         <Ionicons name="arrow-forward" size={18} color={colors.muted} />
-        <Text style={ui.muted}>رجوع للمسار</Text>
+        <Text style={ui.muted}>{t('رجوع للمسار')}</Text>
       </Pressable>
       <View style={ui.card}>
         <Text style={ui.h1}>
@@ -256,7 +257,7 @@ export function StopScreen({
         {stop.branch.address ? <Text style={ui.muted}>{stop.branch.address}</Text> : null}
         <View style={ui.between}>
           <Text style={ui.muted}>
-            {stop.order.number} — {PAYMENT_TYPE_LABELS_AR[stop.paymentType]}
+            {stop.order.number} — {t(PAYMENT_TYPE_LABELS_AR[stop.paymentType])}
           </Text>
           {phone ? (
             <Pressable onPress={() => void Linking.openURL(`tel:${phone}`)} style={ui.row}>
@@ -266,7 +267,7 @@ export function StopScreen({
           ) : null}
         </View>
         <View style={ui.between}>
-          <Text style={ui.muted}>رصيد سابق على العميل</Text>
+          <Text style={ui.muted}>{t('رصيد سابق على العميل')}</Text>
           <Text
             style={[
               ui.text,
@@ -276,14 +277,16 @@ export function StopScreen({
             {formatJod(stop.balance)}
           </Text>
         </View>
-        {stop.order.notes ? <Text style={ui.muted}>ملاحظة الطلب: {stop.order.notes}</Text> : null}
+        {stop.order.notes ? (
+          <Text style={ui.muted}>{t('ملاحظة الطلب: {0}', stop.order.notes)}</Text>
+        ) : null}
       </View>
 
       {error ? <Text style={ui.error}>{error}</Text> : null}
 
       {failing ? (
         <View style={ui.card}>
-          <Text style={ui.h2}>لم يُسلَّم — السبب</Text>
+          <Text style={ui.h2}>{t('لم يُسلَّم — السبب')}</Text>
           <Chips
             options={FAIL_REASONS}
             value={failReason}
@@ -291,24 +294,24 @@ export function StopScreen({
             labels={DELIVERY_REASON_LABELS_AR}
           />
           <TextInput
-            placeholder="ملاحظة (اختياري)"
+            placeholder={t('ملاحظة (اختياري)')}
             placeholderTextColor={colors.muted}
             value={note}
             onChangeText={setNote}
             style={ui.input}
           />
           <Button
-            title="تأكيد: لم يُسلَّم"
+            title={t('تأكيد: لم يُسلَّم')}
             variant="danger"
             busy={busy}
             onPress={() => void submit('failed')}
           />
-          <Button title="رجوع" variant="outline" onPress={() => setFailing(false)} />
+          <Button title={t('رجوع')} variant="outline" onPress={() => setFailing(false)} />
         </View>
       ) : (
         <>
           <View style={ui.card}>
-            <Text style={ui.h2}>الأصناف</Text>
+            <Text style={ui.h2}>{t('الأصناف')}</Text>
             {stop.items.map((i) => {
               const q = delivered[i.itemId] ?? 0;
               return (
@@ -324,9 +327,7 @@ export function StopScreen({
                   <View style={ui.between}>
                     <View style={{ flex: 1 }}>
                       <Text style={[ui.text, { fontWeight: '700' }]}>{i.name}</Text>
-                      <Text style={ui.muted}>
-                        المطلوب {i.quantity} {i.unitLabel}
-                      </Text>
+                      <Text style={ui.muted}>{t('المطلوب {0} {1}', i.quantity, i.unitLabel)}</Text>
                     </View>
                     <Stepper
                       value={q}
@@ -338,7 +339,7 @@ export function StopScreen({
                   {q < i.quantity && (
                     <View style={{ gap: 4 }}>
                       <Text style={{ color: colors.red, fontSize: 13 }}>
-                        ناقص {i.quantity - q} — السبب:
+                        {t('ناقص {0} — السبب:', i.quantity - q)}
                       </Text>
                       <Chips
                         options={SHORT_REASONS}
@@ -356,8 +357,8 @@ export function StopScreen({
           {stop.allowReturns && (
             <View style={ui.card}>
               <View style={ui.between}>
-                <Text style={ui.h2}>المرتجع من العميل</Text>
-                <Text style={ui.muted}>حتى {stop.maxReturnBps / 100}%</Text>
+                <Text style={ui.h2}>{t('المرتجع من العميل')}</Text>
+                <Text style={ui.muted}>{t('حتى {0}%', stop.maxReturnBps / 100)}</Text>
               </View>
               {returns.map((r, idx) => {
                 const item = catalog.find((c) => c.id === r.itemId);
@@ -367,13 +368,13 @@ export function StopScreen({
                       <Text style={[ui.text, { flex: 1 }]}>{item?.name}</Text>
                       <Stepper
                         value={r.qty}
-                        label={`مرتجع ${item?.name ?? ''}`}
+                        label={t('مرتجع {0}', item?.name ?? '')}
                         onChange={(n) =>
                           setReturns(returns.map((x, j) => (j === idx ? { ...x, qty: n } : x)))
                         }
                       />
                       <Pressable
-                        accessibilityLabel="حذف المرتجع"
+                        accessibilityLabel={t('حذف المرتجع')}
                         onPress={() => setReturns(returns.filter((_, j) => j !== idx))}
                       >
                         <Ionicons name="close-circle" size={22} color={colors.red} />
@@ -417,7 +418,7 @@ export function StopScreen({
               ) : (
                 <Pressable onPress={() => setPickReturn(true)} style={ui.row}>
                   <Ionicons name="add-circle-outline" size={20} color={colors.gold} />
-                  <Text style={{ color: colors.gold, fontWeight: '700' }}>إضافة مرتجع</Text>
+                  <Text style={{ color: colors.gold, fontWeight: '700' }}>{t('إضافة مرتجع')}</Text>
                 </Pressable>
               )}
             </View>
@@ -425,17 +426,19 @@ export function StopScreen({
 
           <View style={ui.card}>
             <View style={ui.between}>
-              <Text style={ui.h2}>قيمة التسليم (تقريباً)</Text>
+              <Text style={ui.h2}>{t('قيمة التسليم (تقريباً)')}</Text>
               <Text style={[ui.h2, { color: colors.gold }]}>{formatJod(estimate)}</Text>
             </View>
-            <Text style={ui.muted}>الفاتورة النهائية تصدر من النظام على الكمية المسلّمة.</Text>
+            <Text style={ui.muted}>
+              {t('الفاتورة النهائية تصدر من النظام على الكمية المسلّمة.')}
+            </Text>
           </View>
 
           <View style={ui.card}>
-            <Text style={ui.h2}>المستلم</Text>
+            <Text style={ui.h2}>{t('المستلم')}</Text>
             <TextInput
-              accessibilityLabel="اسم المستلم"
-              placeholder="اسم المستلم"
+              accessibilityLabel={t('اسم المستلم')}
+              placeholder={t('اسم المستلم')}
               placeholderTextColor={colors.muted}
               value={receiver}
               onChangeText={setReceiver}
@@ -445,7 +448,7 @@ export function StopScreen({
           </View>
 
           <View style={ui.card}>
-            <Text style={ui.h2}>التحصيل</Text>
+            <Text style={ui.h2}>{t('التحصيل')}</Text>
             <Chips
               options={['cash', 'cheque', 'transfer'] as PaymentMethod[]}
               value={method}
@@ -453,11 +456,11 @@ export function StopScreen({
               labels={PAYMENT_METHOD_LABELS_AR}
             />
             <TextInput
-              accessibilityLabel="المبلغ المحصّل"
+              accessibilityLabel={t('المبلغ المحصّل')}
               placeholder={
                 stop.paymentType === 'cash'
-                  ? `مثلاً ${filsToJodString(estimate)}`
-                  : 'المبلغ المحصّل (إن وجد)'
+                  ? t('مثلاً {0}', filsToJodString(estimate))
+                  : t('المبلغ المحصّل (إن وجد)')
               }
               placeholderTextColor={colors.muted}
               keyboardType="decimal-pad"
@@ -467,7 +470,7 @@ export function StopScreen({
             />
             {method !== 'cash' && (
               <TextInput
-                placeholder={method === 'cheque' ? 'رقم الشيك' : 'رقم الحوالة'}
+                placeholder={method === 'cheque' ? t('رقم الشيك') : t('رقم الحوالة')}
                 placeholderTextColor={colors.muted}
                 value={reference}
                 onChangeText={setReference}
@@ -475,7 +478,7 @@ export function StopScreen({
               />
             )}
             <TextInput
-              placeholder="ملاحظة (اختياري)"
+              placeholder={t('ملاحظة (اختياري)')}
               placeholderTextColor={colors.muted}
               value={note}
               onChangeText={setNote}
@@ -484,13 +487,15 @@ export function StopScreen({
           </View>
 
           <Button
-            title="تأكيد التسليم"
+            title={t('تأكيد التسليم')}
             variant="gold"
             busy={busy}
             onPress={() => void submit('delivered')}
           />
-          <Button title="لم يُسلَّم" variant="outline" onPress={() => setFailing(true)} />
-          <Text style={[ui.muted, { textAlign: 'center' }]}>يُسجَّل موقعك لحظة التأكيد فقط.</Text>
+          <Button title={t('لم يُسلَّم')} variant="outline" onPress={() => setFailing(true)} />
+          <Text style={[ui.muted, { textAlign: 'center' }]}>
+            {t('يُسجَّل موقعك لحظة التأكيد فقط.')}
+          </Text>
         </>
       )}
     </ScrollView>

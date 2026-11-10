@@ -6,6 +6,7 @@ import { CheckCircle2, Download, FileUp, XCircle } from 'lucide-react';
 import { filsToJodString, formatJod } from '@mecca/shared';
 import { api, errorMessage, fetchAuthedBlob, uploadForm } from '@/lib/api';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 type Kind = {
   kind: string;
@@ -37,7 +38,7 @@ type Opening = {
 };
 
 /** The order the data should go in: customers before their contracts, and so on. */
-const ORDER_NOTE = 'الترتيب: الأصناف ← العملاء ← العقود ← الأسعار الخاصة ← الأرصدة الافتتاحية';
+const ORDER_NOTE = t('الترتيب: الأصناف ← العملاء ← العقود ← الأسعار الخاصة ← الأرصدة الافتتاحية');
 
 export default function ImportPage() {
   const [kinds, setKinds] = useState<Kind[]>([]);
@@ -53,7 +54,7 @@ export default function ImportPage() {
   useEffect(() => {
     void api<Kind[]>('/api/import')
       .then(setKinds)
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, []);
   useEffect(() => {
     if (kind === 'opening') void api<Opening>('/api/import/opening-check').then(setOpening);
@@ -75,10 +76,10 @@ export default function ImportPage() {
       const blob = await fetchAuthedBlob(`/api/import/${kind}/template`);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `قالب-${current?.label ?? kind}.xlsx`;
+      a.download = t('قالب-{0}.xlsx', current?.label ?? kind);
       a.click();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر تنزيل القالب'));
+      setError(errorMessage(err, t('تعذّر تنزيل القالب')));
     }
   }
 
@@ -98,9 +99,13 @@ export default function ImportPage() {
           form,
         );
         setDone(
-          `تم استيراد ${r.created} سطر` +
+          t('تم استيراد {0} سطر', r.created) +
             (r.failed.length
-              ? ` — لم ينجح ${r.failed.length}: ${r.failed.map((f) => `سطر ${f.row} (${f.message})`).join('، ')}`
+              ? t(
+                  ' — لم ينجح {0}: {1}',
+                  r.failed.length,
+                  r.failed.map((f) => t('سطر {0} ({1})', f.row, f.message)).join(t('، ')),
+                )
               : ' ✓'),
         );
         setPreview(null);
@@ -108,7 +113,7 @@ export default function ImportPage() {
         if (input.current) input.current.value = '';
       }
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر قراءة الملف'));
+      setError(errorMessage(err, t('تعذّر قراءة الملف')));
     } finally {
       setBusy(false);
     }
@@ -118,11 +123,11 @@ export default function ImportPage() {
     <div className="space-y-6">
       <div>
         <Link href="/settings" className="text-sm text-brand-muted underline">
-          ← الإعدادات
+          {t('← الإعدادات')}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-brand-brown">نقل البيانات من Excel</h1>
+        <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('نقل البيانات من Excel')}</h1>
         <p className="text-sm text-brand-muted">
-          {ORDER_NOTE}. كل ملف يُفحص أولاً، ولا يُستورد إلا إذا كان بلا أخطاء.
+          {t('{0}. كل ملف يُفحص أولاً، ولا يُستورد إلا إذا كان بلا أخطاء.', ORDER_NOTE)}
         </p>
       </div>
 
@@ -150,21 +155,21 @@ export default function ImportPage() {
         <Card title={current.label}>
           <ol className="space-y-3 text-sm">
             <li className="flex flex-wrap items-center gap-3">
-              <b>1.</b> نزّلي القالب وعبّئيه (الأعمدة:{' '}
-              {current.columns.map((c) => c.label + (c.required ? '*' : '')).join('، ')})
+              <b>1.</b> {t('نزّل القالب وعبّئه (الأعمدة:')}{' '}
+              {current.columns.map((c) => c.label + (c.required ? '*' : '')).join(t('، '))})
               <Button variant="outline" onClick={() => void template()}>
                 <span className="flex items-center gap-1.5">
-                  <Download size={15} /> تنزيل القالب
+                  <Download size={15} /> {t('تنزيل القالب')}
                 </span>
               </Button>
             </li>
             <li className="flex flex-wrap items-center gap-3">
-              <b>2.</b> ارفعي الملف وافحصيه
+              <b>2.</b> {t('ارفع الملف وافحصه')}
               <input
                 ref={input}
                 type="file"
                 accept=".xlsx"
-                aria-label="ملف Excel"
+                aria-label={t('ملف Excel')}
                 className="text-sm"
                 onChange={(e) => {
                   setFile(e.target.files?.[0] ?? null);
@@ -174,12 +179,12 @@ export default function ImportPage() {
               />
               <Button disabled={!file || busy} onClick={() => void send('preview')}>
                 <span className="flex items-center gap-1.5">
-                  <FileUp size={15} /> فحص الملف
+                  <FileUp size={15} /> {t('فحص الملف')}
                 </span>
               </Button>
             </li>
             <li className="flex flex-wrap items-center gap-3">
-              <b>3.</b> إذا لم تظهر أخطاء: استيراد
+              <b>3.</b> {t('إذا لم تظهر أخطاء: استيراد')}
               <Button
                 variant="gold"
                 disabled={
@@ -187,7 +192,7 @@ export default function ImportPage() {
                 }
                 onClick={() => void send('commit')}
               >
-                استيراد {preview?.summary.create ?? ''} سطر
+                {t('استيراد {0} سطر', preview?.summary.create ?? '')}
               </Button>
             </li>
           </ol>
@@ -196,16 +201,18 @@ export default function ImportPage() {
 
       {preview && current && (
         <Card
-          title={`نتيجة الفحص — ${preview.summary.total} سطر`}
+          title={t('نتيجة الفحص — {0} سطر', preview.summary.total)}
           actions={
             <div className="flex flex-wrap gap-2 text-sm">
-              <Badge tone="green">جديد {preview.summary.create}</Badge>
-              <Badge tone="neutral">موجود مسبقاً {preview.summary.skip}</Badge>
+              <Badge tone="green">{t('جديد {0}', preview.summary.create)}</Badge>
+              <Badge tone="neutral">{t('موجود مسبقاً {0}', preview.summary.skip)}</Badge>
               <Badge tone={preview.summary.errors ? 'red' : 'green'}>
-                أخطاء {preview.summary.errors}
+                {t('أخطاء {0}', preview.summary.errors)}
               </Badge>
               {preview.summary.openingTotal !== undefined && (
-                <Badge tone="gold">المجموع {formatJod(preview.summary.openingTotal)}</Badge>
+                <Badge tone="gold">
+                  {t('المجموع {0}', formatJod(preview.summary.openingTotal))}
+                </Badge>
               )}
             </div>
           }
@@ -213,15 +220,15 @@ export default function ImportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
-                  <th className="py-2">السطر</th>
+                <tr className="border-b border-brand-line text-start text-brand-muted">
+                  <th className="py-2">{t('السطر')}</th>
                   <th />
                   {current.columns.map((c) => (
                     <th key={c.key} className="px-2 whitespace-nowrap">
                       {c.label}
                     </th>
                   ))}
-                  <th>الملاحظات</th>
+                  <th>{t('الملاحظات')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -246,7 +253,7 @@ export default function ImportPage() {
                       </td>
                     ))}
                     <td className={r.errors.length ? 'text-red-800' : 'text-brand-muted'}>
-                      {r.errors.join('، ') || r.note || ''}
+                      {r.errors.join(t('، ')) || r.note || ''}
                     </td>
                   </tr>
                 ))}
@@ -257,35 +264,40 @@ export default function ImportPage() {
       )}
 
       {kind === 'opening' && opening && (
-        <Card title={`التحقق من الأرصدة الافتتاحية — ${opening.items.length} عميل`}>
+        <Card title={t('التحقق من الأرصدة الافتتاحية — {0} عميل', opening.items.length)}>
           <p className="mb-3 text-sm text-brand-muted">
-            قارني المجموع مع دفاتر المخبز قبل الإطلاق. المجموع {formatJod(opening.total)}، المتبقي
-            بعد الدفعات {formatJod(opening.remaining)}.
+            {t(
+              'قارن المجموع مع دفاتر المخبز قبل الإطلاق. المجموع {0}، المتبقي بعد الدفعات {1}.',
+              formatJod(opening.total),
+              formatJod(opening.remaining),
+            )}
           </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الكود</th>
-                <th>العميل</th>
-                <th>الرصيد الافتتاحي</th>
-                <th>المدفوع منه</th>
-                <th>المتبقي</th>
-                <th>الاستحقاق</th>
-              </tr>
-            </thead>
-            <tbody>
-              {opening.items.map((o) => (
-                <tr key={o.code} className="border-b border-stone-100">
-                  <td className="py-2 font-mono">{o.code}</td>
-                  <td>{o.name}</td>
-                  <td className="tabular-nums">{filsToJodString(o.amount)}</td>
-                  <td className="tabular-nums">{filsToJodString(o.paid)}</td>
-                  <td className="font-bold tabular-nums">{filsToJodString(o.remaining)}</td>
-                  <td className="font-mono">{o.dueDate}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-start text-brand-muted">
+                  <th className="py-2">{t('الكود')}</th>
+                  <th>{t('العميل')}</th>
+                  <th>{t('الرصيد الافتتاحي')}</th>
+                  <th>{t('المدفوع منه')}</th>
+                  <th>{t('المتبقي')}</th>
+                  <th>{t('الاستحقاق')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {opening.items.map((o) => (
+                  <tr key={o.code} className="border-b border-stone-100">
+                    <td className="py-2 font-mono">{o.code}</td>
+                    <td>{o.name}</td>
+                    <td className="tabular-nums">{filsToJodString(o.amount)}</td>
+                    <td className="tabular-nums">{filsToJodString(o.paid)}</td>
+                    <td className="font-bold tabular-nums">{filsToJodString(o.remaining)}</td>
+                    <td className="font-mono">{o.dueDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
     </div>

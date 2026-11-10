@@ -45,6 +45,7 @@ import { effectivePrice, evaluateCredit } from '../credit/credit-engine.js';
 import { noOpenInvoices, type OpenInvoicesProvider } from '../contracts/contracts.service.js';
 import type { SettingsService } from '../settings/settings.service.js';
 import type { Notifier, OrderNotice } from '../notifications/notifier.js';
+import { t } from '../../lib/i18n.js';
 
 export type OrderLineInput = { itemId: string; quantity: number };
 export type PlaceInput = {
@@ -108,11 +109,11 @@ export function createOrdersService(deps: {
       .from(branches)
       .innerJoin(customers, eq(customers.id, branches.customerId))
       .where(eq(branches.id, branchId));
-    if (!row) throw new AppError(400, 'BAD_BRANCH', 'الفرع غير موجود');
+    if (!row) throw new AppError(400, 'BAD_BRANCH', t('الفرع غير موجود'));
     if (actor && !isStaff(actor) && row.customer.id !== actor.customerId)
-      throw new AppError(403, 'FORBIDDEN', 'هذا الفرع لا يتبع حسابك');
+      throw new AppError(403, 'FORBIDDEN', t('هذا الفرع لا يتبع حسابك'));
     if (!row.branch.isActive || !row.customer.isActive)
-      throw new AppError(409, 'BRANCH_INACTIVE', 'الفرع أو العميل موقوف');
+      throw new AppError(409, 'BRANCH_INACTIVE', t('الفرع أو العميل موقوف'));
     return row;
   }
 
@@ -142,11 +143,11 @@ export function createOrdersService(deps: {
     const merged = new Map<string, number>();
     for (const l of lines) {
       if (!Number.isInteger(l.quantity) || l.quantity < 0 || l.quantity > MAX_QUANTITY)
-        throw new AppError(400, 'BAD_QUANTITY', 'الكمية غير صالحة');
+        throw new AppError(400, 'BAD_QUANTITY', t('الكمية غير صالحة'));
       merged.set(l.itemId, (merged.get(l.itemId) ?? 0) + l.quantity);
     }
     for (const [id, q] of merged) if (q === 0) merged.delete(id);
-    if (merged.size === 0) throw new AppError(400, 'EMPTY_ORDER', 'الطلب لا يحتوي على أصناف');
+    if (merged.size === 0) throw new AppError(400, 'EMPTY_ORDER', t('الطلب لا يحتوي على أصناف'));
 
     const ids = [...merged.keys()];
     const rows = await db
@@ -159,9 +160,9 @@ export function createOrdersService(deps: {
       .from(items)
       .innerJoin(itemSections, eq(itemSections.id, items.sectionId))
       .where(inArray(items.id, ids));
-    if (rows.length !== ids.length) throw new AppError(400, 'BAD_ITEM', 'صنف غير موجود');
+    if (rows.length !== ids.length) throw new AppError(400, 'BAD_ITEM', t('صنف غير موجود'));
     const inactive = rows.find((r) => !(r.active && r.sectionActive) && !allowInactive.has(r.id));
-    if (inactive) throw new AppError(409, 'ITEM_INACTIVE', 'أحد الأصناف لم يعد متوفراً');
+    if (inactive) throw new AppError(409, 'ITEM_INACTIVE', t('أحد الأصناف لم يعد متوفراً'));
 
     const special = new Map<string, number>();
     if (contract) {
@@ -269,14 +270,14 @@ export function createOrdersService(deps: {
   /** Restaurants may change an order only until the cutoff; staff any time. */
   async function assertEditable(actor: AuthUser, order: OrderRow) {
     if (['cancelled', 'rejected'].includes(order.status))
-      throw new AppError(409, 'ORDER_CLOSED', 'الطلب ملغى أو مرفوض');
+      throw new AppError(409, 'ORDER_CLOSED', t('الطلب ملغى أو مرفوض'));
     if (order.status === 'delivered')
-      throw new AppError(409, 'ORDER_DELIVERED', 'تم تسليم الطلب؛ أي تصحيح يكون على الفاتورة');
+      throw new AppError(409, 'ORDER_DELIVERED', t('تم تسليم الطلب؛ أي تصحيح يكون على الفاتورة'));
     if (isStaff(actor)) return;
     if (order.customerId !== actor.customerId) throw notFound('Order');
     const { cutoffTime } = await settings.getOrderSettings();
     if (now() >= cutoffAt(order.deliveryDate, cutoffTime) || order.status === 'confirmed')
-      throw new AppError(409, 'ORDER_LOCKED', 'انتهى وقت تعديل الطلب، تواصل مع المخبز');
+      throw new AppError(409, 'ORDER_LOCKED', t('انتهى وقت تعديل الطلب، تواصل مع المخبز'));
   }
 
   /** Status after saving: held if credit fails, confirmed if the cutoff already passed. */
@@ -357,11 +358,15 @@ export function createOrdersService(deps: {
       const deliveryDate = input.deliveryDate ?? current;
       if (!isStaff(actor)) {
         if (deliveryDate < current)
-          throw new AppError(409, 'ORDER_LOCKED', 'انتهى وقت الطلب لهذا اليوم');
+          throw new AppError(409, 'ORDER_LOCKED', t('انتهى وقت الطلب لهذا اليوم'));
         if (deliveryDate > addDays(current, MAX_DAYS_AHEAD))
-          throw new AppError(400, 'TOO_FAR_AHEAD', `يمكن الطلب حتى ${MAX_DAYS_AHEAD} أيام مقدماً`);
+          throw new AppError(
+            400,
+            'TOO_FAR_AHEAD',
+            t('يمكن الطلب حتى {0} أيام مقدماً', MAX_DAYS_AHEAD),
+          );
       } else if (deliveryDate < ammanDate(now())) {
-        throw new AppError(400, 'PAST_DATE', 'لا يمكن إنشاء طلب لتاريخ سابق');
+        throw new AppError(400, 'PAST_DATE', t('لا يمكن إنشاء طلب لتاريخ سابق'));
       }
 
       const existing = await db.query.orders.findFirst({
@@ -373,9 +378,14 @@ export function createOrdersService(deps: {
       });
       // A waiting draft becomes the order; anything else is a duplicate.
       if (existing && existing.status !== 'draft')
-        throw new AppError(409, 'ORDER_EXISTS', 'يوجد طلب لهذا الفرع في نفس اليوم — يمكنك تعديله', {
-          orderId: existing.id,
-        });
+        throw new AppError(
+          409,
+          'ORDER_EXISTS',
+          t('يوجد طلب لهذا الفرع في نفس اليوم — يمكنك تعديله'),
+          {
+            orderId: existing.id,
+          },
+        );
       if (existing)
         return this.update(actor, existing.id, { lines: input.lines, notes: input.notes }, ctx);
 
@@ -427,7 +437,7 @@ export function createOrdersService(deps: {
           throw new AppError(
             409,
             'ORDER_EXISTS',
-            'يوجد طلب لهذا الفرع في نفس اليوم — يمكنك تعديله',
+            t('يوجد طلب لهذا الفرع في نفس اليوم — يمكنك تعديله'),
           );
         throw err;
       }
@@ -502,7 +512,7 @@ export function createOrdersService(deps: {
     /** Restaurant confirms a draft as it is. */
     async submitDraft(actor: AuthUser, id: string, ctx?: AuditContext) {
       const order = await getRow(id);
-      if (order.status !== 'draft') throw new AppError(409, 'NOT_DRAFT', 'الطلب ليس مسودة');
+      if (order.status !== 'draft') throw new AppError(409, 'NOT_DRAFT', t('الطلب ليس مسودة'));
       return this.update(actor, id, {}, ctx);
     },
 
@@ -533,7 +543,7 @@ export function createOrdersService(deps: {
     async decide(actor: AuthUser, id: string, approve: boolean, note: string, ctx?: AuditContext) {
       const before = await getRow(id);
       if (before.status !== 'pending_approval')
-        throw new AppError(409, 'NOT_PENDING', 'الطلب ليس بانتظار الموافقة');
+        throw new AppError(409, 'NOT_PENDING', t('الطلب ليس بانتظار الموافقة'));
       const { cutoffTime } = await settings.getOrderSettings();
       const status: OrderStatus = !approve
         ? 'rejected'
@@ -582,7 +592,7 @@ export function createOrdersService(deps: {
         ),
         orderBy: [desc(orders.deliveryDate)],
       });
-      if (!last) throw new AppError(404, 'NO_PREVIOUS_ORDER', 'لا يوجد طلب سابق لهذا الفرع');
+      if (!last) throw new AppError(404, 'NO_PREVIOUS_ORDER', t('لا يوجد طلب سابق لهذا الفرع'));
       const lines = await currentLines(last.id);
       const activeIds = new Set(
         (
@@ -898,7 +908,7 @@ export function createOrdersService(deps: {
               status === 'confirmed' ? 'confirmed' : 'approval_requested',
               null,
               {
-                note: 'إرسال تلقائي للمسودة عند الإغلاق',
+                note: t('إرسال تلقائي للمسودة عند الإغلاق'),
               },
             );
             await writeAudit(tx, ctx, {
@@ -919,7 +929,9 @@ export function createOrdersService(deps: {
                 cancelReason: 'لم تُؤكَّد المسودة قبل الإغلاق',
               })
               .where(eq(orders.id, d.id));
-            await addEvent(tx, d.id, 'cancelled', null, { note: 'لم تُؤكَّد المسودة قبل الإغلاق' });
+            await addEvent(tx, d.id, 'cancelled', null, {
+              note: t('لم تُؤكَّد المسودة قبل الإغلاق'),
+            });
             await writeAudit(tx, ctx, {
               action: 'order.draft_expire',
               entity: 'order',
@@ -975,7 +987,7 @@ export function createOrdersService(deps: {
 
     /** Restaurant: its branches with their order for the current delivery date. */
     async myDay(actor: AuthUser) {
-      if (!actor.customerId) throw new AppError(403, 'FORBIDDEN', 'هذا الحساب غير مرتبط بعميل');
+      if (!actor.customerId) throw new AppError(403, 'FORBIDDEN', t('هذا الحساب غير مرتبط بعميل'));
       const win = await this.window();
       const branchRows = await db
         .select({

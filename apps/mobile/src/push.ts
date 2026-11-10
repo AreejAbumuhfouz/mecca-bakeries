@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { api } from './api';
+import { t } from './i18n';
 
 let currentToken: string | null = null;
 
@@ -30,7 +31,7 @@ export async function registerForPush() {
     if (!projectId) return;
     if (Platform.OS === 'android')
       await Notifications.setNotificationChannelAsync('orders', {
-        name: 'الطلبات',
+        name: t('الطلبات'),
         importance: Notifications.AndroidImportance.HIGH,
       });
     const { status } = await Notifications.requestPermissionsAsync();

@@ -12,6 +12,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 type Summary = {
   deliveryDate: string;
@@ -48,7 +49,7 @@ function SummaryView() {
         setData(s);
         if (!date) setDate(s.deliveryDate);
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر تحميل الكشف')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر تحميل الكشف'))));
   }, [date]);
 
   const sections = [...new Set(data?.items.map((i) => i.sectionName))];
@@ -58,11 +59,11 @@ function SummaryView() {
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
           <Link href="/orders" className="text-sm text-brand-muted underline">
-            ← الطلبات
+            {t('← الطلبات')}
           </Link>
-          <h1 className="mt-1 text-2xl font-bold text-brand-brown">الكشف المبدئي للإنتاج</h1>
+          <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('الكشف المبدئي للإنتاج')}</h1>
           <p className="text-sm text-brand-muted">
-            مجموع كل صنف من الطلبات المرسلة والمؤكدة والموقوفة.
+            {t('مجموع كل صنف من الطلبات المرسلة والمؤكدة والموقوفة.')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -73,7 +74,7 @@ function SummaryView() {
             onChange={(e) => setDate(e.target.value)}
           />
           <Button variant="outline" onClick={() => window.print()}>
-            طباعة
+            {t('طباعة')}
           </Button>
         </div>
       </div>
@@ -82,7 +83,7 @@ function SummaryView() {
       {data && (
         <>
           <h2 className="hidden text-xl font-bold print:block">
-            الكشف المبدئي ليوم {data.deliveryDate}
+            {t('الكشف المبدئي ليوم {0}', data.deliveryDate)}
           </h2>
           <div className="flex flex-wrap gap-3 text-sm">
             {data.counts.map((c) => (
@@ -90,72 +91,74 @@ function SummaryView() {
                 key={c.status}
                 className="rounded-full border border-brand-line bg-surface px-3 py-1"
               >
-                {ORDER_STATUS_LABELS_AR[c.status]}: <b>{c.n}</b>
+                {t(ORDER_STATUS_LABELS_AR[c.status])}: <b>{c.n}</b>
               </span>
             ))}
           </div>
 
-          <Card title={`الأصناف ليوم ${data.deliveryDate}`}>
+          <Card title={t('الأصناف ليوم {0}', data.deliveryDate)}>
             {data.items.length === 0 ? (
-              <p className="text-sm text-brand-muted">لا توجد طلبات لهذا اليوم</p>
+              <p className="text-sm text-brand-muted">{t('لا توجد طلبات لهذا اليوم')}</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
-                    <th className="py-2">الكود</th>
-                    <th>الصنف</th>
-                    <th>الكمية الكلية</th>
-                    <th>منها مؤكد</th>
-                    <th>القيمة</th>
-                  </tr>
-                </thead>
-                {sections.map((sec) => (
-                  <tbody key={sec}>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
-                      >
-                        {sec}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
+                      <th className="py-2">{t('الكود')}</th>
+                      <th>{t('الصنف')}</th>
+                      <th>{t('الكمية الكلية')}</th>
+                      <th>{t('منها مؤكد')}</th>
+                      <th>{t('القيمة')}</th>
                     </tr>
-                    {data.items
-                      .filter((i) => i.sectionName === sec)
-                      .map((i) => (
-                        <tr key={i.itemId} className="border-b border-stone-100">
-                          <td className="py-2 pl-4 font-mono">{i.code}</td>
-                          <td className="font-bold">{i.name}</td>
-                          <td className="text-lg font-bold">
-                            {i.quantity}{' '}
-                            <span className="text-sm font-normal">
-                              {ITEM_UNIT_LABELS_AR[i.unit]}
-                            </span>
-                          </td>
-                          <td>{i.confirmedQuantity}</td>
-                          <td>{formatJod(i.amount)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {sections.map((sec) => (
+                    <tbody key={sec}>
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
+                        >
+                          {sec}
+                        </td>
+                      </tr>
+                      {data.items
+                        .filter((i) => i.sectionName === sec)
+                        .map((i) => (
+                          <tr key={i.itemId} className="border-b border-stone-100">
+                            <td className="py-2 pe-4 font-mono">{i.code}</td>
+                            <td className="font-bold">{i.name}</td>
+                            <td className="text-lg font-bold">
+                              {i.quantity}{' '}
+                              <span className="text-sm font-normal">
+                                {t(ITEM_UNIT_LABELS_AR[i.unit])}
+                              </span>
+                            </td>
+                            <td>{i.confirmedQuantity}</td>
+                            <td>{formatJod(i.amount)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  ))}
+                </table>
+              </div>
             )}
           </Card>
 
-          <Card title={`فروع لم تطلب (${data.branchesWithoutOrder.length})`}>
+          <Card title={t('فروع لم تطلب ({0})', data.branchesWithoutOrder.length)}>
             <ul className="grid grid-cols-1 gap-1 text-sm md:grid-cols-2">
               {data.branchesWithoutOrder.map((b) => (
                 <li key={b.branchId}>
                   <b>{b.customerName}</b> — {b.branchName}{' '}
                   <span className="font-mono text-xs text-brand-muted">{b.branchCode}</span>
                   {b.customerPhone && (
-                    <span className="mr-2 text-brand-muted" dir="ltr">
+                    <span className="ms-2 text-brand-muted" dir="ltr">
                       {b.customerPhone}
                     </span>
                   )}
                 </li>
               ))}
               {data.branchesWithoutOrder.length === 0 && (
-                <li className="text-brand-muted">كل الفروع طلبت ✓</li>
+                <li className="text-brand-muted">{t('كل الفروع طلبت ✓')}</li>
               )}
             </ul>
           </Card>

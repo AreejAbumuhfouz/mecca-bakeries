@@ -3,6 +3,7 @@ import type { Permission } from '@mecca/shared';
 import { AppError } from '../lib/errors.js';
 import type { AuthService } from '../modules/auth/auth.service.js';
 import type { TokenService } from '../modules/auth/tokens.js';
+import { t } from '../lib/i18n.js';
 
 /** Attaches request metadata used by audit logging. */
 export const auditContext: RequestHandler = (req, _res, next) => {
@@ -15,16 +16,16 @@ export function authenticate(tokens: TokenService, auth: AuthService): RequestHa
   return async (req, _res, next) => {
     const header = req.get('authorization');
     const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) return next(new AppError(401, 'UNAUTHENTICATED', 'يرجى تسجيل الدخول'));
+    if (!token) return next(new AppError(401, 'UNAUTHENTICATED', t('يرجى تسجيل الدخول')));
     try {
       const claims = await tokens.verifyAccess(token);
       const user = await auth.loadAuthUser(claims.sub);
-      if (!user) return next(new AppError(401, 'UNAUTHENTICATED', 'الحساب غير مفعّل'));
+      if (!user) return next(new AppError(401, 'UNAUTHENTICATED', t('الحساب غير مفعّل')));
       req.auth = user;
       req.audit.userId = user.id;
       next();
     } catch {
-      next(new AppError(401, 'UNAUTHENTICATED', 'انتهت صلاحية الجلسة'));
+      next(new AppError(401, 'UNAUTHENTICATED', t('انتهت صلاحية الجلسة')));
     }
   };
 }
@@ -35,7 +36,7 @@ export function requirePermission(...needed: Permission[]): RequestHandler {
     const have = new Set(req.auth?.permissions ?? []);
     const missing = needed.filter((p) => !have.has(p));
     if (missing.length)
-      return next(new AppError(403, 'FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء', { missing }));
+      return next(new AppError(403, 'FORBIDDEN', t('ليس لديك صلاحية لهذا الإجراء'), { missing }));
     next();
   };
 }
@@ -45,6 +46,6 @@ export function requireAnyPermission(...anyOf: Permission[]): RequestHandler {
   return (req, _res, next) => {
     const have = new Set(req.auth?.permissions ?? []);
     if (anyOf.some((p) => have.has(p))) return next();
-    next(new AppError(403, 'FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء', { anyOf }));
+    next(new AppError(403, 'FORBIDDEN', t('ليس لديك صلاحية لهذا الإجراء'), { anyOf }));
   };
 }
