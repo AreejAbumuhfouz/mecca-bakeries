@@ -57,7 +57,7 @@ function Chips<T extends string>({
           <Text
             style={{ fontSize: 13, color: colors.brown, fontWeight: value === o ? '700' : '400' }}
           >
-            {labels[o]}
+            {t(labels[o])}
           </Text>
         </Pressable>
       ))}
@@ -257,7 +257,7 @@ export function StopScreen({
         {stop.branch.address ? <Text style={ui.muted}>{stop.branch.address}</Text> : null}
         <View style={ui.between}>
           <Text style={ui.muted}>
-            {stop.order.number} — {PAYMENT_TYPE_LABELS_AR[stop.paymentType]}
+            {stop.order.number} — {t(PAYMENT_TYPE_LABELS_AR[stop.paymentType])}
           </Text>
           {phone ? (
             <Pressable onPress={() => void Linking.openURL(`tel:${phone}`)} style={ui.row}>

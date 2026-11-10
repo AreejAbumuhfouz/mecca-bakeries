@@ -3,12 +3,12 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Languages, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { ApiRequestError } from '@/lib/api';
 import { Button, Input } from '@/components/ui';
-import { t } from '@/lib/i18n';
+import { getLocale, setLocale, t } from '@/lib/i18n';
 
 export default function LoginPage() {
   const { user, loading, requestCode, verifyCode } = useAuth();
@@ -30,8 +30,10 @@ export default function LoginPage() {
     try {
       await fn();
     } catch (e) {
-      setError(e instanceof ApiRequestError ? e.message : t('حدث خطأ، حاول مرة أخرى'));
-    } finally {
+      // A fetch that never reached the API (server stopped, no internet) is not an ApiRequestError.
+      setError(
+        e instanceof ApiRequestError ? e.message : t('لا يوجد اتصال بالخادم — تأكد من الإنترنت'),
+      );
       setBusy(false);
     }
   }
@@ -41,12 +43,14 @@ export default function LoginPage() {
     void run(async () => {
       await requestCode(email);
       setStep('code');
+      setBusy(false);
     });
   };
 
   const onCode = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
+      // Stays busy until the dashboard opens, so the code can't be sent twice.
       await verifyCode(email, code);
       router.replace('/');
     });
@@ -54,13 +58,21 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center p-6">
-      <button
-        onClick={toggle}
-        className="absolute top-4 left-4 rounded-lg border border-brand-line bg-surface p-2 text-brand-brown"
-        aria-label={theme === 'dark' ? t('الوضع الفاتح') : t('الوضع الداكن')}
-      >
-        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-      </button>
+      <div className="absolute top-4 inset-e-4 flex gap-2">
+        <button
+          onClick={() => setLocale(getLocale() === 'ar' ? 'en' : 'ar')}
+          className="flex items-center gap-1.5 rounded-lg border border-brand-line bg-surface px-2.5 py-2 text-xs font-bold text-brand-brown"
+        >
+          <Languages size={16} /> {getLocale() === 'ar' ? 'English' : 'العربية'}
+        </button>
+        <button
+          onClick={toggle}
+          className="rounded-lg border border-brand-line bg-surface p-2 text-brand-brown"
+          aria-label={theme === 'dark' ? t('الوضع الفاتح') : t('الوضع الداكن')}
+        >
+          {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
+      </div>
       <div className="w-full max-w-sm rounded-2xl border border-brand-line bg-surface p-8 shadow-sm">
         <div className="mx-auto w-fit rounded-xl bg-white p-2">
           <Image src="/logo.png" alt={t('مخابز مكة')} width={120} height={101} priority />

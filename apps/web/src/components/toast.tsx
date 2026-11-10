@@ -41,7 +41,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed bottom-4 start-4 z-50 flex w-[min(92vw,360px)] flex-col gap-2 print:hidden"
+        className="pointer-events-none fixed bottom-4 inset-e-4 z-50 flex w-[min(92vw,360px)] flex-col gap-2 print:hidden"
       >
         {items.map((x) => {
           const Icon = icon[x.tone];
@@ -53,7 +53,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             >
               <Icon size={18} className="mt-0.5 shrink-0" />
               <span className="flex-1 leading-6">{x.message}</span>
-              <button aria-label={t('إغلاق')} onClick={() => remove(x.id)} className="opacity-60 hover:opacity-100">
+              <button
+                aria-label={t('إغلاق')}
+                onClick={() => remove(x.id)}
+                className="opacity-60 hover:opacity-100"
+              >
                 <X size={16} />
               </button>
             </div>

@@ -1,6 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { RequestHandler } from 'express';
-import { DEFAULT_LOCALE, LOCALES, translate, translateDeep, type Locale } from '@mecca/shared';
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  setLocaleSource,
+  translate,
+  translateDeep,
+  type Locale,
+} from '@mecca/shared';
 
 /**
  * The language of the current request (or background job). Requests carry it in the
@@ -13,6 +20,7 @@ export const asLocale = (v: unknown): Locale | null =>
   typeof v === 'string' && (LOCALES as readonly string[]).includes(v) ? (v as Locale) : null;
 
 export const currentLocale = (): Locale => store.getStore()?.locale ?? DEFAULT_LOCALE;
+setLocaleSource(currentLocale);
 
 /** Translates Arabic text into the current language. */
 export const t = (text: string, ...args: unknown[]) => translate(currentLocale(), text, args);

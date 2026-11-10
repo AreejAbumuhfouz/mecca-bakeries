@@ -2,7 +2,16 @@
 // Usage: node scripts/i18n/codemod.cjs [api|web|mobile]...
 const path = require('path');
 const fs = require('fs');
-const { ROOT, ts, AR, jsxText, sourceFile, isDataPosition, literalKey, targets } = require('./shared.cjs');
+const {
+  ROOT,
+  ts,
+  AR,
+  jsxText,
+  sourceFile,
+  isDataPosition,
+  literalKey,
+  targets,
+} = require('./shared.cjs');
 
 const RENAME = 'tr';
 
@@ -35,7 +44,15 @@ function renameLocalT(file) {
       n.name.text === 't'
     ) {
       let s = n.parent;
-      while (s && !ts.isFunctionLike(s) && !ts.isBlock(s) && !ts.isSourceFile(s) && !ts.isForOfStatement(s) && !ts.isForStatement(s)) s = s.parent;
+      while (
+        s &&
+        !ts.isFunctionLike(s) &&
+        !ts.isBlock(s) &&
+        !ts.isSourceFile(s) &&
+        !ts.isForOfStatement(s) &&
+        !ts.isForStatement(s)
+      )
+        s = s.parent;
       if (ts.isParameter(n)) s = n.parent;
       scopes.push(s);
     }
@@ -55,7 +72,8 @@ function renameLocalT(file) {
           (ts.isBindingElement(p) && p.propertyName === n);
         if (!isPropName) {
           const start = n.getStart();
-          if (ts.isShorthandPropertyAssignment(p)) edits.set(start, { start, end: n.end, text: `t: ${RENAME}` });
+          if (ts.isShorthandPropertyAssignment(p))
+            edits.set(start, { start, end: n.end, text: `t: ${RENAME}` });
           else edits.set(start, { start, end: n.end, text: RENAME });
         }
       }
@@ -121,7 +139,11 @@ function pass(file) {
       }
       flush();
     }
-    if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateExpression(n)) {
+    if (
+      ts.isStringLiteral(n) ||
+      ts.isNoSubstitutionTemplateLiteral(n) ||
+      ts.isTemplateExpression(n)
+    ) {
       const own = ts.isTemplateExpression(n)
         ? n.head.text + n.templateSpans.map((s) => s.literal.text).join('')
         : n.text;
@@ -137,11 +159,20 @@ function pass(file) {
   visit(src);
   // Innermost only: drop candidates that contain another.
   const leaves = cands.filter(
-    (a) => !cands.some((b) => b !== a && b.start >= a.start && b.end <= a.end && (b.start !== a.start || b.end !== a.end)),
+    (a) =>
+      !cands.some(
+        (b) =>
+          b !== a &&
+          b.start >= a.start &&
+          b.end <= a.end &&
+          (b.start !== a.start || b.end !== a.end),
+      ),
   );
   // Remove duplicates with the same range.
   const seen = new Set();
-  const edits = leaves.filter((e) => (seen.has(`${e.start}:${e.end}`) ? false : seen.add(`${e.start}:${e.end}`)));
+  const edits = leaves.filter((e) =>
+    seen.has(`${e.start}:${e.end}`) ? false : seen.add(`${e.start}:${e.end}`),
+  );
   if (edits.length) fs.writeFileSync(file, apply(text, edits));
   return edits.length;
 }
@@ -155,7 +186,8 @@ function addImport(app, file) {
   let pos = 0;
   for (const s of src.statements) {
     if (ts.isImportDeclaration(s)) pos = s.end;
-    else if (ts.isExpressionStatement(s) && ts.isStringLiteral(s.expression) && pos === 0) pos = s.end;
+    else if (ts.isExpressionStatement(s) && ts.isStringLiteral(s.expression) && pos === 0)
+      pos = s.end;
     else break;
   }
   text = text.slice(0, pos) + (pos ? '\n' : '') + line + (pos ? '' : '\n') + text.slice(pos);

@@ -1,5 +1,13 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { filsToJodString, formatJod } from '@mecca/shared';
 import { api, errorText, fetchBlob } from '../api';
@@ -53,12 +61,23 @@ export function InvoicesScreen() {
   const [open, setOpen] = useState<Detail | null>(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    void Promise.all([
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(async () => {
+    setError('');
+    await Promise.all([
       api<Balance>('/api/app/account/balance').then(setBalance),
       api<{ items: Row[] }>('/api/app/account/invoices?pageSize=50').then((r) => setRows(r.items)),
     ]).catch((err) => setError(errorText(err, t('تعذّر التحميل'))));
   }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const refresh = async () => {
+    setRefreshing(true);
+    setStatement(null);
+    await load();
+    setRefreshing(false);
+  };
   useEffect(() => {
     if (view === 'statement' && !statement)
       void api<Statement>('/api/app/account/statement')
@@ -126,7 +145,11 @@ export function InvoicesScreen() {
     );
 
   return (
-    <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
+    <ScrollView
+      style={ui.screen}
+      contentContainerStyle={ui.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
+    >
       <Text style={ui.h1}>{t('فواتيري وحسابي')}</Text>
       {error ? <Text style={ui.error}>{error}</Text> : null}
       {balance && (

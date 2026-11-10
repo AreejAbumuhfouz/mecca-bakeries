@@ -17,7 +17,9 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "i18n:check": "node scripts/i18n/extract.cjs --check",
+    "i18n:missing": "node scripts/i18n/extract.cjs --json"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

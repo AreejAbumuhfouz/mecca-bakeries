@@ -248,7 +248,7 @@ export default function DashboardHome() {
                       {c.customerName}
                     </Link>
                     <span className="font-mono text-brand-muted">{c.number}</span>
-                    <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+                    <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
                     <span className={left < 0 ? 'text-red-700' : 'text-brand-muted'}>
                       {left < 0
                         ? t('انتهى منذ {0} يوم', -left)

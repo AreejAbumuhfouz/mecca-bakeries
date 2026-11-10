@@ -244,7 +244,7 @@ export default function ProductionSetupPage() {
               )}
               {canManage && (
                 <button
-                  className="mr-auto text-xs text-brand-brown underline"
+                  className="ms-auto text-xs text-brand-brown underline"
                   onClick={() =>
                     void run(
                       () =>

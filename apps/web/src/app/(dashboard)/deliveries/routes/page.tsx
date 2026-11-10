@@ -97,7 +97,7 @@ export default function RoutesPage() {
 
       {drivers.length === 0 && (
         <div className="rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          {t('لا يوجد سائقون. أضيفيهم من «المستخدمون» بدور «سائق».')}
+          {t('لا يوجد سائقون. أضفهم من «المستخدمون» بدور «سائق».')}
         </div>
       )}
 
@@ -182,7 +182,7 @@ export default function RoutesPage() {
                   void setStops(r, [...r.stops.map((s) => s.branchId), e.target.value])
                 }
               >
-                <option value="">{t('— اختاري فرعاً بدون مسار —')}</option>
+                <option value="">{t('— اختر فرعاً بدون مسار —')}</option>
                 {free.map((b) => (
                   <option key={b.branchId} value={b.branchId}>
                     {b.customerName} — {b.branchName}

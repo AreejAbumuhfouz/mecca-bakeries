@@ -53,7 +53,7 @@ export function TermsFields({
         >
           {PAYMENT_TYPES.map((p) => (
             <option key={p} value={p}>
-              {PAYMENT_TYPE_LABELS_AR[p]}
+              {t(PAYMENT_TYPE_LABELS_AR[p])}
             </option>
           ))}
         </Select>

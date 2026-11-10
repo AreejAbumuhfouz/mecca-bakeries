@@ -1,3 +1,5 @@
+import { AlertCircle, Inbox } from 'lucide-react';
+import { t } from '@/lib/i18n';
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -51,9 +53,9 @@ export function Card({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-brand-line bg-surface p-5">
+    <section className="min-w-0 rounded-2xl border border-brand-line bg-surface p-4 shadow-[0_1px_2px_rgba(62,42,28,0.05)] sm:p-5">
       {(title || actions) && (
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {title && <h2 className="text-lg font-bold text-brand-brown">{title}</h2>}
           {actions}
         </div>
@@ -112,5 +114,45 @@ export function Textarea({
 
 export function ErrorBox({ message }: { message: string }) {
   if (!message) return null;
-  return <div className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-800">{message}</div>;
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800"
+    >
+      <AlertCircle size={17} className="mt-0.5 shrink-0" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+/** A friendly empty state for lists and tables. */
+export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-10 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-cream text-brand-gold">
+        <Inbox size={22} />
+      </span>
+      <p className="font-bold text-brand-brown">{title}</p>
+      {hint && <p className="max-w-sm text-sm text-brand-muted">{hint}</p>}
+    </div>
+  );
+}
+
+/** Placeholder blocks shown while a page loads its data. */
+export function PageSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label={t('جارٍ التحميل…')}>
+      <div className="mb-skeleton h-8 w-56" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="mb-skeleton h-20" />
+        ))}
+      </div>
+      <div className="space-y-2 rounded-2xl border border-brand-line bg-surface p-5">
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} className="mb-skeleton h-6" />
+        ))}
+      </div>
+    </div>
+  );
 }

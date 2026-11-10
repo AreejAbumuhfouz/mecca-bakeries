@@ -154,13 +154,13 @@ export default function AuditPage() {
             return (
               <li key={r.id} className="py-2">
                 <button
-                  className="flex w-full flex-wrap items-center gap-3 text-right"
+                  className="flex w-full flex-wrap items-center gap-3 text-start"
                   onClick={() => setOpen(open === r.id ? null : r.id)}
                 >
                   <span className="w-36 shrink-0 text-brand-muted tabular-nums">
                     {formatAmman(r.createdAt)}
                   </span>
-                  <b className="w-40 shrink-0 truncate">{r.userName ?? '—'}</b>
+                  <b className="w-40 shrink-0 truncate">{r.userName ? t(r.userName) : '—'}</b>
                   <span className="rounded-full bg-brand-gold-light px-2 py-0.5 text-xs font-bold text-brand-brown">
                     {verb(r.action)}
                   </span>
@@ -173,7 +173,7 @@ export default function AuditPage() {
                         .join(t('، '))}
                     </span>
                   )}
-                  <span className="mr-auto font-mono text-xs text-brand-muted" dir="ltr">
+                  <span className="ms-auto font-mono text-xs text-brand-muted" dir="ltr">
                     {r.action}
                   </span>
                 </button>
@@ -183,7 +183,7 @@ export default function AuditPage() {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="text-right text-brand-muted">
+                            <tr className="text-start text-brand-muted">
                               <th>{t('الحقل')}</th>
                               <th>{t('قبل')}</th>
                               <th>{t('بعد')}</th>

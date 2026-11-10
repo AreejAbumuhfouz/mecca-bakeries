@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Badge, Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
 import {
   emptyBranchForm,
   toBody,
@@ -19,7 +19,7 @@ import {
 import { CONTRACT_STATE_LABELS_AR, formatJod } from '@mecca/shared';
 import { STATE_TONE, type ContractRow } from '@/lib/contracts';
 import { CustomerFields } from '../customer-fields';
-import { t } from '@/lib/i18n';
+import { arrow, t } from '@/lib/i18n';
 
 const errMsg = (err: unknown, fallback: string) =>
   err instanceof ApiRequestError ? err.message : fallback;
@@ -52,7 +52,7 @@ function Info({ label, value, ltr }: { label: string; value: string | null; ltr?
   return (
     <div>
       <div className="text-xs text-brand-muted">{label}</div>
-      <div className="font-bold" dir={ltr ? 'ltr' : undefined} style={{ textAlign: 'right' }}>
+      <div className="font-bold" dir={ltr ? 'ltr' : undefined} style={{ textAlign: 'start' }}>
         {value || '—'}
       </div>
     </div>
@@ -158,7 +158,7 @@ export default function CustomerPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">{t('جارٍ التحميل…')}</p>}
+        {!error && <PageSkeleton />}
       </div>
     );
   }
@@ -257,12 +257,12 @@ export default function CustomerPage() {
                   {c.number}
                 </Link>
                 <span className="font-mono text-brand-muted">
-                  {c.startDate} ← {c.endDate}
+                  {c.startDate} {arrow()} {c.endDate}
                 </span>
                 <span>
                   {c.paymentType === 'credit' ? t('سقف {0}', formatJod(c.creditLimit)) : t('نقدي')}
                 </span>
-                <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+                <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
               </li>
             ))}
             {contracts.length === 0 && (
@@ -349,7 +349,7 @@ export default function CustomerPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('الكود')}</th>
                 <th>{t('الفرع')}</th>
                 <th>{t('المسؤول')}</th>
@@ -362,7 +362,7 @@ export default function CustomerPage() {
             <tbody>
               {customer.branches.map((b) => (
                 <tr key={b.id} className="border-b border-stone-100">
-                  <td className="py-2.5 pl-4 font-mono">{b.code}</td>
+                  <td className="py-2.5 pe-4 font-mono">{b.code}</td>
                   <td className="font-bold">
                     {b.name}
                     {b.deliveryNotes && (
@@ -370,7 +370,7 @@ export default function CustomerPage() {
                     )}
                   </td>
                   <td>{b.contactName ?? '—'}</td>
-                  <td dir="ltr" style={{ textAlign: 'right' }}>
+                  <td dir="ltr" style={{ textAlign: 'start' }}>
                     {b.phone ?? '—'}
                   </td>
                   <td>{[b.city, b.address].filter(Boolean).join(' - ') || '—'}</td>

@@ -5,7 +5,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { filsToJodString, type OrderSettings, type ReceivablesSettings } from '@mecca/shared';
 import { jodToFils } from '@/lib/billing';
 import { api, errorMessage, fetchAuthedBlob } from '@/lib/api';
-import { Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
+import { useToast } from '@/components/toast';
 import { formatAmman } from '@/lib/orders';
 import { t } from '@/lib/i18n';
 
@@ -122,8 +123,8 @@ export default function SettingsPage() {
   );
   const [runs, setRuns] = useState<Run[]>([]);
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     void api<OrderSettings>('/api/settings/orders')
@@ -141,7 +142,6 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!s) return;
     setError('');
-    setSaved(false);
     setBusy(true);
     try {
       setS(
@@ -150,15 +150,15 @@ export default function SettingsPage() {
           body: JSON.stringify(s),
         }),
       );
-      setSaved(true);
+      toast.success(t('تم حفظ الإعدادات ✓'));
     } catch (err) {
-      setError(errorMessage(err, t('تعذّر الحفظ')));
+      toast.error(errorMessage(err, t('تعذّر الحفظ')));
     } finally {
       setBusy(false);
     }
   }
 
-  if (!s) return <ErrorBox message={error} />;
+  if (!s) return error ? <ErrorBox message={error} /> : <PageSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -167,11 +167,6 @@ export default function SettingsPage() {
         <p className="text-sm text-brand-muted">{t('كل الأوقات بتوقيت عمّان.')}</p>
       </div>
       <ErrorBox message={error} />
-      {saved && (
-        <div className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-800">
-          {t('تم حفظ الإعدادات ✓')}
-        </div>
-      )}
 
       <form onSubmit={save} className="space-y-6">
         <Card title={t('مواعيد الطلبات')}>
@@ -304,7 +299,7 @@ export default function SettingsPage() {
       <Card title={t('بياناتكم')}>
         <p className="mb-3 text-sm text-brand-muted">
           {t(
-            'البيانات ملك مخابز مكة بالكامل. نزّلي نسخة كاملة منها (كل جدول في ورقة Excel) في أي وقت.',
+            'البيانات ملك مخابز مكة بالكامل. يمكن تنزيل نسخة كاملة منها (كل جدول في ورقة Excel) في أي وقت.',
           )}
         </p>
         <Button
@@ -321,7 +316,7 @@ export default function SettingsPage() {
         >
           {t('تنزيل كل البيانات (Excel)')}
         </Button>
-        <Link href="/settings/import" className="mr-3 text-sm text-brand-brown underline">
+        <Link href="/settings/import" className="ms-3 text-sm text-brand-brown underline">
           {t('نقل البيانات من Excel (العملاء، الأصناف، العقود، الأرصدة الافتتاحية)')}
         </Link>
       </Card>
@@ -333,7 +328,9 @@ export default function SettingsPage() {
               <b>{JOB_LABELS[r.job] ?? r.job}</b>
               <span className="font-mono">{r.runKey}</span>
               <span className="text-brand-muted">{formatAmman(r.startedAt)}</span>
-              <span className={r.error ? 'text-red-700' : 'text-brand-muted'}>
+              <span
+                className={`min-w-0 break-all ${r.error ? 'text-red-700' : 'text-brand-muted'}`}
+              >
                 {r.error ?? JSON.stringify(r.result)}
               </span>
             </li>

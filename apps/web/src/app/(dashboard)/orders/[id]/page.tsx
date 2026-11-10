@@ -12,7 +12,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Badge, Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
 import { OrderLinesEditor, toLines, type Quantities } from '@/components/order-lines-editor';
 import { formatAmman, STATUS_TONE, type CatalogItem, type Order } from '@/lib/orders';
 import { t } from '@/lib/i18n';
@@ -63,7 +63,7 @@ export default function OrderPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">{t('جارٍ التحميل…')}</p>}
+        {!error && <PageSkeleton />}
       </div>
     );
 
@@ -85,14 +85,16 @@ export default function OrderPage() {
               {order.customerName}
             </Link>
             <span>— {order.branchName}</span>
-            <Badge tone={STATUS_TONE[order.status]}>{ORDER_STATUS_LABELS_AR[order.status]}</Badge>
+            <Badge tone={STATUS_TONE[order.status]}>
+              {t(ORDER_STATUS_LABELS_AR[order.status])}
+            </Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
             {t('التسليم يوم')} <b>{order.deliveryDate}</b>{' '}
             {t(
               '— إغلاق الطلبات {0} — المصدر: {1}',
               formatAmman(order.cutoffAt),
-              ORDER_SOURCE_LABELS_AR[order.source],
+              t(ORDER_SOURCE_LABELS_AR[order.source]),
             )}
           </p>
         </div>
@@ -140,7 +142,7 @@ export default function OrderPage() {
         <Card title={t('موقوف بسبب الائتمان')}>
           <ul className="mb-3 list-inside list-disc text-sm text-red-800">
             {order.creditReasons?.map((r) => (
-              <li key={r.code}>{r.message}</li>
+              <li key={r.code}>{t(r.key ?? r.message, ...(r.args ?? []))}</li>
             ))}
           </ul>
           {can('credit.override') ? (
@@ -221,7 +223,7 @@ export default function OrderPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-2">{t('الكود')}</th>
                   <th>{t('الصنف')}</th>
                   <th>{t('الكمية')}</th>
@@ -232,15 +234,15 @@ export default function OrderPage() {
               <tbody>
                 {order.lines.map((l) => (
                   <tr key={l.itemId} className="border-b border-stone-100">
-                    <td className="py-2 pl-4 font-mono">{l.code}</td>
+                    <td className="py-2 pe-4 font-mono">{l.code}</td>
                     <td className="font-bold">{l.name}</td>
                     <td>
-                      {l.quantity} {ITEM_UNIT_LABELS_AR[l.unit]}
+                      {l.quantity} {t(ITEM_UNIT_LABELS_AR[l.unit])}
                     </td>
                     <td>
                       {formatJod(l.unitPrice)}
                       {l.priceSource === 'contract' && (
-                        <span className="mr-1 text-xs text-brand-gold">{t('سعر خاص')}</span>
+                        <span className="ms-1 text-xs text-brand-gold">{t('سعر خاص')}</span>
                       )}
                     </td>
                     <td className="font-bold">{formatJod(l.lineTotal)}</td>
@@ -249,7 +251,7 @@ export default function OrderPage() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={4} className="py-3 pl-4 text-left font-bold">
+                  <td colSpan={4} className="py-3 pe-4 text-end font-bold">
                     {t('المجموع')}
                   </td>
                   <td className="text-lg font-bold text-brand-brown">{formatJod(order.total)}</td>
@@ -265,16 +267,16 @@ export default function OrderPage() {
       )}
 
       <Card title={t('سجل الطلب')}>
-        <ol className="space-y-3 border-r-2 border-brand-line pr-4 text-sm">
+        <ol className="space-y-3 border-s-2 border-brand-line ps-4 text-sm">
           {order.events.map((e) => {
             const change = e.data as Change | null;
             return (
               <li key={e.id}>
-                <div className="font-bold text-brand-brown">{ORDER_EVENT_LABELS_AR[e.type]}</div>
+                <div className="font-bold text-brand-brown">{t(ORDER_EVENT_LABELS_AR[e.type])}</div>
                 <div className="text-xs text-brand-muted">
                   {formatAmman(e.createdAt)} — {e.actorName ?? t('النظام')}
                 </div>
-                {e.note && <div className="mt-1">{e.note}</div>}
+                {e.note && <div className="mt-1">{t(e.note)}</div>}
                 {change?.before && change.after && (
                   <div className="mt-1 text-xs">
                     {t(

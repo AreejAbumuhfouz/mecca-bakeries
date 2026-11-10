@@ -17,7 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Textarea } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { INVOICE_TONE, jodToFils, type Invoice } from '@/lib/billing';
-import { t } from '@/lib/i18n';
+import { arrow, t } from '@/lib/i18n';
 
 type EditLine = {
   kind: 'sale' | 'return';
@@ -106,7 +106,7 @@ export default function InvoicePage() {
       const q = Number(l.quantity);
       const p = jodToFils(l.price);
       if (!Number.isInteger(q) || q < 1 || p === null)
-        return setError(t('تحقّقي من الكمية والسعر: {0}', l.description));
+        return setError(t('تحقّق من الكمية والسعر: {0}', l.description));
       out.push({
         kind: l.kind,
         itemId: l.itemId,
@@ -161,7 +161,7 @@ export default function InvoicePage() {
             </Link>
             {inv.branchName && <span>— {inv.branchName}</span>}
             <span className="text-brand-muted">{inv.tradeName?.name}</span>
-            <Badge tone={INVOICE_TONE[inv.status]}>{INVOICE_STATUS_LABELS_AR[inv.status]}</Badge>
+            <Badge tone={INVOICE_TONE[inv.status]}>{t(INVOICE_STATUS_LABELS_AR[inv.status])}</Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
             {t('التاريخ {0} — الاستحقاق {1}', inv.issueDate, inv.dueDate)}
@@ -231,7 +231,7 @@ export default function InvoicePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-right text-brand-muted">
+                    <tr className="text-start text-brand-muted">
                       <th>{t('الصنف')}</th>
                       <th className="w-24">{t('الكمية')}</th>
                       <th className="w-28">{t('السعر')}</th>
@@ -295,7 +295,7 @@ export default function InvoicePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
                       <th className="py-2">#</th>
                       <th>{t('الصنف')}</th>
                       <th>{t('الكمية')}</th>
@@ -318,7 +318,7 @@ export default function InvoicePage() {
                         <td>
                           {filsToJodString(l.unitPrice)}
                           {l.listPrice > l.unitPrice && (
-                            <span className="mr-1 text-xs text-brand-muted line-through">
+                            <span className="ms-1 text-xs text-brand-muted line-through">
                               {filsToJodString(l.listPrice)}
                             </span>
                           )}
@@ -406,7 +406,7 @@ export default function InvoicePage() {
                 <li key={p.paymentId} className="flex justify-between">
                   <span>
                     <span className="font-mono">{p.number}</span> — {p.receivedOn} —{' '}
-                    {PAYMENT_METHOD_LABELS_AR[p.method]}
+                    {t(PAYMENT_METHOD_LABELS_AR[p.method])}
                   </span>
                   <b>{formatJod(p.amount)}</b>
                 </li>
@@ -486,7 +486,7 @@ export default function InvoicePage() {
                 <span>{formatAmman(r.createdAt)}</span>
                 <b>{r.userName}</b>
                 <span>
-                  {formatJod(r.before.total)} ← {formatJod(r.after.total)}
+                  {formatJod(r.before.total)} {arrow()} {formatJod(r.after.total)}
                 </span>
                 <span className="text-brand-muted">{t('السبب: {0}', r.reason)}</span>
               </li>

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { AuthUser, LoginResult, Permission } from '@mecca/shared';
 import { api, refreshSession, setAccessToken, setSessionExpiredHandler } from './api';
+import { getLocale, hasChosenLocale, setLocale } from './i18n';
 
 type AuthState = {
   user: AuthUser | null;
@@ -40,6 +41,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, code }),
     });
     setAccessToken(result.accessToken);
+    // A language picked in this browser wins and is saved on the account; otherwise the
+    // account's language is used (e.g. signing in on a new computer).
+    if (hasChosenLocale()) {
+      if (result.user.locale !== getLocale())
+        await api('/api/auth/me/locale', {
+          method: 'PATCH',
+          body: JSON.stringify({ locale: getLocale() }),
+        }).catch(() => undefined);
+    } else if (result.user.locale !== getLocale()) {
+      setLocale(result.user.locale);
+    }
     setUser(result.user);
   }, []);
 

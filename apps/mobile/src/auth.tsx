@@ -10,7 +10,7 @@ import {
 import type { AuthUser, LoginResult } from '@mecca/shared';
 import { api, clearSession, refreshSession, saveSession, setExpiredHandler } from './api';
 import { registerForPush, unregisterPush } from './push';
-import { t } from './i18n';
+import { getLocale, t } from './i18n';
 
 type AuthState = {
   user: AuthUser | null;
@@ -51,6 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(t('هذا التطبيق لحسابات المطاعم والسائقين. استخدم لوحة التحكم من الكمبيوتر.'));
     }
     await saveSession(result);
+    // The language chosen in the app is kept on the account (notifications use it).
+    if (result.user.locale !== getLocale())
+      void api('/api/auth/me/locale', { method: 'PATCH', body: { locale: getLocale() } }).catch(
+        () => undefined,
+      );
     setUser(result.user);
     void registerForPush();
   }, []);

@@ -92,9 +92,9 @@ export default function OrdersPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {(['submitted', 'confirmed', 'pending_approval', 'draft'] as OrderStatus[]).map((s) => (
-          <button key={s} onClick={() => setStatus(status === s ? '' : s)} className="text-right">
+          <button key={s} onClick={() => setStatus(status === s ? '' : s)} className="text-start">
             <Card>
-              <div className="text-xs text-brand-muted">{ORDER_STATUS_LABELS_AR[s]}</div>
+              <div className="text-xs text-brand-muted">{t(ORDER_STATUS_LABELS_AR[s])}</div>
               <div className="text-2xl font-bold text-brand-brown">{counts[s] ?? 0}</div>
             </Card>
           </button>
@@ -123,7 +123,7 @@ export default function OrdersPage() {
               <option value="">{t('كل الحالات')}</option>
               {ORDER_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {ORDER_STATUS_LABELS_AR[s]}
+                  {t(ORDER_STATUS_LABELS_AR[s])}
                 </option>
               ))}
             </select>
@@ -139,7 +139,7 @@ export default function OrdersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('رقم الطلب')}</th>
                 <th>{t('العميل')}</th>
                 <th>{t('الفرع')}</th>
@@ -152,7 +152,7 @@ export default function OrdersPage() {
             <tbody>
               {data?.items.map((o) => (
                 <tr key={o.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/orders/${o.id}`} className="text-brand-brown underline">
                       {o.number}
                     </Link>
@@ -164,9 +164,11 @@ export default function OrdersPage() {
                   </td>
                   <td>{o.itemCount}</td>
                   <td className="font-bold">{formatJod(o.total)}</td>
-                  <td className="text-brand-muted">{ORDER_SOURCE_LABELS_AR[o.source]}</td>
+                  <td className="text-brand-muted">{t(ORDER_SOURCE_LABELS_AR[o.source])}</td>
                   <td>
-                    <Badge tone={STATUS_TONE[o.status]}>{ORDER_STATUS_LABELS_AR[o.status]}</Badge>
+                    <Badge tone={STATUS_TONE[o.status]}>
+                      {t(ORDER_STATUS_LABELS_AR[o.status])}
+                    </Badge>
                   </td>
                 </tr>
               ))}

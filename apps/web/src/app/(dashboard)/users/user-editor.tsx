@@ -134,7 +134,7 @@ export function UserEditor({
           <Select label={t('الدور')} value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {ROLE_VALUES.map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABELS_AR[r]}
+                {t(ROLE_LABELS_AR[r])}
               </option>
             ))}
           </Select>
@@ -185,7 +185,7 @@ export function UserEditor({
                       checked={effective(p)}
                       onChange={() => toggle(p)}
                     />
-                    {PERMISSION_LABELS_AR[p]}
+                    {t(PERMISSION_LABELS_AR[p])}
                   </label>
                 );
               })}

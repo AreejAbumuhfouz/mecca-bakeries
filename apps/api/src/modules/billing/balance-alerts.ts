@@ -1,12 +1,12 @@
 import { and, eq } from 'drizzle-orm';
 import { addDays, ammanDate, filsToJodString } from '@mecca/shared';
 import type { Db } from '../../db/client.js';
-import { branches, customers } from '../../db/schema/index.js';
+import { branches, customers, users } from '../../db/schema/index.js';
 import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import type { PushService } from '../notifications/push.js';
 import type { SettingsService } from '../settings/settings.service.js';
 import type { BillingService } from './billing.service.js';
-import { t } from '../../lib/i18n.js';
+import { t, withLocale } from '../../lib/i18n.js';
 
 /**
  * Daily reminder of the unpaid balance: WhatsApp message with the statement PDF
@@ -32,7 +32,11 @@ export function createBalanceAlerts(deps: {
     return { customer: c, phone: b?.phone ?? null };
   }
 
-  async function sendTo(customerId: string, sentBy: string | null) {
+  /** The statement and WhatsApp message are Arabic (registered template), whoever sends it. */
+  const sendTo = (customerId: string, sentBy: string | null) =>
+    withLocale('ar', () => send(customerId, sentBy));
+
+  async function send(customerId: string, sentBy: string | null) {
     const today = ammanDate(now());
     const { customer, phone } = await phoneOf(customerId);
     if (!customer) return { whatsapp: 'skipped' as const, push: 0 };
@@ -56,15 +60,22 @@ export function createBalanceAlerts(deps: {
             ? 'skipped'
             : 'sent';
     }
-    await push.toCustomer(customerId, {
-      title: t('رصيد حسابكم'),
-      body: t(
-        'المستحق {0} د.أ{1}',
-        filsToJodString(s.balance),
-        s.overdue ? t(' — متأخر {0} د.أ', filsToJodString(s.overdue)) : '',
-      ),
-      data: { screen: 'account' },
-    });
+    const [u] = await db
+      .select({ locale: users.locale })
+      .from(users)
+      .where(eq(users.customerId, customerId))
+      .limit(1);
+    await withLocale(u?.locale ?? 'ar', () =>
+      push.toCustomer(customerId, {
+        title: t('رصيد حسابكم'),
+        body: t(
+          'المستحق {0} د.أ{1}',
+          filsToJodString(s.balance),
+          s.overdue ? t(' — متأخر {0} د.أ', filsToJodString(s.overdue)) : '',
+        ),
+        data: { screen: 'account' },
+      }),
+    );
     return { whatsapp: wa, balance: s.balance, overdue: s.overdue };
   }
 

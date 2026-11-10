@@ -86,7 +86,7 @@ function NewContract() {
       <Card title={t('الأسعار الخاصة')}>
         <p className="mb-3 text-sm text-brand-muted">
           {t(
-            'اكتبي السعر الخاص فقط للأصناف المتفق عليها. باقي الأصناف تأخذ السعر الأساسي مع الخصم العام.',
+            'اكتب السعر الخاص فقط للأصناف المتفق عليها. باقي الأصناف تأخذ السعر الأساسي مع الخصم العام.',
           )}
         </p>
         <PricesEditor draft={draft} setDraft={setDraft} discountBps={discountBps} />

@@ -32,7 +32,7 @@ export function PoLinesEditor({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-right text-brand-muted">
+            <tr className="text-start text-brand-muted">
               <th className="w-8">#</th>
               <th>{t('المادة')}</th>
               <th className="w-28">{t('الكمية')}</th>
@@ -115,7 +115,7 @@ export function toPoLines(lines: LineDraft[]) {
     if (!l.description.trim() && !l.quantity.trim()) continue;
     const q = Number(l.quantity.replace(/[٠-٩]/g, (d) => String(t('٠١٢٣٤٥٦٧٨٩').indexOf(d))));
     if (!l.description.trim() || !(q > 0) || !l.unit.trim())
-      return t('البند {0}: أكملي المادة والكمية والوحدة', i + 1);
+      return t('البند {0}: أكمل المادة والكمية والوحدة', i + 1);
     out.push({
       description: l.description.trim(),
       quantity: Math.round(q * 1000) / 1000,
@@ -123,5 +123,5 @@ export function toPoLines(lines: LineDraft[]) {
       note: l.note.trim() || null,
     });
   }
-  return out.length ? out : t('أضيفي بنداً واحداً على الأقل');
+  return out.length ? out : t('أضف بنداً واحداً على الأقل');
 }

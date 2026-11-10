@@ -32,10 +32,10 @@ export function importRouter(svc: ImportService, authenticate: RequestHandler): 
       ok: true,
       data: IMPORT_KINDS.map((k) => ({
         kind: k,
-        label: IMPORT_LABELS_AR[k],
+        label: t(IMPORT_LABELS_AR[k]),
         columns: IMPORT_COLUMNS[k].map((c) => ({
           key: c.key,
-          label: c.label,
+          label: t(c.label),
           required: Boolean(c.required),
         })),
       })),

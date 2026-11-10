@@ -131,7 +131,7 @@ export function OrderScreen({
         {order?.status === 'pending_approval' &&
           order.creditReasons?.map((r) => (
             <Text key={r.code} style={ui.error}>
-              {r.message}
+              {t(r.key ?? r.message, ...(r.args ?? []))}
             </Text>
           ))}
         {!editable && (
@@ -157,7 +157,7 @@ export function OrderScreen({
                     <View style={{ flex: 1 }}>
                       <Text style={[ui.text, { fontWeight: '700' }]}>{i.name}</Text>
                       <Text style={ui.muted}>
-                        {formatJod(i.price)} / {ITEM_UNIT_LABELS_AR[i.unit]}
+                        {formatJod(i.price)} / {t(ITEM_UNIT_LABELS_AR[i.unit])}
                         {i.source === 'contract' ? t(' — سعرك الخاص') : ''}
                       </Text>
                     </View>
@@ -198,7 +198,7 @@ export function OrderScreen({
             <Text style={ui.h2}>{t('سجل الطلب')}</Text>
             {order.events.map((e) => (
               <Text key={e.id} style={ui.muted}>
-                {ORDER_EVENT_LABELS_AR[e.type]} — {new Date(e.createdAt).toLocaleString('ar-JO')}
+                {t(ORDER_EVENT_LABELS_AR[e.type])} — {new Date(e.createdAt).toLocaleString('ar-JO')}
               </Text>
             ))}
           </View>

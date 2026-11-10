@@ -2,7 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ORDER_STATUS_LABELS_AR, type OrderStatus } from '@mecca/shared';
 import { colors } from './theme';
-import { t } from './i18n';
+import { getLocale, setLocale, t } from './i18n';
+import { api } from './api';
+import { Ionicons } from '@expo/vector-icons';
 
 export function Button({
   title,
@@ -57,7 +59,7 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
   const [bg, fg] = statusColors()[status];
   return (
     <Text style={[styles.badge, { backgroundColor: bg, color: fg }]}>
-      {ORDER_STATUS_LABELS_AR[status]}
+      {t(ORDER_STATUS_LABELS_AR[status])}
     </Text>
   );
 }
@@ -129,3 +131,51 @@ const makeStyles = () =>
       fontVariant: ['tabular-nums'],
     },
   });
+
+/** Switches the app between Arabic and English (saved on the account when signed in). */
+export function LanguageButton({ signedIn, compact }: { signedIn: boolean; compact?: boolean }) {
+  const next = getLocale() === 'ar' ? 'en' : 'ar';
+  const change = async () => {
+    if (signedIn)
+      await api('/api/auth/me/locale', {
+        method: 'PATCH',
+        body: JSON.stringify({ locale: next }),
+      }).catch(() => undefined);
+    await setLocale(next);
+  };
+  if (compact)
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('اللغة')}
+        onPress={() => void change()}
+        style={{ padding: 8 }}
+      >
+        <Text style={{ color: colors.brown, fontWeight: '700' }}>{next === 'en' ? 'EN' : 'ع'}</Text>
+      </Pressable>
+    );
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => void change()}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: colors.white,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: colors.line,
+        padding: 16,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="language" size={20} color={colors.gold} />
+        <Text style={{ color: colors.brown, fontSize: 15 }}>{t('اللغة')}</Text>
+      </View>
+      <Text style={{ color: colors.brown, fontSize: 15, fontWeight: '700' }}>
+        {next === 'en' ? 'English' : 'العربية'}
+      </Text>
+    </Pressable>
+  );
+}

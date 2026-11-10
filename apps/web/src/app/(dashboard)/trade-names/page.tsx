@@ -232,7 +232,7 @@ export default function TradeNamesPage() {
                   )}
                 </div>
                 {tr.nameEn && (
-                  <div dir="ltr" className="text-right text-brand-muted">
+                  <div dir="ltr" className="text-start text-brand-muted">
                     {tr.nameEn}
                   </div>
                 )}

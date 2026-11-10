@@ -118,7 +118,7 @@ export default function CustomerAccountPage() {
         </Card>
         {AGING_BUCKETS.map((b) => (
           <Card key={b}>
-            <div className="text-sm text-brand-muted">{AGING_LABELS_AR[b]}</div>
+            <div className="text-sm text-brand-muted">{t(AGING_LABELS_AR[b])}</div>
             <div className="mt-1 text-lg font-bold">{filsToJodString(s.aging[b])}</div>
           </Card>
         ))}
@@ -127,7 +127,7 @@ export default function CustomerAccountPage() {
       <Card
         title={t('الحركات')}
         actions={
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             {t('من')}{' '}
             <input
               type="date"
@@ -148,7 +148,7 @@ export default function CustomerAccountPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('التاريخ')}</th>
                 <th>{t('الرقم')}</th>
                 <th>{t('البيان')}</th>

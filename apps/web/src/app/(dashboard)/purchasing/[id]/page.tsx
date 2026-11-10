@@ -102,7 +102,7 @@ export default function PurchaseOrderPage() {
             <span dir="ltr" className="font-mono text-brand-muted">
               {po.supplier.whatsappPhone ?? po.supplier.phone ?? t('بدون رقم')}
             </span>
-            <Badge tone={PO_TONE[po.status]}>{PURCHASE_ORDER_STATUS_LABELS_AR[po.status]}</Badge>
+            <Badge tone={PO_TONE[po.status]}>{t(PURCHASE_ORDER_STATUS_LABELS_AR[po.status])}</Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
             {t(
@@ -209,7 +209,7 @@ export default function PurchaseOrderPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-2">#</th>
                   <th>{t('المادة')}</th>
                   <th>{t('الكمية')}</th>
@@ -222,7 +222,7 @@ export default function PurchaseOrderPage() {
                   <tr key={i} className="border-b border-stone-100">
                     <td className="py-2 text-brand-muted">{i + 1}</td>
                     <td className="font-bold">{l.description}</td>
-                    <td dir="ltr" className="text-right font-bold">
+                    <td dir="ltr" className="text-start font-bold">
                       {Number(l.quantity)}
                     </td>
                     <td>{l.unit}</td>

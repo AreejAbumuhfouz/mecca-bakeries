@@ -79,7 +79,7 @@ export default function ApprovalsPage() {
                 </div>
                 <ul className="list-inside list-disc text-sm text-red-800">
                   {o.creditReasons?.map((r) => (
-                    <li key={r.code}>{r.message}</li>
+                    <li key={r.code}>{t(r.key ?? r.message, ...(r.args ?? []))}</li>
                   ))}
                 </ul>
                 {canDecide && (

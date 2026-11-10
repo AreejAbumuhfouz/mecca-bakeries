@@ -46,7 +46,7 @@ export default function ProductionHistoryPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('اليوم')}</th>
                 <th>{t('الحالة')}</th>
                 <th>{t('الأصناف')}</th>
@@ -65,7 +65,7 @@ export default function ProductionHistoryPage() {
                   <td className="py-2 font-mono font-bold">{d.deliveryDate}</td>
                   <td>
                     <Badge tone={DAY_TONE[d.status]}>
-                      {PRODUCTION_DAY_STATUS_LABELS_AR[d.status]}
+                      {t(PRODUCTION_DAY_STATUS_LABELS_AR[d.status])}
                     </Badge>
                   </td>
                   <td>{d.itemCount}</td>
@@ -92,7 +92,7 @@ export default function ProductionHistoryPage() {
         </div>
         <p className="mt-3 text-xs text-brand-muted">
           {t(
-            'لفتح يوم سابق: صفحة الإنتاج ← اختاري التاريخ. «فروقات» هو عدد الأصناف خارج السماحية (المعتمدة وغير المعتمدة).',
+            'لفتح يوم سابق: صفحة الإنتاج ← اختر التاريخ. «فروقات» هو عدد الأصناف خارج السماحية (المعتمدة وغير المعتمدة).',
           )}
         </p>
       </Card>

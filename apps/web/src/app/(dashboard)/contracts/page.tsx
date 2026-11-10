@@ -76,7 +76,7 @@ export default function ContractsPage() {
               <option value="">{t('كل الحالات')}</option>
               {CONTRACT_STATES.map((s) => (
                 <option key={s} value={s}>
-                  {CONTRACT_STATE_LABELS_AR[s]}
+                  {t(CONTRACT_STATE_LABELS_AR[s])}
                 </option>
               ))}
             </select>
@@ -86,7 +86,7 @@ export default function ContractsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('رقم العقد')}</th>
                 <th>{t('العميل')}</th>
                 <th>{t('من')}</th>
@@ -100,24 +100,24 @@ export default function ContractsPage() {
             <tbody>
               {data?.items.map((c) => (
                 <tr key={c.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/contracts/${c.id}`} className="text-brand-brown underline">
                       {c.number}
                     </Link>
                   </td>
                   <td className="font-bold">
                     <Link href={`/contracts/${c.id}`}>{c.customerName}</Link>
-                    <span className="mr-2 font-mono text-xs font-normal text-brand-muted">
+                    <span className="ms-2 font-mono text-xs font-normal text-brand-muted">
                       {c.customerCode}
                     </span>
                   </td>
                   <td className="font-mono">{c.startDate}</td>
                   <td className="font-mono">{c.endDate}</td>
-                  <td>{PAYMENT_TYPE_LABELS_AR[c.paymentType]}</td>
+                  <td>{t(PAYMENT_TYPE_LABELS_AR[c.paymentType])}</td>
                   <td>{c.paymentType === 'credit' ? formatJod(c.creditLimit) : '—'}</td>
                   <td>{c.discountBps ? `${c.discountBps / 100}%` : '—'}</td>
                   <td>
-                    <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+                    <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
                   </td>
                 </tr>
               ))}

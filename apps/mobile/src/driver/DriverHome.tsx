@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { DELIVERY_STATUS_LABELS_AR, formatJod, type DeliveryStatus } from '@mecca/shared';
 import { useAuth } from '../auth';
-import { Button, Empty } from '../components';
+import { Button, Empty, LanguageButton } from '../components';
 import { colors, ui, useTheme } from '../theme';
 import { discard, loadDay, loadQueue, pendingIds, sync } from './offline';
 import { StopScreen } from './StopScreen';
@@ -101,6 +101,7 @@ export function DriverHome() {
           </Text>
         </View>
         <View style={ui.row}>
+          <LanguageButton signedIn compact />
           <Pressable accessibilityLabel={t('تغيير المظهر')} onPress={toggle} style={{ padding: 8 }}>
             <Ionicons
               name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'}
@@ -193,7 +194,7 @@ export function DriverHome() {
                       fontWeight: '700',
                     }}
                   >
-                    {st === 'queued' ? t('بانتظار الإرسال') : DELIVERY_STATUS_LABELS_AR[st]}
+                    {st === 'queued' ? t('بانتظار الإرسال') : t(DELIVERY_STATUS_LABELS_AR[st])}
                   </Text>
                 </View>
                 <Text style={ui.text}>{s.branch.name}</Text>

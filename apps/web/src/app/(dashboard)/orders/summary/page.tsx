@@ -91,7 +91,7 @@ function SummaryView() {
                 key={c.status}
                 className="rounded-full border border-brand-line bg-surface px-3 py-1"
               >
-                {ORDER_STATUS_LABELS_AR[c.status]}: <b>{c.n}</b>
+                {t(ORDER_STATUS_LABELS_AR[c.status])}: <b>{c.n}</b>
               </span>
             ))}
           </div>
@@ -103,7 +103,7 @@ function SummaryView() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
                       <th className="py-2">{t('الكود')}</th>
                       <th>{t('الصنف')}</th>
                       <th>{t('الكمية الكلية')}</th>
@@ -125,12 +125,12 @@ function SummaryView() {
                         .filter((i) => i.sectionName === sec)
                         .map((i) => (
                           <tr key={i.itemId} className="border-b border-stone-100">
-                            <td className="py-2 pl-4 font-mono">{i.code}</td>
+                            <td className="py-2 pe-4 font-mono">{i.code}</td>
                             <td className="font-bold">{i.name}</td>
                             <td className="text-lg font-bold">
                               {i.quantity}{' '}
                               <span className="text-sm font-normal">
-                                {ITEM_UNIT_LABELS_AR[i.unit]}
+                                {t(ITEM_UNIT_LABELS_AR[i.unit])}
                               </span>
                             </td>
                             <td>{i.confirmedQuantity}</td>
@@ -151,7 +151,7 @@ function SummaryView() {
                   <b>{b.customerName}</b> — {b.branchName}{' '}
                   <span className="font-mono text-xs text-brand-muted">{b.branchCode}</span>
                   {b.customerPhone && (
-                    <span className="mr-2 text-brand-muted" dir="ltr">
+                    <span className="ms-2 text-brand-muted" dir="ltr">
                       {b.customerPhone}
                     </span>
                   )}

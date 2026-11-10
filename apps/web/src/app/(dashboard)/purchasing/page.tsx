@@ -90,7 +90,7 @@ export default function PurchasingPage() {
             <option value="">{t('كل الحالات')}</option>
             {PURCHASE_ORDER_STATUSES.map((s) => (
               <option key={s} value={s}>
-                {PURCHASE_ORDER_STATUS_LABELS_AR[s]}
+                {t(PURCHASE_ORDER_STATUS_LABELS_AR[s])}
               </option>
             ))}
           </select>
@@ -99,7 +99,7 @@ export default function PurchasingPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('الرقم')}</th>
                 <th>{t('المورد')}</th>
                 <th>{t('البنود')}</th>
@@ -111,7 +111,7 @@ export default function PurchasingPage() {
             <tbody>
               {orders.map((o) => (
                 <tr key={o.id} className="border-b border-stone-100">
-                  <td className="py-2 pl-4 font-mono">
+                  <td className="py-2 pe-4 font-mono">
                     <Link href={`/purchasing/${o.id}`} className="text-brand-brown underline">
                       {o.number}
                     </Link>
@@ -122,7 +122,7 @@ export default function PurchasingPage() {
                   <td className="text-brand-muted">{formatAmman(o.createdAt)}</td>
                   <td>
                     <Badge tone={PO_TONE[o.status]}>
-                      {PURCHASE_ORDER_STATUS_LABELS_AR[o.status]}
+                      {t(PURCHASE_ORDER_STATUS_LABELS_AR[o.status])}
                     </Badge>
                   </td>
                 </tr>
@@ -200,7 +200,7 @@ export default function PurchasingPage() {
               <span className="text-brand-muted">{t('{0} طلب', s.orderCount)}</span>
               {!s.isActive && <Badge tone="red">{t('موقوف')}</Badge>}
               {canManage && (
-                <span className="mr-auto flex gap-3 text-xs">
+                <span className="ms-auto flex gap-3 text-xs">
                   <button
                     className="text-brand-brown underline"
                     onClick={() => {

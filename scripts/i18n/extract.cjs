@@ -14,7 +14,9 @@ function keysOf(file) {
         if (AR.test(a.text)) keys.add(a.text);
       }
     } else if (
-      (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateExpression(n)) &&
+      (ts.isStringLiteral(n) ||
+        ts.isNoSubstitutionTemplateLiteral(n) ||
+        ts.isTemplateExpression(n)) &&
       !ts.isTaggedTemplateExpression(n.parent)
     ) {
       const { key } = literalKey(n);
@@ -30,7 +32,8 @@ function keysOf(file) {
 function allKeys() {
   const all = new Set();
   const t = targets();
-  for (const f of [...t.api, ...t.web, ...t.mobile, ...t.shared]) for (const k of keysOf(f)) all.add(k);
+  for (const f of [...t.api, ...t.web, ...t.mobile, ...t.shared])
+    for (const k of keysOf(f)) all.add(k);
   return [...all].sort();
 }
 

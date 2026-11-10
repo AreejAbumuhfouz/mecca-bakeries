@@ -111,7 +111,7 @@ export default function DeliveriesPage() {
                   <b>{t('{0} طلب مؤكد بدون مسار:', day.unassigned.length)}</b>{' '}
                   {day.unassigned.map((u) => `${u.customerName} — ${u.branchName}`).join(t('، '))}.{' '}
                   <Link href="/deliveries/routes" className="underline">
-                    {t('أضيفي فروعها لمسار')}
+                    {t('أضف فروعها لمسار')}
                   </Link>{' '}
                   {t('ثم «تحديث من الطلبات».')}
                 </div>
@@ -126,7 +126,7 @@ export default function DeliveriesPage() {
             <Card>
               <p className="text-sm text-brand-muted">
                 {t(
-                  'لا توجد مسارات لهذا اليوم بعد. تُجهَّز عند إغلاق الطلبات، أو اضغطي «تحديث من الطلبات».',
+                  'لا توجد مسارات لهذا اليوم بعد. تُجهَّز عند إغلاق الطلبات، أو اضغط «تحديث من الطلبات».',
                 )}
               </p>
             </Card>
@@ -138,7 +138,7 @@ export default function DeliveriesPage() {
               title={tr.routeName}
               actions={
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Badge tone={TRIP_TONE[tr.status]}>{TRIP_STATUS_LABELS_AR[tr.status]}</Badge>
+                  <Badge tone={TRIP_TONE[tr.status]}>{t(TRIP_STATUS_LABELS_AR[tr.status])}</Badge>
                   <span className="text-brand-muted">
                     {tr.driverName ?? t('بدون سائق')} — {tr.vehicleName ?? t('بدون سيارة')}
                   </span>
@@ -175,7 +175,7 @@ export default function DeliveriesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
                       <th className="py-2">#</th>
                       <th>{t('المطعم')}</th>
                       <th>{t('الطلب')}</th>
@@ -201,11 +201,11 @@ export default function DeliveriesPage() {
                         </td>
                         <td>
                           <Badge tone={DELIVERY_TONE[d.status]}>
-                            {DELIVERY_STATUS_LABELS_AR[d.status]}
+                            {t(DELIVERY_STATUS_LABELS_AR[d.status])}
                           </Badge>
                           {d.failReason && (
                             <div className="text-xs text-red-700">
-                              {DELIVERY_REASON_LABELS_AR[d.failReason]}
+                              {t(DELIVERY_REASON_LABELS_AR[d.failReason])}
                             </div>
                           )}
                         </td>

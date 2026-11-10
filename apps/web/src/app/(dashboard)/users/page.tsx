@@ -6,7 +6,7 @@ import { api, ApiRequestError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, Input } from '@/components/ui';
 import { UserEditor } from './user-editor';
-import { t } from '@/lib/i18n';
+import { intlLocale, t } from '@/lib/i18n';
 
 type UserRow = {
   id: string;
@@ -152,7 +152,7 @@ export default function UsersPage() {
               >
                 {ROLE_VALUES.map((r) => (
                   <option key={r} value={r}>
-                    {ROLE_LABELS_AR[r]}
+                    {t(ROLE_LABELS_AR[r])}
                   </option>
                 ))}
               </select>
@@ -200,7 +200,7 @@ export default function UsersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('الاسم')}</th>
                 <th>{t('البريد')}</th>
                 <th>{t('الدور')}</th>
@@ -213,13 +213,13 @@ export default function UsersPage() {
               {data?.items.map((u) => (
                 <tr key={u.id} className="border-b border-stone-100">
                   <td className="py-2.5 font-bold">{u.name}</td>
-                  <td dir="ltr" className="text-right">
+                  <td dir="ltr" className="text-start">
                     {u.email}
                   </td>
-                  <td>{ROLE_LABELS_AR[u.role]}</td>
+                  <td>{t(ROLE_LABELS_AR[u.role])}</td>
                   <td className="text-brand-muted">
                     {u.lastLoginAt
-                      ? new Date(u.lastLoginAt).toLocaleString('ar-JO', {
+                      ? new Date(u.lastLoginAt).toLocaleString(intlLocale(), {
                           dateStyle: 'short',
                           timeStyle: 'short',
                         })

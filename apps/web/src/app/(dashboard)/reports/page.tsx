@@ -179,7 +179,7 @@ export default function ReportsPage() {
               </select>
             </label>
           )}
-          <span className="mr-auto flex gap-2">
+          <span className="ms-auto flex gap-2">
             <Button variant="outline" onClick={() => void excel()}>
               <span className="flex items-center gap-1.5">
                 <FileSpreadsheet size={15} /> Excel
@@ -219,7 +219,7 @@ export default function ReportsPage() {
                         style={{ width: `${(Number(r[chart!.value]) / max) * 100}%` }}
                       />
                     </div>
-                    <span className="text-left font-bold tabular-nums">
+                    <span className="text-end font-bold tabular-nums">
                       {show(chartCol.kind, r[chart!.value])}
                     </span>
                   </div>
@@ -233,7 +233,7 @@ export default function ReportsPage() {
             <div className={`overflow-x-auto ${busy ? 'opacity-50' : ''}`}>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <tr className="border-b border-brand-line text-start text-brand-muted">
                     {table.columns.map((c) => (
                       <th key={c.key} className="px-2 py-2 whitespace-nowrap">
                         {c.label}

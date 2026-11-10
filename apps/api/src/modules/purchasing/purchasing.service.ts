@@ -19,7 +19,7 @@ import type { FilesService } from '../files/files.service.js';
 import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import { normalizePhone } from '../whatsapp/templates.js';
 import { purchaseOrderHtml } from './purchase-order-pdf.js';
-import { t } from '../../lib/i18n.js';
+import { t, withLocale } from '../../lib/i18n.js';
 
 export type SupplierInput = {
   name: string;
@@ -332,14 +332,17 @@ export function createPurchasingService(deps: {
         throw new AppError(409, 'PO_CLOSED', t('الطلب مستلم أو ملغى'));
       const phone = normalizePhone(po.supplier.whatsappPhone ?? po.supplier.phone);
       if (!phone) throw new AppError(400, 'NO_PHONE', t('لا يوجد رقم واتساب صحيح للمورد'));
-      const { bytes, filename } = await this.pdf(id);
-      const message = await whatsapp.sendDocumentTemplate(
-        phone,
-        'mb_purchase_order',
-        [po.number, po.neededDate ?? t('أقرب وقت')],
-        { buffer: bytes, mimeType: 'application/pdf', filename },
-        { sentBy: actor.id },
-      );
+      // The supplier gets the Arabic PDF and template, whatever language the sender uses.
+      const message = await withLocale('ar', async () => {
+        const { bytes, filename } = await this.pdf(id);
+        return whatsapp.sendDocumentTemplate(
+          phone,
+          'mb_purchase_order',
+          [po.number, po.neededDate ?? t('أقرب وقت')],
+          { buffer: bytes, mimeType: 'application/pdf', filename },
+          { sentBy: actor.id },
+        );
+      });
       if (!message || message.status === 'failed')
         throw new AppError(
           502,

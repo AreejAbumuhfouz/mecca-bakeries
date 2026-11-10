@@ -67,7 +67,7 @@ export type ConfirmInput = {
   note?: string | null;
 };
 
-const unitAr = (u: string) => (ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u;
+const unitAr = (u: string) => t((ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u);
 
 export function createDistributionService(deps: {
   db: Db;
@@ -600,7 +600,7 @@ export function createDistributionService(deps: {
             orderNumber: s.order.number,
             orderTotal: s.order.total,
             previousBalance: s.balance,
-            paymentType: PAYMENT_TYPE_LABELS_AR[s.paymentType],
+            paymentType: t(PAYMENT_TYPE_LABELS_AR[s.paymentType]),
             lines: s.items.map((i) => ({ name: i.name, quantity: i.quantity })),
           })),
         }),
@@ -787,10 +787,10 @@ export function createDistributionService(deps: {
             actorId: actor.id,
             note:
               status === 'failed'
-                ? t('لم يُسلَّم')
+                ? 'لم يُسلَّم'
                 : status === 'partial'
-                  ? t('تسليم ناقص')
-                  : t('تم التسليم'),
+                  ? 'تسليم ناقص'
+                  : 'تم التسليم',
             data: { deliveryId, invoiceId, receiver: input.receiverName ?? null },
           });
           if (collected)
@@ -802,7 +802,7 @@ export function createDistributionService(deps: {
                 method: collected.method,
                 receivedOn: ammanDate(at),
                 reference: collected.reference ?? null,
-                note: t('تحصيل السائق عند التسليم ({0})', order.number),
+                note: `تحصيل السائق عند التسليم (${order.number})`,
               },
               { source: 'driver', deliveryId, receivedBy: actor.id },
             );

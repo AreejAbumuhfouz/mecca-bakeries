@@ -829,7 +829,7 @@ export function createBillingService(deps: {
             status: 'approved',
             grossTotal: input.amount,
             total: input.amount,
-            notes: input.note?.trim() || t('رصيد افتتاحي'),
+            notes: input.note?.trim() || 'رصيد افتتاحي',
             approvedBy: actor.id,
             approvedAt: now(),
             createdBy: actor.id,
@@ -1114,7 +1114,7 @@ export function createBillingService(deps: {
           closing: s.closing,
           overdue: s.summary.overdue,
           aging: AGING_BUCKETS.map((b) => ({
-            label: AGING_LABELS_AR[b],
+            label: t(AGING_LABELS_AR[b]),
             amount: s.summary.aging[b],
           })),
           printedOn: ammanDate(now()),

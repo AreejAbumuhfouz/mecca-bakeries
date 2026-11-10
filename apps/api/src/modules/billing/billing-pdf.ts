@@ -1,7 +1,7 @@
 import { filsToJodString } from '@mecca/shared';
 import { embeddedFontCss, escapeHtml as e } from '../../lib/pdf.js';
 import type { BrandHeader } from '../../lib/brand-header.js';
-import { t } from '../../lib/i18n.js';
+import { currentLocale, isRtlNow, t } from '../../lib/i18n.js';
 
 const jod = (fils: number) => filsToJodString(fils);
 
@@ -18,12 +18,12 @@ h1{font-size:22px;margin:0}
 .box{border:1px solid #E8DCC8;border-radius:10px;padding:8px 12px;background:#FBF7F0}
 .box b{display:block;margin-bottom:2px}
 table{width:100%;border-collapse:collapse;margin-top:6px}
-th{background:#3E2A1C;color:#fff;text-align:right;padding:7px;font-weight:700}
+th{background:#3E2A1C;color:#fff;text-align:start;padding:7px;font-weight:700}
 td{border-bottom:1px solid #E8DCC8;padding:7px;vertical-align:top}
 .num{direction:ltr;text-align:right;white-space:nowrap}
 .b{font-weight:700}
 .ret td{color:#9B2C22}
-.totals{margin-top:12px;margin-right:auto;width:46%}
+.totals{margin-top:12px;margin-inline-start:auto;width:46%}
 .totals td{padding:5px 8px}
 .totals tr.grand td{font-size:15px;font-weight:700;border-top:2px solid #3E2A1C;border-bottom:none}
 footer{margin-top:24px;display:flex;justify-content:space-between;color:#7A6E62;font-size:10.5px}
@@ -40,7 +40,7 @@ const brandBlock = (b: BrandHeader) =>
     : `<b style="font-size:18px">${e(b.name)}</b>`;
 
 const doc = (title: string, body: string) => `<!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title>
+<html lang="${currentLocale()}" dir="${isRtlNow() ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${e(title)}</title>
 <style>${baseCss()}</style></head><body>${body}</body></html>`;
 
 // ---------------------------------------------------------------- invoice
@@ -114,7 +114,7 @@ export function invoiceHtml(inv: InvoiceDoc) {
     <h1>${title} ${inv.status === 'cancelled' ? `<span class="stamp">${t('ملغاة')}</span>` : inv.status === 'draft' ? `<span class="stamp" style="color:#7A6E62;border-color:#7A6E62">${t('مسودة')}</span>` : ''}</h1>
     <div class="muted">${t('رقم')} <b dir="ltr">${e(inv.number)}</b> ${t('— تاريخ')} <span dir="ltr">${e(inv.issueDate)}</span></div>
   </div>
-  <div style="text-align:left">${brandBlock(inv.brand)}</div>
+  <div style="text-align:end">${brandBlock(inv.brand)}</div>
 </header>
 <div class="meta">
   <div class="box"><b>${e(inv.brand.name)}</b><span class="muted">${e(inv.brand.phone)} ${e(inv.brand.address)}</span></div>
@@ -182,7 +182,7 @@ export function statementHtml(s: StatementDoc) {
     <h1>${t('كشف حساب')}</h1>
     <div class="muted">${t('من')} <span dir="ltr">${e(s.from)}</span> ${t('إلى')} <span dir="ltr">${e(s.to)}</span></div>
   </div>
-  <div style="text-align:left">${brandBlock(s.brand)}</div>
+  <div style="text-align:end">${brandBlock(s.brand)}</div>
 </header>
 <div class="meta">
   <div class="box"><b>${t('العميل')}</b>${e(s.customer.name)} <span class="muted" dir="ltr">${e(s.customer.code)}</span><br><span class="muted">${e(s.customer.address)}</span></div>
@@ -253,7 +253,7 @@ export function loadingSheetHtml(s: LoadingSheetDoc) {
     <h1>${t('كشف التحميل والتوزيع')}</h1>
     <div class="muted">${e(s.routeName)} — <span dir="ltr">${e(s.deliveryDate)}</span></div>
   </div>
-  <div style="text-align:left">${brandBlock(s.brand)}</div>
+  <div style="text-align:end">${brandBlock(s.brand)}</div>
 </header>
 <div class="meta">
   <div class="box"><b>${t('السائق')}</b>${e(s.driverName ?? '—')}</div>

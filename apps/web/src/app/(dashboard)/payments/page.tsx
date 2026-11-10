@@ -98,7 +98,7 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
         </Card>
         {AGING_BUCKETS.map((b) => (
           <Card key={b}>
-            <div className="text-sm text-brand-muted">{AGING_LABELS_AR[b]}</div>
+            <div className="text-sm text-brand-muted">{t(AGING_LABELS_AR[b])}</div>
             <div className="mt-1 text-lg font-bold text-brand-brown">
               {filsToJodString(data.totals.aging[b] ?? 0)}
             </div>
@@ -129,12 +129,12 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('العميل')}</th>
                 <th>{t('الرصيد')}</th>
                 <th>{t('المتأخر')}</th>
                 {AGING_BUCKETS.map((b) => (
-                  <th key={b}>{AGING_LABELS_AR[b]}</th>
+                  <th key={b}>{t(AGING_LABELS_AR[b])}</th>
                 ))}
                 <th>{t('آخر دفعة')}</th>
                 <th>{t('التذكير')}</th>
@@ -227,7 +227,7 @@ function Payments({ setError }: { setError: (s: string) => void }) {
             <option value="">{t('كل الطرق')}</option>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
-                {PAYMENT_METHOD_LABELS_AR[m]}
+                {t(PAYMENT_METHOD_LABELS_AR[m])}
               </option>
             ))}
           </select>
@@ -237,7 +237,7 @@ function Payments({ setError }: { setError: (s: string) => void }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
+            <tr className="border-b border-brand-line text-start text-brand-muted">
               <th className="py-2">{t('الإيصال')}</th>
               <th>{t('التاريخ')}</th>
               <th>{t('العميل')}</th>
@@ -291,7 +291,7 @@ function PaymentLine({
       </td>
       <td className="font-bold">{formatJod(p.amount)}</td>
       <td>
-        {PAYMENT_METHOD_LABELS_AR[p.method]}
+        {t(PAYMENT_METHOD_LABELS_AR[p.method])}
         {p.reference && <span className="text-xs text-brand-muted"> {p.reference}</span>}
         {p.chequeDueDate && (
           <div className="text-xs text-brand-muted">{t('استحقاق {0}', p.chequeDueDate)}</div>
@@ -363,7 +363,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
   async function save(e: FormEvent) {
     e.preventDefault();
     const fils = jodToFils(amount);
-    if (!fils) return setError(t('اكتبي المبلغ بالدينار، مثل 25 أو 12.500'));
+    if (!fils) return setError(t('اكتب المبلغ بالدينار، مثل 25 أو 12.500'));
     const allocations = [];
     for (const [invoiceId, v] of Object.entries(manual)) {
       if (!v.trim()) continue;
@@ -405,7 +405,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
           >
-            <option value="">{t('— اختاري العميل —')}</option>
+            <option value="">{t('— اختر العميل —')}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code} — {c.name}
@@ -427,7 +427,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
           >
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
-                {PAYMENT_METHOD_LABELS_AR[m]}
+                {t(PAYMENT_METHOD_LABELS_AR[m])}
               </option>
             ))}
           </Select>
@@ -461,13 +461,13 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
         <Card title={t('الفواتير المفتوحة — الرصيد {0}', formatJod(summary.balance))}>
           <p className="mb-3 text-sm text-brand-muted">
             {t(
-              'اتركي الحقول فارغة ليُوزَّع المبلغ تلقائياً على الأقدم أولاً، أو اكتبي مبلغاً لفاتورة معيّنة.',
+              'اترك الحقول فارغة ليُوزَّع المبلغ تلقائياً على الأقدم أولاً، أو اكتب مبلغاً لفاتورة معيّنة.',
             )}
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-2">{t('الفاتورة')}</th>
                   <th>{t('التاريخ')}</th>
                   <th>{t('الاستحقاق')}</th>

@@ -8,11 +8,24 @@ const ts = require(require.resolve('typescript', { paths: [path.join(ROOT, 'apps
 const AR = /[؀-ۿ]/;
 
 /** Attributes whose Arabic value is data, not display text. */
-const SKIP_ATTRS = new Set(['value', 'key', 'defaultValue', 'href', 'id', 'name', 'className', 'type', 'dir', 'lang', 'src']);
+const SKIP_ATTRS = new Set([
+  'value',
+  'key',
+  'defaultValue',
+  'href',
+  'id',
+  'name',
+  'className',
+  'type',
+  'dir',
+  'lang',
+  'src',
+]);
 /** Object properties whose value is data. */
 const SKIP_PROPS = new Set(['value', 'key', 'code', 'id', 'kind']);
 /** Calls whose arguments are not shown to users. */
-const SKIP_CALLEE = /^(logger|console|log)\.|^t$|^tr$|^translate$|^require$|^describe$|^it$|^test$|^expect$/;
+const SKIP_CALLEE =
+  /^(logger|console|log)\.|^t$|^tr$|^translate$|^require$|^describe$|^it$|^test$|^expect$/;
 
 /** Turns a JSX text run into the text React would render (whitespace rules). */
 function jsxText(raw) {
@@ -46,13 +59,16 @@ function calleeName(call) {
 function isDataPosition(node) {
   const p = node.parent;
   if (!p) return true;
-  if (ts.isImportDeclaration(p) || ts.isExportDeclaration(p) || ts.isExternalModuleReference(p)) return true;
+  if (ts.isImportDeclaration(p) || ts.isExportDeclaration(p) || ts.isExternalModuleReference(p))
+    return true;
   if (ts.isLiteralTypeNode(p)) return true;
   if (ts.isPropertyAssignment(p) && p.name === node) return true;
-  if (ts.isPropertyAssignment(p) && SKIP_PROPS.has(p.name.getText().replace(/['"]/g, ''))) return true;
+  if (ts.isPropertyAssignment(p) && SKIP_PROPS.has(p.name.getText().replace(/['"]/g, '')))
+    return true;
   if (ts.isElementAccessExpression(p) && p.argumentExpression === node) return true;
   if (ts.isCaseClause(p)) return true;
-  if (ts.isBinaryExpression(p) && /^(===|!==|==|!=|in)$/.test(p.operatorToken.getText())) return true;
+  if (ts.isBinaryExpression(p) && /^(===|!==|==|!=|in)$/.test(p.operatorToken.getText()))
+    return true;
   if (ts.isEnumMember(p)) return true;
   if (ts.isJsxAttribute(p) && SKIP_ATTRS.has(p.name.getText())) return true;
   if (ts.isCallExpression(p) && SKIP_CALLEE.test(calleeName(p))) return true;
@@ -63,7 +79,8 @@ function isDataPosition(node) {
 
 /** {key, args} for a string literal or template expression. */
 function literalKey(node) {
-  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return { key: node.text, args: [] };
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
+    return { key: node.text, args: [] };
   // Template expression: head + spans.
   let key = node.head.text;
   const args = [];
@@ -104,4 +121,15 @@ function targets() {
   return { api, web, mobile, shared };
 }
 
-module.exports = { ROOT, ts, AR, jsxText, sourceFile, isDataPosition, literalKey, targets, SKIP_CALLEE, calleeName };
+module.exports = {
+  ROOT,
+  ts,
+  AR,
+  jsxText,
+  sourceFile,
+  isDataPosition,
+  literalKey,
+  targets,
+  SKIP_CALLEE,
+  calleeName,
+};

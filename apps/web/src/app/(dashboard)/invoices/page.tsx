@@ -137,7 +137,7 @@ export default function InvoicesPage() {
             <option value="">{t('كل الحالات')}</option>
             {INVOICE_STATUSES.map((s) => (
               <option key={s} value={s}>
-                {INVOICE_STATUS_LABELS_AR[s]}
+                {t(INVOICE_STATUS_LABELS_AR[s])}
               </option>
             ))}
           </select>
@@ -193,7 +193,7 @@ export default function InvoicesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   {canManage && (
                     <th className="w-8 py-2">
                       <input
@@ -243,7 +243,7 @@ export default function InvoicesPage() {
                       {i.flags.length > 0 && (
                         <span
                           title={i.flags.join(t('، '))}
-                          className="mr-1 inline-block text-amber-900"
+                          className="ms-1 inline-block text-amber-900"
                         >
                           <AlertTriangle size={14} />
                         </span>
@@ -266,7 +266,7 @@ export default function InvoicesPage() {
                     <td className="font-mono text-brand-muted">{i.dueDate}</td>
                     <td>
                       <Badge tone={INVOICE_TONE[i.status]}>
-                        {INVOICE_STATUS_LABELS_AR[i.status]}
+                        {t(INVOICE_STATUS_LABELS_AR[i.status])}
                       </Badge>
                     </td>
                   </tr>

@@ -155,7 +155,7 @@ export default function ImportPage() {
         <Card title={current.label}>
           <ol className="space-y-3 text-sm">
             <li className="flex flex-wrap items-center gap-3">
-              <b>1.</b> {t('نزّلي القالب وعبّئيه (الأعمدة:')}{' '}
+              <b>1.</b> {t('نزّل القالب وعبّئه (الأعمدة:')}{' '}
               {current.columns.map((c) => c.label + (c.required ? '*' : '')).join(t('، '))})
               <Button variant="outline" onClick={() => void template()}>
                 <span className="flex items-center gap-1.5">
@@ -164,7 +164,7 @@ export default function ImportPage() {
               </Button>
             </li>
             <li className="flex flex-wrap items-center gap-3">
-              <b>2.</b> {t('ارفعي الملف وافحصيه')}
+              <b>2.</b> {t('ارفع الملف وافحصه')}
               <input
                 ref={input}
                 type="file"
@@ -220,7 +220,7 @@ export default function ImportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-2">{t('السطر')}</th>
                   <th />
                   {current.columns.map((c) => (
@@ -267,7 +267,7 @@ export default function ImportPage() {
         <Card title={t('التحقق من الأرصدة الافتتاحية — {0} عميل', opening.items.length)}>
           <p className="mb-3 text-sm text-brand-muted">
             {t(
-              'قارني المجموع مع دفاتر المخبز قبل الإطلاق. المجموع {0}، المتبقي بعد الدفعات {1}.',
+              'قارن المجموع مع دفاتر المخبز قبل الإطلاق. المجموع {0}، المتبقي بعد الدفعات {1}.',
               formatJod(opening.total),
               formatJod(opening.remaining),
             )}
@@ -275,7 +275,7 @@ export default function ImportPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-2">{t('الكود')}</th>
                   <th>{t('العميل')}</th>
                   <th>{t('الرصيد الافتتاحي')}</th>

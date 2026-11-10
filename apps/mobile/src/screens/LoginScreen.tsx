@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../auth';
 import { errorText } from '../api';
-import { Button } from '../components';
+import { Button, LanguageButton } from '../components';
 import { colors, ui } from '../theme';
 import { t } from '../i18n';
 
@@ -62,6 +62,7 @@ export function LoginScreen() {
           <Text style={[ui.h1, { marginTop: 8 }]}>{t('مخابز مكة')}</Text>
           <Text style={ui.muted}>{t('تطبيق طلبات المطاعم')}</Text>
         </View>
+        <LanguageButton signedIn={false} />
 
         {step === 'email' ? (
           <>

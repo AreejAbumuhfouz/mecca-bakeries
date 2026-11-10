@@ -16,6 +16,7 @@ import {
   type ReportKey,
   type ReportsService,
 } from './reports.service.js';
+import { t, tr } from '../../lib/i18n.js';
 
 const Query = z.object({
   from: isoDate.optional(),
@@ -43,8 +44,8 @@ export function reportsRouter(
       ok: true,
       data: Object.entries(REPORTS).map(([key, r]) => ({
         key,
-        title: r.title,
-        groups: r.groups.map((g) => ({ key: g, label: GROUP_LABELS_AR[g] })),
+        title: t(r.title),
+        groups: r.groups.map((g) => ({ key: g, label: t(GROUP_LABELS_AR[g] ?? g) })),
       })),
     });
   });
@@ -70,7 +71,8 @@ export function reportsRouter(
     const q = Query.parse(req.query);
     const to = q.to ?? ammanDate();
     const from = q.from ?? addDays(to, -29);
-    const table = await svc.run(key, { from, to, groupBy: q.groupBy });
+    // Titles, column names and placeholder values ('بدون سائق') are Arabic keys.
+    const table = tr(await svc.run(key, { from, to, groupBy: q.groupBy }));
     const file = `${key}-${from}_${to}`;
     if (q.format === 'xlsx') {
       res.setHeader('Content-Type', XLSX);

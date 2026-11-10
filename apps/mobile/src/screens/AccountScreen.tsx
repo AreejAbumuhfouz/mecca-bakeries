@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatJod } from '@mecca/shared';
 import { api, errorText } from '../api';
 import { useAuth } from '../auth';
-import { Button } from '../components';
+import { Button, LanguageButton } from '../components';
 import { colors, ui, useTheme } from '../theme';
 import type { Me } from '../types';
 import { t } from '../i18n';
@@ -47,7 +47,7 @@ export function AccountScreen() {
           />
           {c.reasons.map((r) => (
             <Text key={r.code} style={ui.error}>
-              {r.message}
+              {t(r.key ?? r.message, ...(r.args ?? []))}
             </Text>
           ))}
         </View>
@@ -71,6 +71,7 @@ export function AccountScreen() {
           {mode === 'dark' ? t('داكن') : t('فاتح')}
         </Text>
       </Pressable>
+      <LanguageButton signedIn />
       <Button title={t('تسجيل الخروج')} variant="outline" onPress={() => void logout()} />
       {process.env.EXPO_PUBLIC_PRIVACY_URL ? (
         <Pressable onPress={() => void Linking.openURL(process.env.EXPO_PUBLIC_PRIVACY_URL!)}>

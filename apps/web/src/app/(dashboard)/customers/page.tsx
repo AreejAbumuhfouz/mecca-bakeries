@@ -236,7 +236,7 @@ export default function CustomersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2">{t('الكود')}</th>
                 <th>{t('الاسم')}</th>
                 <th>{t('الفئة')}</th>
@@ -250,7 +250,7 @@ export default function CustomersPage() {
             <tbody>
               {data?.items.map((c) => (
                 <tr key={c.id} className="border-b border-stone-100 hover:bg-brand-cream/50">
-                  <td className="py-2.5 pl-4 font-mono">
+                  <td className="py-2.5 pe-4 font-mono">
                     <Link href={`/customers/${c.id}`} className="text-brand-brown underline">
                       {c.code}
                     </Link>
@@ -261,7 +261,7 @@ export default function CustomersPage() {
                   <td>{c.categoryName ?? '—'}</td>
                   <td>{c.tradeName ?? '—'}</td>
                   <td>{c.contactName ?? '—'}</td>
-                  <td dir="ltr" className="text-right">
+                  <td dir="ltr" className="text-start">
                     {c.phone ?? '—'}
                   </td>
                   <td>{c.branchCount}</td>

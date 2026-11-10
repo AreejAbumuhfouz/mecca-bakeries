@@ -113,7 +113,7 @@ export default function TripPage() {
             {trip.route.name} — <span className="font-mono">{trip.deliveryDate}</span>
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-brand-muted">
-            <Badge tone={TRIP_TONE[trip.status]}>{TRIP_STATUS_LABELS_AR[trip.status]}</Badge>
+            <Badge tone={TRIP_TONE[trip.status]}>{t(TRIP_STATUS_LABELS_AR[trip.status])}</Badge>
             {trip.driver?.name ?? t('بدون سائق')} — {trip.vehicle?.name ?? t('بدون سيارة')}
             {trip.startedAt && <span>{t('خرج {0}', formatAmman(trip.startedAt))}</span>}
             {trip.finishedAt && <span>{t('انتهى {0}', formatAmman(trip.finishedAt))}</span>}
@@ -137,7 +137,7 @@ export default function TripPage() {
           key={s.deliveryId}
           title={`${s.position}. ${s.customer.name} — ${s.branch.name}`}
           actions={
-            <Badge tone={DELIVERY_TONE[s.status]}>{DELIVERY_STATUS_LABELS_AR[s.status]}</Badge>
+            <Badge tone={DELIVERY_TONE[s.status]}>{t(DELIVERY_STATUS_LABELS_AR[s.status])}</Badge>
           }
         >
           <div className="mb-3 flex flex-wrap gap-4 text-sm text-brand-muted">
@@ -150,13 +150,13 @@ export default function TripPage() {
               </Link>{' '}
               {formatJod(s.order.total)}
             </span>
-            <span>{PAYMENT_TYPE_LABELS_AR[s.paymentType]}</span>
+            <span>{t(PAYMENT_TYPE_LABELS_AR[s.paymentType])}</span>
             <span>{t('الرصيد الحالي {0}', formatJod(s.balance))}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-line text-right text-brand-muted">
+                <tr className="border-b border-brand-line text-start text-brand-muted">
                   <th className="py-1.5">{t('الصنف')}</th>
                   <th>{t('المطلوب')}</th>
                   <th>{t('المسلّم')}</th>
@@ -187,7 +187,7 @@ export default function TripPage() {
                         {short || ''}{' '}
                         {l.shortReason && (
                           <span className="text-xs">
-                            ({DELIVERY_REASON_LABELS_AR[l.shortReason]})
+                            ({t(DELIVERY_REASON_LABELS_AR[l.shortReason])})
                           </span>
                         )}
                       </td>
@@ -195,7 +195,7 @@ export default function TripPage() {
                         {l.returnedQty || ''}{' '}
                         {l.returnReason && (
                           <span className="text-xs">
-                            ({DELIVERY_REASON_LABELS_AR[l.returnReason]})
+                            ({t(DELIVERY_REASON_LABELS_AR[l.returnReason])})
                           </span>
                         )}
                       </td>
@@ -208,7 +208,7 @@ export default function TripPage() {
           {s.result && (
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
               {s.result.failReason && (
-                <b className="text-red-800">{DELIVERY_REASON_LABELS_AR[s.result.failReason]}</b>
+                <b className="text-red-800">{t(DELIVERY_REASON_LABELS_AR[s.result.failReason])}</b>
               )}
               {s.result.receiverName && (
                 <span>
@@ -231,7 +231,8 @@ export default function TripPage() {
                   {t(
                     'حصّل {0} {1}',
                     formatJod(s.result.collectedAmount),
-                    s.result.collectedMethod && PAYMENT_METHOD_LABELS_AR[s.result.collectedMethod],
+                    s.result.collectedMethod &&
+                      t(PAYMENT_METHOD_LABELS_AR[s.result.collectedMethod]),
                   )}
                 </span>
               )}

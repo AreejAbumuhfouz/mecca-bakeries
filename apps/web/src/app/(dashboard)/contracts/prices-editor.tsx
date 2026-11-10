@@ -82,7 +82,7 @@ export function PricesEditor({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-brand-cream">
-              <tr className="text-right text-brand-muted">
+              <tr className="text-start text-brand-muted">
                 <th className="px-3 py-2">{t('الكود')}</th>
                 <th>{t('الصنف')}</th>
                 <th>{t('الوحدة')}</th>
@@ -97,16 +97,16 @@ export function PricesEditor({
                   <td className="px-3 py-2 font-mono">{i.code}</td>
                   <td className="font-bold">
                     {i.name}
-                    <span className="mr-2 text-xs font-normal text-brand-muted">
+                    <span className="ms-2 text-xs font-normal text-brand-muted">
                       {i.sectionName}
                     </span>
                   </td>
-                  <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
+                  <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
                   <td>{formatJod(i.basePrice)}</td>
                   <td className="text-brand-muted">
                     {discountBps > 0 ? formatJod(applyDiscount(i.basePrice, discountBps)) : '—'}
                   </td>
-                  <td className="py-1 pl-3">
+                  <td className="py-1 pe-3">
                     {readOnly ? (
                       <span className="font-bold text-brand-brown">
                         {draft[i.id] ? t('{0} د.أ', draft[i.id]) : '—'}

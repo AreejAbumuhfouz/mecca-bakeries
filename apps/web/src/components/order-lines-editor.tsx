@@ -58,7 +58,7 @@ export function OrderLinesEditor({
           />
           {t('المختار فقط ({0})', chosen)}
         </label>
-        <span className="mr-auto text-lg font-bold text-brand-brown">
+        <span className="ms-auto text-lg font-bold text-brand-brown">
           {t('المجموع: {0}', formatJod(total))}
         </span>
       </div>
@@ -66,7 +66,7 @@ export function OrderLinesEditor({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-brand-cream">
-              <tr className="text-right text-brand-muted">
+              <tr className="text-start text-brand-muted">
                 <th className="px-3 py-2">{t('الكود')}</th>
                 <th>{t('الصنف')}</th>
                 <th>{t('الوحدة')}</th>
@@ -86,15 +86,15 @@ export function OrderLinesEditor({
                     <td className="px-3 py-2 font-mono">{i.code}</td>
                     <td className="font-bold">
                       {i.name}
-                      <span className="mr-2 text-xs font-normal text-brand-muted">
+                      <span className="ms-2 text-xs font-normal text-brand-muted">
                         {i.sectionName}
                       </span>
                     </td>
-                    <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
+                    <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
                     <td>
                       {formatJod(i.price)}
                       {i.source === 'contract' && (
-                        <span className="mr-1 text-xs text-brand-gold">{t('خاص')}</span>
+                        <span className="ms-1 text-xs text-brand-gold">{t('خاص')}</span>
                       )}
                     </td>
                     <td className="py-1">

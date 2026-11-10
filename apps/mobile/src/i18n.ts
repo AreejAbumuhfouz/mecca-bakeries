@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, DevSettings, I18nManager } from 'react-native';
-import { DEFAULT_LOCALE, LOCALES, translate, type Locale } from '@mecca/shared';
+import { DEFAULT_LOCALE, LOCALES, setLocaleSource, translate, type Locale } from '@mecca/shared';
 
 /**
  * App language. index.ts loads it before the app's modules are evaluated, so constants
@@ -10,6 +10,7 @@ const KEY = 'mb-locale';
 let current: Locale = DEFAULT_LOCALE;
 
 export const getLocale = () => current;
+setLocaleSource(getLocale);
 export const t = (text: string, ...args: unknown[]) => translate(current, text, args);
 
 /** Reads the saved language and sets the layout direction to match it. */

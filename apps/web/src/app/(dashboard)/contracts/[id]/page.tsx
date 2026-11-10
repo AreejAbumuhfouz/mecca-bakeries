@@ -11,7 +11,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage, openPrivateFile, uploadFile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
+import { Badge, Button, Card, ErrorBox, Input, PageSkeleton } from '@/components/ui';
 import {
   STATE_TONE,
   termsToBody,
@@ -21,14 +21,14 @@ import {
 } from '@/lib/contracts';
 import { TermsFields } from '../terms-fields';
 import { draftToPrices, PricesEditor, pricesToDraft, type PriceDraft } from '../prices-editor';
-import { t } from '@/lib/i18n';
+import { arrow, t } from '@/lib/i18n';
 
 type Credit = {
   allowed: boolean;
   outstanding: number;
   overdueAmount: number;
   available: number | null;
-  reasons: { code: string; message: string }[];
+  reasons: { code: string; message: string; key?: string; args?: string[] }[];
   contract: { id: string } | null;
 };
 
@@ -150,7 +150,7 @@ export default function ContractPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">{t('جارٍ التحميل…')}</p>}
+        {!error && <PageSkeleton />}
       </div>
     );
   }
@@ -175,7 +175,7 @@ export default function ContractPage() {
               {c.customer.name}
             </Link>
             <span className="font-mono text-brand-muted">{c.customer.code}</span>
-            <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
+            <Badge tone={STATE_TONE[c.state]}>{t(CONTRACT_STATE_LABELS_AR[c.state])}</Badge>
           </div>
         </div>
         {editable && !editTerms && (
@@ -251,7 +251,7 @@ export default function ContractPage() {
           {credit.reasons.length > 0 && (
             <ul className="mt-3 list-inside list-disc text-sm text-red-800">
               {credit.reasons.map((r) => (
-                <li key={r.code}>{r.message}</li>
+                <li key={r.code}>{t(r.key ?? r.message, ...(r.args ?? []))}</li>
               ))}
             </ul>
           )}
@@ -261,7 +261,7 @@ export default function ContractPage() {
             </p>
           )}
           <p className="mt-3 text-xs text-brand-muted">
-            {t('الرصيد والذمم تُحسب من الفواتير بعد بناء وحدة الفواتير (المرحلة 4).')}
+            {t('الرصيد والذمم تُحسب من الفواتير المعتمدة والدفعات.')}
           </p>
         </Card>
       )}
@@ -281,8 +281,8 @@ export default function ContractPage() {
           </form>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Info label={t('المدة')} value={`${c.startDate} ← ${c.endDate}`} />
-            <Info label={t('طريقة الدفع')} value={PAYMENT_TYPE_LABELS_AR[c.paymentType]} />
+            <Info label={t('المدة')} value={`${c.startDate} ${arrow()} ${c.endDate}`} />
+            <Info label={t('طريقة الدفع')} value={t(PAYMENT_TYPE_LABELS_AR[c.paymentType])} />
             <Info
               label={t('سقف الائتمان')}
               value={c.paymentType === 'credit' ? formatJod(c.creditLimit) : '—'}
@@ -300,7 +300,10 @@ export default function ContractPage() {
               label={t('المرتجعات')}
               value={c.allowReturns ? t('مسموحة حتى {0}%', c.maxReturnBps / 100) : t('غير مسموحة')}
             />
-            <Info label={t('تنبيه التجديد')} value={t('قبل {0} يوم', c.renewalAlertDays)} />
+            <Info
+              label={t('تنبيه التجديد')}
+              value={t('قبل الانتهاء بـ {0} يوم', c.renewalAlertDays)}
+            />
             {c.returnsNotes && <Info label={t('شروط المرتجعات')} value={c.returnsNotes} />}
             {c.notes && <Info label={t('ملاحظات')} value={c.notes} />}
           </div>

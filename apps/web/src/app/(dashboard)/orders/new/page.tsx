@@ -67,7 +67,7 @@ function NewOrder() {
     } catch (err) {
       const existing =
         err instanceof ApiRequestError && err.code === 'ORDER_EXISTS'
-          ? t(' — افتحي الطلب الموجود من قائمة الطلبات لتعديله')
+          ? t(' — افتح الطلب الموجود من قائمة الطلبات لتعديله')
           : '';
       setError(errorMessage(err, t('تعذّر حفظ الطلب')) + existing);
       setBusy(false);

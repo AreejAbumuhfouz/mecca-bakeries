@@ -85,7 +85,7 @@ export function HomeScreen({
               <Text style={[ui.h2, { color: colors.red }]}>{t('تنبيه من المخبز')}</Text>
               {me.credit.reasons.map((r) => (
                 <Text key={r.code} style={ui.text}>
-                  • {r.message}
+                  • {t(r.key ?? r.message, ...(r.args ?? []))}
                 </Text>
               ))}
               <Text style={ui.muted}>

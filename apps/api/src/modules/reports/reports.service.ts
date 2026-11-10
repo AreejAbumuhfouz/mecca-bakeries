@@ -63,7 +63,7 @@ const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 1000) / 10 : 0);
 const sumBy = (rows: Row[], keys: string[]) =>
   Object.fromEntries(keys.map((k) => [k, rows.reduce((s, r) => s + n(r[k]), 0)]));
-const unitAr = (u: string) => (ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u;
+const unitAr = (u: string) => t((ITEM_UNIT_LABELS_AR as Record<string, string>)[u] ?? u);
 
 export function createReportsService(deps: {
   db: Db;
@@ -81,7 +81,7 @@ export function createReportsService(deps: {
     const base = {
       key: 'sales' as const,
       title: t('المبيعات'),
-      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, GROUP_LABELS_AR[groupBy] ?? ''),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
     };
     if (groupBy === 'item') {
       const rows = await q<Row>(sql`
@@ -156,7 +156,7 @@ export function createReportsService(deps: {
     const columns: Column[] = [
       {
         key: 'name',
-        label: GROUP_LABELS_AR[groupBy] ?? t('البند'),
+        label: t(GROUP_LABELS_AR[groupBy] ?? 'البند'),
         kind: groupBy === 'day' ? 'date' : 'text',
       },
       { key: 'invoices', label: t('الفواتير'), kind: 'int' },
@@ -279,7 +279,7 @@ export function createReportsService(deps: {
         { key: 'overdue', label: t('المتأخر'), kind: 'money' },
         ...AGING_BUCKETS.map((b) => ({
           key: b,
-          label: AGING_LABELS_AR[b],
+          label: t(AGING_LABELS_AR[b]),
           kind: 'money' as const,
         })),
         { key: 'oldest_due', label: t('أقدم استحقاق'), kind: 'date' },
@@ -321,7 +321,7 @@ export function createReportsService(deps: {
       columns: [
         {
           key: 'name',
-          label: GROUP_LABELS_AR[groupBy] ?? t('اليوم'),
+          label: t(GROUP_LABELS_AR[groupBy] ?? 'اليوم'),
           kind: groupBy === 'customer' ? 'text' : 'date',
         },
         { key: 'total', label: t('الطلبات'), kind: 'int' },
@@ -371,11 +371,11 @@ export function createReportsService(deps: {
     return {
       key: 'delivery',
       title: t('التسليم'),
-      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, GROUP_LABELS_AR[groupBy] ?? ''),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
       columns: [
         {
           key: 'name',
-          label: GROUP_LABELS_AR[groupBy] ?? t('اليوم'),
+          label: t(GROUP_LABELS_AR[groupBy] ?? 'اليوم'),
           kind: groupBy === 'route' ? 'text' : 'date',
         },
         { key: 'stops', label: t('التوصيلات'), kind: 'int' },
@@ -472,7 +472,7 @@ export function createReportsService(deps: {
     const out = rows.map((r) => ({
       name:
         groupBy === 'reason'
-          ? (DELIVERY_REASON_LABELS_AR[r.name as DeliveryReason] ?? String(r.name))
+          ? t(DELIVERY_REASON_LABELS_AR[r.name as DeliveryReason] ?? String(r.name))
           : String(r.name),
       qty: n(r.qty),
       customers: n(r.customers),
@@ -481,9 +481,9 @@ export function createReportsService(deps: {
     return {
       key: 'returns',
       title: t('المرتجعات'),
-      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, GROUP_LABELS_AR[groupBy] ?? ''),
+      subtitle: t('من {0} إلى {1} — حسب {2}', from, to, t(GROUP_LABELS_AR[groupBy] ?? '')),
       columns: [
-        { key: 'name', label: GROUP_LABELS_AR[groupBy] ?? t('الصنف'), kind: 'text' },
+        { key: 'name', label: t(GROUP_LABELS_AR[groupBy] ?? 'الصنف'), kind: 'text' },
         { key: 'qty', label: t('الكمية المرتجعة'), kind: 'int' },
         { key: 'customers', label: t('عدد العملاء'), kind: 'int' },
         ...(groupBy === 'reason'
@@ -517,7 +517,7 @@ export function createReportsService(deps: {
     const out = rows.map((r) => {
       const name =
         groupBy === 'reason'
-          ? (STOCK_LOSS_REASON_LABELS_AR[r.name as StockLossReason] ?? String(r.name))
+          ? t(STOCK_LOSS_REASON_LABELS_AR[r.name as StockLossReason] ?? String(r.name))
           : String(r.name);
       const made = groupBy === 'item' ? (prodOf.get(String(r.name)) ?? 0) : null;
       return {
@@ -534,7 +534,7 @@ export function createReportsService(deps: {
       title: t('الهدر والتالف'),
       subtitle: t('أيام الإنتاج من {0} إلى {1}', from, to),
       columns: [
-        { key: 'name', label: GROUP_LABELS_AR[groupBy] ?? t('الصنف'), kind: 'text' },
+        { key: 'name', label: t(GROUP_LABELS_AR[groupBy] ?? 'الصنف'), kind: 'text' },
         { key: 'waste', label: t('التالف'), kind: 'int' },
         { key: 'returned', label: t('المرتجع للمخبز'), kind: 'int' },
         { key: 'days', label: t('عدد الأيام'), kind: 'int' },

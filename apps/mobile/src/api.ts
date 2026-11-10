@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { ApiResponse, LoginResult } from '@mecca/shared';
-import { t } from './i18n';
+import { getLocale, t } from './i18n';
 
 /** On a real phone "localhost" is the phone itself: set your Mac's Wi-Fi IP in apps/mobile/.env */
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -69,7 +69,7 @@ export function refreshSession(): Promise<LoginResult | null> {
     try {
       const res = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Locale': getLocale() },
         body: JSON.stringify({ refreshToken }),
       });
       if (!res.ok) {
@@ -93,7 +93,7 @@ export async function api<T>(
   init: { method?: string; body?: unknown } = {},
   retry = true,
 ): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', 'X-Locale': getLocale() };
   if (init.body !== undefined) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   let res: Response;
@@ -117,7 +117,10 @@ export async function api<T>(
 export async function fetchBlob(path: string) {
   const load = () =>
     fetch(`${API_URL}${path}`, {
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      headers: {
+        'X-Locale': getLocale(),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
     });
   let res = await load();
   if (res.status === 401 && (await refreshSession())) res = await load();

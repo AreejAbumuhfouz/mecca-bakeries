@@ -116,7 +116,7 @@ export default function MessagesPage() {
       <Card
         title={t('الرسائل ({0})', total)}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               className="w-52 rounded-lg border border-brand-line px-3 py-2 text-sm"
               placeholder={t('بحث بالرقم أو النص أو العميل')}

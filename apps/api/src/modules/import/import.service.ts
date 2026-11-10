@@ -4,6 +4,7 @@ import {
   ammanDate,
   ITEM_UNIT_LABELS_AR,
   ITEM_UNITS,
+  translate,
   type AuthUser,
   type ItemUnit,
 } from '@mecca/shared';
@@ -24,7 +25,7 @@ import type { BillingService } from '../billing/billing.service.js';
 import type { createContractsService } from '../contracts/contracts.service.js';
 import type { createCustomersService } from '../customers/customers.service.js';
 import type { createItemsService } from '../items/items.service.js';
-import { t } from '../../lib/i18n.js';
+import { isRtlNow, t } from '../../lib/i18n.js';
 
 /**
  * Moving the bakery's existing data in from Excel. Each kind has a template; an upload is
@@ -132,7 +133,7 @@ export type PreviewRow = {
   note?: string;
 };
 
-const digits = (s: string) => s.replace(/[٠-٩]/g, (d) => String(t('٠١٢٣٤٥٦٧٨٩').indexOf(d)));
+const digits = (s: string) => s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
 const text = (v: Cell) =>
   v === null || v === undefined
     ? ''
@@ -166,10 +167,15 @@ const date = (v: Cell) => {
       : '';
   return iso && !Number.isNaN(new Date(iso).getTime()) ? iso : 'bad';
 };
-const yes = (v: Cell) => [t('نعم'), 'yes', 'y', '1', 'true'].includes(text(v).toLowerCase());
+const yes = (v: Cell) => ['نعم', 'yes', 'y', '1', 'true'].includes(text(v).toLowerCase());
 const unitOf = (v: Cell): ItemUnit | null => {
   const s = text(v);
-  const found = ITEM_UNITS.find((u) => u === s || ITEM_UNIT_LABELS_AR[u] === s);
+  const found = ITEM_UNITS.find(
+    (u) =>
+      u === s ||
+      ITEM_UNIT_LABELS_AR[u] === s ||
+      translate('en', ITEM_UNIT_LABELS_AR[u]).toLowerCase() === s.toLowerCase(),
+  );
   return found ?? null;
 };
 
@@ -187,20 +193,23 @@ export function createImportService(deps: {
   async function template(kind: ImportKind) {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet(t('البيانات'), {
-      views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }],
+      views: [{ rightToLeft: isRtlNow(), state: 'frozen', ySplit: 1 }],
     });
     const cols = COLUMNS[kind];
-    ws.addRow(cols.map((c) => (c.required ? `${c.label} *` : c.label)));
+    ws.addRow(cols.map((c) => (c.required ? `${t(c.label)} *` : t(c.label))));
     ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     ws.getRow(1).eachCell(
       (c) => (c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3E2A1C' } }),
     );
-    ws.addRow(cols.map((c) => c.example));
+    ws.addRow(cols.map((c) => (typeof c.example === 'string' ? t(c.example) : c.example)));
     ws.getRow(2).font = { italic: true, color: { argb: 'FF7A6E62' } };
     cols.forEach((c, i) => (ws.getColumn(i + 1).width = Math.max(14, c.label.length + 6)));
 
-    const help = wb.addWorksheet(t('طريقة التعبئة'), { views: [{ rightToLeft: true }] });
-    help.addRow([t('قالب استيراد: {0}', IMPORT_LABELS_AR[kind])]).font = { bold: true, size: 14 };
+    const help = wb.addWorksheet(t('طريقة التعبئة'), { views: [{ rightToLeft: isRtlNow() }] });
+    help.addRow([t('قالب استيراد: {0}', t(IMPORT_LABELS_AR[kind]))]).font = {
+      bold: true,
+      size: 14,
+    };
     help.addRow([t('• عبّئ البيانات في ورقة «البيانات» بدءاً من السطر الثاني (امسح سطر المثال).')]);
     help.addRow([
       t(
@@ -210,7 +219,17 @@ export function createImportService(deps: {
     help.addRow([t('• لا تغيّر عناوين الأعمدة.')]);
     help.addRow([]);
     for (const c of cols)
-      help.addRow([c.label, c.required ? t('مطلوب') : t('اختياري'), c.help ?? '']);
+      help.addRow([
+        t(c.label),
+        c.required ? t('مطلوب') : t('اختياري'),
+        c.key === 'unit'
+          ? Object.values(ITEM_UNIT_LABELS_AR)
+              .map((u) => t(u))
+              .join(t('، '))
+          : c.help
+            ? t(c.help)
+            : '',
+      ]);
     if (kind === 'customers' || kind === 'items') {
       help.addRow([]);
       const [tns, cats, secs] = await Promise.all([
@@ -239,14 +258,20 @@ export function createImportService(deps: {
     } catch {
       throw new AppError(422, 'BAD_FILE', t('الملف ليس Excel صالحاً (xlsx)'));
     }
-    const ws = wb.getWorksheet(t('البيانات')) ?? wb.worksheets[0];
+    // Templates downloaded in either language are accepted.
+    const ws =
+      wb.getWorksheet('البيانات') ??
+      wb.getWorksheet(translate('en', 'البيانات')) ??
+      wb.worksheets[0];
     if (!ws) throw new AppError(422, 'BAD_FILE', t('الملف فارغ'));
     const cols = COLUMNS[kind];
     const header = (ws.getRow(1).values as Cell[])
       .slice(1)
       .map((h) => text(h).replace(/\s*\*$/, ''));
-    const index = cols.map((c) => header.indexOf(c.label));
-    const missing = cols.filter((c, i) => c.required && index[i] === -1).map((c) => c.label);
+    const index = cols.map((c) =>
+      header.findIndex((h) => h === c.label || h === translate('en', c.label)),
+    );
+    const missing = cols.filter((c, i) => c.required && index[i] === -1).map((c) => t(c.label));
     if (missing.length)
       throw new AppError(
         422,
@@ -355,10 +380,7 @@ export function createImportService(deps: {
         if (s === 'bad') errors.push(t('تاريخ البداية غير صحيح'));
         if (e === 'bad') errors.push(t('تاريخ النهاية غير صحيح'));
         if (s && e && s !== 'bad' && e !== 'bad' && e < s) errors.push(t('النهاية قبل البداية'));
-        if (
-          text(v.paymentType) &&
-          ![t('نقدي'), t('آجل'), 'cash', 'credit'].includes(text(v.paymentType))
-        )
+        if (text(v.paymentType) && !['نقدي', 'آجل', 'cash', 'credit'].includes(text(v.paymentType)))
           errors.push(t('نوع الدفع: نقدي أو آجل'));
         for (const k of ['creditLimit'])
           if (Number.isNaN(jod(v[k]))) errors.push(t('سقف الائتمان غير صحيح'));

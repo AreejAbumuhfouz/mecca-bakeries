@@ -136,7 +136,7 @@ export default function ItemsPage() {
     e.preventDefault();
     const basePrice = parseJod(form.price);
     if (basePrice === null) {
-      setError(t('السعر غير صالح — اكتبيه بالدينار مثل 0.350'));
+      setError(t('السعر غير صالح — اكتبه بالدينار مثل 0.350'));
       return;
     }
     const body = JSON.stringify({
@@ -274,7 +274,7 @@ export default function ItemsPage() {
       {editing !== null && (
         <Card title={editing === 'new' ? t('صنف جديد') : t('تعديل الصنف')}>
           {sections.length === 0 ? (
-            <p className="text-sm text-brand-muted">{t('أضيفي قسماً أولاً من زر «الأقسام».')}</p>
+            <p className="text-sm text-brand-muted">{t('أضف قسماً أولاً من زر «الأقسام».')}</p>
           ) : (
             <form onSubmit={saveItem} className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -314,7 +314,7 @@ export default function ItemsPage() {
                 <Select label={t('الوحدة')} value={form.unit} onChange={set('unit')}>
                   {ITEM_UNITS.map((u) => (
                     <option key={u} value={u}>
-                      {ITEM_UNIT_LABELS_AR[u]}
+                      {t(ITEM_UNIT_LABELS_AR[u])}
                     </option>
                   ))}
                 </Select>
@@ -398,7 +398,7 @@ export default function ItemsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
+              <tr className="border-b border-brand-line text-start text-brand-muted">
                 <th className="py-2" />
                 <th>{t('الكود')}</th>
                 <th>{t('الصنف')}</th>
@@ -412,7 +412,7 @@ export default function ItemsPage() {
             <tbody>
               {data?.items.map((i) => (
                 <tr key={i.id} className="border-b border-stone-100">
-                  <td className="py-2 pl-3">
+                  <td className="py-2 pe-3">
                     <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-brand-line bg-brand-cream">
                       {i.imageFileId ? (
                         <img
@@ -425,21 +425,21 @@ export default function ItemsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="pl-4 font-mono">{i.code}</td>
+                  <td className="pe-4 font-mono">{i.code}</td>
                   <td className="font-bold">
                     {i.name}
                     {i.nameEn && (
                       <div
                         className="text-xs font-normal text-brand-muted"
                         dir="ltr"
-                        style={{ textAlign: 'right' }}
+                        style={{ textAlign: 'start' }}
                       >
                         {i.nameEn}
                       </div>
                     )}
                   </td>
                   <td>{i.sectionName}</td>
-                  <td>{ITEM_UNIT_LABELS_AR[i.unit]}</td>
+                  <td>{t(ITEM_UNIT_LABELS_AR[i.unit])}</td>
                   <td className="font-bold">{formatJod(i.basePrice)}</td>
                   <td>
                     {i.isActive ? (

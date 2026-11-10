@@ -926,7 +926,7 @@ export function createOrdersService(deps: {
               .set({
                 status: 'cancelled',
                 cancelledAt: now(),
-                cancelReason: t('لم تُؤكَّد المسودة قبل الإغلاق'),
+                cancelReason: 'لم تُؤكَّد المسودة قبل الإغلاق',
               })
               .where(eq(orders.id, d.id));
             await addEvent(tx, d.id, 'cancelled', null, {

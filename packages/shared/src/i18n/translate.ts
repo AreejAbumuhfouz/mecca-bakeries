@@ -1,6 +1,14 @@
 import type { Locale } from '../locales.js';
 import { EN } from './en.js';
 
+let source: () => Locale = () => 'ar';
+
+/** Each app tells the shared helpers (formatJod...) where the current language comes from. */
+export const setLocaleSource = (fn: () => Locale) => {
+  source = fn;
+};
+export const activeLocale = (): Locale => source();
+
 export type TArg = string | number | boolean | null | undefined;
 
 /** Fills {0}, {1}, ... with the given values. */

@@ -91,7 +91,7 @@ export default function ProductionPage() {
       return true;
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === 'OPEN_VARIANCES') {
-        setError(t('يوجد فروقات لم تُعتمد بعد — اعتمديها من الأسفل ثم أغلقي اليوم'));
+        setError(t('يوجد فروقات لم تُعتمد بعد — اعتمدها من الأسفل ثم أغلق اليوم'));
         setTab('variances');
       } else setError(errorMessage(err, fallback));
       return false;
@@ -215,7 +215,9 @@ export default function ProductionPage() {
       {day && (
         <>
           <div className="flex flex-wrap items-center gap-3 print:hidden">
-            <Badge tone={DAY_TONE[day.status]}>{PRODUCTION_DAY_STATUS_LABELS_AR[day.status]}</Badge>
+            <Badge tone={DAY_TONE[day.status]}>
+              {t(PRODUCTION_DAY_STATUS_LABELS_AR[day.status])}
+            </Badge>
             <span className="text-sm text-brand-muted">
               {t('آخر تحديث من الطلبات: {0}', formatAmman(day.generatedAt))}
             </span>
@@ -245,7 +247,7 @@ export default function ProductionPage() {
               >
                 {tr.label}
                 {tr.key === 'variances' && openCount > 0 && (
-                  <span className="mr-1 text-red-300">({openCount})</span>
+                  <span className="ms-1 text-red-300">({openCount})</span>
                 )}
               </button>
             ))}
@@ -255,7 +257,7 @@ export default function ProductionPage() {
             {t(
               'كشف الإنتاج ليوم {0} — {1}',
               day.deliveryDate,
-              PRODUCTION_DAY_STATUS_LABELS_AR[day.status],
+              t(PRODUCTION_DAY_STATUS_LABELS_AR[day.status]),
             )}
           </h2>
 
@@ -273,7 +275,7 @@ export default function ProductionPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
                       <th className="py-2">{t('الكود')}</th>
                       <th>{t('الصنف')}</th>
                       <th>{t('المطلوب')}</th>
@@ -297,11 +299,11 @@ export default function ProductionPage() {
                         const d = plan[i.itemId] ?? { extra: '0', produced: '' };
                         return (
                           <tr key={i.itemId} className="border-b border-stone-100">
-                            <td className="py-1.5 pl-4 font-mono">{i.code}</td>
+                            <td className="py-1.5 pe-4 font-mono">{i.code}</td>
                             <td className="font-bold">
                               {i.name}{' '}
                               <span className="text-xs font-normal text-brand-muted">
-                                {ITEM_UNIT_LABELS_AR[i.unit]}
+                                {t(ITEM_UNIT_LABELS_AR[i.unit])}
                               </span>
                             </td>
                             <td>{i.ordered}</td>
@@ -377,7 +379,7 @@ export default function ProductionPage() {
             >
               {activeVehicles.length === 0 ? (
                 <p className="text-sm text-brand-muted">
-                  {t('أضيفي السيارات أولاً من')}{' '}
+                  {t('أضف السيارات أولاً من')}{' '}
                   <Link href="/production/setup" className="underline">
                     {t('الخطوط والسيارات')}
                   </Link>
@@ -387,7 +389,7 @@ export default function ProductionPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-brand-line text-right text-brand-muted">
+                      <tr className="border-b border-brand-line text-start text-brand-muted">
                         <th className="py-2">{t('الصنف')}</th>
                         <th>{t('المطلوب')}</th>
                         {activeVehicles.map((v) => (
@@ -475,7 +477,7 @@ export default function ProductionPage() {
                   >
                     {STOCK_LOSS_REASONS.map((r) => (
                       <option key={r} value={r}>
-                        {STOCK_LOSS_REASON_LABELS_AR[r]}
+                        {t(STOCK_LOSS_REASON_LABELS_AR[r])}
                       </option>
                     ))}
                   </Select>
@@ -511,7 +513,7 @@ export default function ProductionPage() {
                     <b>{l.itemName}</b>
                     <span>{l.quantity}</span>
                     <span className="text-brand-muted">
-                      {STOCK_LOSS_REASON_LABELS_AR[l.reason]}
+                      {t(STOCK_LOSS_REASON_LABELS_AR[l.reason])}
                     </span>
                     {l.note && <span className="text-brand-muted">— {l.note}</span>}
                     <span className="text-xs text-brand-muted">
@@ -519,7 +521,7 @@ export default function ProductionPage() {
                     </span>
                     {editable && (
                       <button
-                        className="mr-auto text-xs text-red-700 underline"
+                        className="ms-auto text-xs text-red-700 underline"
                         onClick={() =>
                           void run(
                             () =>
@@ -573,7 +575,7 @@ export default function ProductionPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                    <tr className="border-b border-brand-line text-start text-brand-muted">
                       <th className="py-2">{t('الصنف')}</th>
                       <th>{t('مطلوب')}</th>
                       <th>{t('مخطط')}</th>
