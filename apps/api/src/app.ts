@@ -55,6 +55,8 @@ import { accountRouter, billingRouter } from './modules/billing/billing.routes.j
 import { createBalanceAlerts } from './modules/billing/balance-alerts.js';
 import { createDistributionService } from './modules/distribution/distribution.service.js';
 import { distributionRouter, driverRouter } from './modules/distribution/distribution.routes.js';
+import { createReportsService } from './modules/reports/reports.service.js';
+import { reportsRouter } from './modules/reports/reports.routes.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -201,6 +203,13 @@ export function createApp(deps: AppDeps) {
   app.use('/api/billing', billingRouter(billing, alerts, requireAuth));
   app.use('/api/distribution', distributionRouter(distribution, requireAuth));
   app.use('/api/driver', driverRouter(distribution, requireAuth));
+  const reports = createReportsService({
+    db,
+    billing,
+    orderSettings: () => settings.getOrderSettings(),
+    now: deps.now,
+  });
+  app.use('/api/reports', reportsRouter(reports, { db, files, pdf }, requireAuth));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
