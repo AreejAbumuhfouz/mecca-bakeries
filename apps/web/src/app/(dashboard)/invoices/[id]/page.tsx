@@ -312,7 +312,10 @@ export default function InvoicePage() {
                         <td className="py-2 text-brand-muted">{i + 1}</td>
                         <td>
                           {l.kind === 'return' && t('مرتجع: ')}
-                          {l.description} <span className="text-xs text-brand-muted">{l.unit}</span>
+                          {l.description}{' '}
+                          <span className="text-xs text-brand-muted">
+                            {l.unit ? t(l.unit) : ''}
+                          </span>
                         </td>
                         <td>{l.quantity}</td>
                         <td>

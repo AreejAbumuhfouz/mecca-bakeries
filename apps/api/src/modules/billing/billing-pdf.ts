@@ -80,7 +80,7 @@ export function invoiceHtml(inv: InvoiceDoc) {
       (l, i) => `<tr class="${l.kind === 'return' ? 'ret' : ''}">
       <td>${i + 1}</td>
       <td>${l.kind === 'return' ? t('مرتجع: ') : ''}${e(l.description)}</td>
-      <td>${e(l.unit)}</td>
+      <td>${e(l.unit ? t(l.unit) : null)}</td>
       <td class="num b">${l.quantity}</td>
       <td class="num">${jod(l.unitPrice)}</td>
       <td class="num b">${jod(l.lineTotal)}</td>

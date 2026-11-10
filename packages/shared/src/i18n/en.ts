@@ -630,6 +630,8 @@ export const EN: Record<string, string> = {
   'بحث عن صنف': 'Search for an item',
   'بدون إنترنت — التطبيق يعمل والتأكيدات محفوظة':
     'Offline — the app works and confirmations are saved',
+  'بدون اسم تجاري': 'No trade name',
+  'بدون خط': 'No line',
   'بدون خط إنتاج': 'No production line',
   'بدون رقم': 'No number',
   'بدون سائق': 'No driver',
@@ -1065,6 +1067,7 @@ export const EN: Record<string, string> = {
   'عميل جديد': 'New customer',
   عمّان: 'Amman',
   'عنوان الفرع': 'Branch address',
+  'غير محدد': 'Not specified',
   'غير مدفوعة فقط': 'Unpaid only',
   'غير مربوط بعد — الرسائل تُسجَّل فقط ولا تُرسل':
     'Not connected yet — messages are only recorded, not sent',
