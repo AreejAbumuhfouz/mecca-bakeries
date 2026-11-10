@@ -94,7 +94,7 @@ export const NAV: NavItem[] = [
     permission: 'purchasing.view',
     ready: true,
   },
-  { href: '/reports', label: 'التقارير', icon: BarChart3, permission: 'reports.view' },
+  { href: '/reports', label: 'التقارير', icon: BarChart3, permission: 'reports.view', ready: true },
   {
     href: '/users',
     label: 'المستخدمون والصلاحيات',
