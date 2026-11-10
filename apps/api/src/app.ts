@@ -60,6 +60,8 @@ import { createDistributionService } from './modules/distribution/distribution.s
 import { distributionRouter, driverRouter } from './modules/distribution/distribution.routes.js';
 import { createReportsService } from './modules/reports/reports.service.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
+import { createImportService } from './modules/import/import.service.js';
+import { importRouter } from './modules/import/import.routes.js';
 
 /** Express keeps the full path in originalUrl; req.url is relative to the mounted router. */
 const fullUrl = (req: IncomingMessage) =>
@@ -163,8 +165,10 @@ export function createApp(deps: AppDeps) {
   const openInvoices = billing.openInvoicesProvider;
   app.use('/api/files', filesRouter(files, requireAuth, env.UPLOAD_MAX_MB));
   app.use('/api/trade-names', tradeNamesRouter(createTradeNamesService(db, files), requireAuth));
-  app.use('/api/customers', customersRouter(createCustomersService(db), requireAuth));
-  app.use('/api/items', itemsRouter(createItemsService(db, files), requireAuth));
+  const customersSvc = createCustomersService(db);
+  const itemsSvc = createItemsService(db, files);
+  app.use('/api/customers', customersRouter(customersSvc, requireAuth));
+  app.use('/api/items', itemsRouter(itemsSvc, requireAuth));
   const contracts = createContractsService({ db, files, openInvoices, now: deps.now });
   app.use('/api/contracts', contractsRouter(contracts, requireAuth));
 
@@ -230,6 +234,15 @@ export function createApp(deps: AppDeps) {
     now: deps.now,
   });
   app.use('/api/reports', reportsRouter(reports, { db, files, pdf }, requireAuth));
+  const importer = createImportService({
+    db,
+    customers: customersSvc,
+    items: itemsSvc,
+    contracts,
+    billing,
+    now: deps.now,
+  });
+  app.use('/api/import', importRouter(importer, requireAuth));
 
   app.use(notFoundHandler);
   const alert = createErrorAlerts({ mailer: deps.mailer, to: env.ALERT_EMAIL });

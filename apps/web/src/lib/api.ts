@@ -77,6 +77,10 @@ export function uploadFile(file: File, isPublic: boolean) {
   return api<UploadedFile>('/api/files', { method: 'POST', body });
 }
 
+/** Posts a multipart form (e.g. an Excel file to import). */
+export const uploadForm = <T>(path: string, body: FormData) =>
+  api<T>(path, { method: 'POST', body });
+
 /** URL for a public file (logos, item images) usable in <img src>. */
 export const fileUrl = (id: string) => `${API_URL}/api/files/${id}`;
 

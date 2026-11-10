@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { filsToJodString, type OrderSettings, type ReceivablesSettings } from '@mecca/shared';
 import { jodToFils } from '@/lib/billing';
@@ -314,6 +315,9 @@ export default function SettingsPage() {
         >
           تنزيل كل البيانات (Excel)
         </Button>
+        <Link href="/settings/import" className="mr-3 text-sm text-brand-brown underline">
+          نقل البيانات من Excel (العملاء، الأصناف، العقود، الأرصدة الافتتاحية)
+        </Link>
       </Card>
 
       <Card title="آخر المهام المجدولة">
