@@ -6,6 +6,7 @@ import {
   Croissant,
   Factory,
   FileSignature,
+  History,
   LayoutDashboard,
   MessageCircle,
   Receipt,
@@ -102,6 +103,7 @@ export const NAV: NavItem[] = [
     permission: 'users.view',
     ready: true,
   },
+  { href: '/audit', label: 'سجل التدقيق', icon: History, permission: 'audit.view', ready: true },
   {
     href: '/settings',
     label: 'الإعدادات',

@@ -5,8 +5,12 @@ set -euo pipefail
 : "${APP_DOMAIN:?set APP_DOMAIN}" "${API_DOMAIN:?set API_DOMAIN}" "${ADMIN_EMAIL:?set ADMIN_EMAIL}"
 
 apt-get update
-apt-get install -y curl git nginx postgresql postgresql-contrib chromium-browser fonts-noto-core \
+apt-get install -y curl git nginx postgresql postgresql-contrib fonts-noto-core \
   certbot python3-certbot-nginx rclone ufw unattended-upgrades
+# Google Chrome for PDF files (invoices, statements, purchase orders, reports).
+# The snap 'chromium' does not run well under systemd, so the .deb is used.
+curl -fsSL -o /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+apt-get install -y /tmp/chrome.deb && rm /tmp/chrome.deb
 # Node.js 22 LTS + pnpm
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
