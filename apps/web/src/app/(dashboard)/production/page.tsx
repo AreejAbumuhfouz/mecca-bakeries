@@ -263,88 +263,93 @@ export default function ProductionPage() {
                 )
               }
             >
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
-                    <th className="py-2">الكود</th>
-                    <th>الصنف</th>
-                    <th>المطلوب</th>
-                    <th>إضافي</th>
-                    <th>المخطط</th>
-                    <th>المنتج فعلياً</th>
-                    <th>الفرق</th>
-                  </tr>
-                </thead>
-                {groups.map((g) => (
-                  <tbody key={g.key}>
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
-                      >
-                        {g.title}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                      <th className="py-2">الكود</th>
+                      <th>الصنف</th>
+                      <th>المطلوب</th>
+                      <th>إضافي</th>
+                      <th>المخطط</th>
+                      <th>المنتج فعلياً</th>
+                      <th>الفرق</th>
                     </tr>
-                    {g.items.map((i) => {
-                      const d = plan[i.itemId] ?? { extra: '0', produced: '' };
-                      return (
-                        <tr key={i.itemId} className="border-b border-stone-100">
-                          <td className="py-1.5 pl-4 font-mono">{i.code}</td>
-                          <td className="font-bold">
-                            {i.name}{' '}
-                            <span className="text-xs font-normal text-brand-muted">
-                              {ITEM_UNIT_LABELS_AR[i.unit]}
-                            </span>
-                          </td>
-                          <td>{i.ordered}</td>
-                          <td>
-                            {editable ? (
-                              <input
-                                dir="ltr"
-                                className={cell}
-                                aria-label={`إضافي ${i.name}`}
-                                value={d.extra}
-                                onChange={(e) =>
-                                  setPlan({ ...plan, [i.itemId]: { ...d, extra: e.target.value } })
-                                }
-                              />
-                            ) : (
-                              i.extra
-                            )}
-                          </td>
-                          <td className="text-lg font-bold">{num(d.extra) + i.ordered}</td>
-                          <td>
-                            {editable ? (
-                              <input
-                                dir="ltr"
-                                className={cell}
-                                aria-label={`المنتج ${i.name}`}
-                                placeholder="—"
-                                value={d.produced}
-                                onChange={(e) =>
-                                  setPlan({
-                                    ...plan,
-                                    [i.itemId]: { ...d, produced: e.target.value },
-                                  })
-                                }
-                              />
-                            ) : (
-                              (i.produced ?? '—')
-                            )}
-                          </td>
-                          <td
-                            className={
-                              i.productionDiff ? 'font-bold text-red-800' : 'text-brand-muted'
-                            }
-                          >
-                            {i.produced === null ? '—' : signed(i.productionDiff)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {groups.map((g) => (
+                    <tbody key={g.key}>
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
+                        >
+                          {g.title}
+                        </td>
+                      </tr>
+                      {g.items.map((i) => {
+                        const d = plan[i.itemId] ?? { extra: '0', produced: '' };
+                        return (
+                          <tr key={i.itemId} className="border-b border-stone-100">
+                            <td className="py-1.5 pl-4 font-mono">{i.code}</td>
+                            <td className="font-bold">
+                              {i.name}{' '}
+                              <span className="text-xs font-normal text-brand-muted">
+                                {ITEM_UNIT_LABELS_AR[i.unit]}
+                              </span>
+                            </td>
+                            <td>{i.ordered}</td>
+                            <td>
+                              {editable ? (
+                                <input
+                                  dir="ltr"
+                                  className={cell}
+                                  aria-label={`إضافي ${i.name}`}
+                                  value={d.extra}
+                                  onChange={(e) =>
+                                    setPlan({
+                                      ...plan,
+                                      [i.itemId]: { ...d, extra: e.target.value },
+                                    })
+                                  }
+                                />
+                              ) : (
+                                i.extra
+                              )}
+                            </td>
+                            <td className="text-lg font-bold">{num(d.extra) + i.ordered}</td>
+                            <td>
+                              {editable ? (
+                                <input
+                                  dir="ltr"
+                                  className={cell}
+                                  aria-label={`المنتج ${i.name}`}
+                                  placeholder="—"
+                                  value={d.produced}
+                                  onChange={(e) =>
+                                    setPlan({
+                                      ...plan,
+                                      [i.itemId]: { ...d, produced: e.target.value },
+                                    })
+                                  }
+                                />
+                              ) : (
+                                (i.produced ?? '—')
+                              )}
+                            </td>
+                            <td
+                              className={
+                                i.productionDiff ? 'font-bold text-red-800' : 'text-brand-muted'
+                              }
+                            >
+                              {i.produced === null ? '—' : signed(i.productionDiff)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  ))}
+                </table>
+              </div>
               {day.items.length === 0 && (
                 <p className="py-4 text-sm text-brand-muted">لا توجد طلبات لهذا اليوم.</p>
               )}

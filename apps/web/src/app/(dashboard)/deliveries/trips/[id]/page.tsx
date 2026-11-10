@@ -148,56 +148,58 @@ export default function TripPage() {
             <span>{PAYMENT_TYPE_LABELS_AR[s.paymentType]}</span>
             <span>الرصيد الحالي {formatJod(s.balance)}</span>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-1.5">الصنف</th>
-                <th>المطلوب</th>
-                <th>المسلّم</th>
-                <th>الناقص</th>
-                <th>المرتجع</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(s.result?.lines.length
-                ? s.result.lines
-                : s.items.map((i) => ({
-                    itemId: i.itemId,
-                    orderedQty: i.quantity,
-                    deliveredQty: null,
-                    shortReason: null,
-                    returnedQty: 0,
-                    returnReason: null,
-                  }))
-              ).map((l) => {
-                const item = s.items.find((i) => i.itemId === l.itemId);
-                const short = l.deliveredQty == null ? 0 : l.orderedQty - l.deliveredQty;
-                return (
-                  <tr key={l.itemId} className="border-b border-stone-100">
-                    <td className="py-1.5">{item?.name ?? 'صنف مرتجع'}</td>
-                    <td>{l.orderedQty}</td>
-                    <td className="font-bold">{l.deliveredQty ?? '—'}</td>
-                    <td className={short ? 'text-red-800' : ''}>
-                      {short || ''}{' '}
-                      {l.shortReason && (
-                        <span className="text-xs">
-                          ({DELIVERY_REASON_LABELS_AR[l.shortReason]})
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {l.returnedQty || ''}{' '}
-                      {l.returnReason && (
-                        <span className="text-xs">
-                          ({DELIVERY_REASON_LABELS_AR[l.returnReason]})
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <th className="py-1.5">الصنف</th>
+                  <th>المطلوب</th>
+                  <th>المسلّم</th>
+                  <th>الناقص</th>
+                  <th>المرتجع</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(s.result?.lines.length
+                  ? s.result.lines
+                  : s.items.map((i) => ({
+                      itemId: i.itemId,
+                      orderedQty: i.quantity,
+                      deliveredQty: null,
+                      shortReason: null,
+                      returnedQty: 0,
+                      returnReason: null,
+                    }))
+                ).map((l) => {
+                  const item = s.items.find((i) => i.itemId === l.itemId);
+                  const short = l.deliveredQty == null ? 0 : l.orderedQty - l.deliveredQty;
+                  return (
+                    <tr key={l.itemId} className="border-b border-stone-100">
+                      <td className="py-1.5">{item?.name ?? 'صنف مرتجع'}</td>
+                      <td>{l.orderedQty}</td>
+                      <td className="font-bold">{l.deliveredQty ?? '—'}</td>
+                      <td className={short ? 'text-red-800' : ''}>
+                        {short || ''}{' '}
+                        {l.shortReason && (
+                          <span className="text-xs">
+                            ({DELIVERY_REASON_LABELS_AR[l.shortReason]})
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {l.returnedQty || ''}{' '}
+                        {l.returnReason && (
+                          <span className="text-xs">
+                            ({DELIVERY_REASON_LABELS_AR[l.returnReason]})
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           {s.result && (
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
               {s.result.failReason && (

@@ -227,106 +227,112 @@ export default function InvoicePage() {
         <div className="lg:col-span-2">
           <Card title="البنود">
             {editing && inv.kind === 'sale' ? (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-right text-brand-muted">
-                    <th>الصنف</th>
-                    <th className="w-24">الكمية</th>
-                    <th className="w-28">السعر</th>
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((l, i) => (
-                    <tr key={i}>
-                      <td className="py-1">
-                        {l.kind === 'return' && <span className="text-red-800">مرتجع: </span>}
-                        {l.description}
-                      </td>
-                      <td>
-                        <input
-                          dir="ltr"
-                          aria-label={`كمية ${l.description}`}
-                          className="h-9 w-20 rounded-lg border border-brand-line bg-surface px-2"
-                          value={l.quantity}
-                          onChange={(e) =>
-                            setLines(
-                              lines.map((x, j) =>
-                                j === i ? { ...x, quantity: e.target.value } : x,
-                              ),
-                            )
-                          }
-                        />
-                      </td>
-                      <td>
-                        <input
-                          dir="ltr"
-                          aria-label={`سعر ${l.description}`}
-                          className="h-9 w-24 rounded-lg border border-brand-line bg-surface px-2"
-                          value={l.price}
-                          onChange={(e) =>
-                            setLines(
-                              lines.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)),
-                            )
-                          }
-                        />
-                      </td>
-                      <td>
-                        <button
-                          className="text-red-700"
-                          aria-label="حذف"
-                          onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                        >
-                          ✕
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-right text-brand-muted">
+                      <th>الصنف</th>
+                      <th className="w-24">الكمية</th>
+                      <th className="w-28">السعر</th>
+                      <th className="w-8" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {lines.map((l, i) => (
+                      <tr key={i}>
+                        <td className="py-1">
+                          {l.kind === 'return' && <span className="text-red-800">مرتجع: </span>}
+                          {l.description}
+                        </td>
+                        <td>
+                          <input
+                            dir="ltr"
+                            aria-label={`كمية ${l.description}`}
+                            className="h-9 w-20 rounded-lg border border-brand-line bg-surface px-2"
+                            value={l.quantity}
+                            onChange={(e) =>
+                              setLines(
+                                lines.map((x, j) =>
+                                  j === i ? { ...x, quantity: e.target.value } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            dir="ltr"
+                            aria-label={`سعر ${l.description}`}
+                            className="h-9 w-24 rounded-lg border border-brand-line bg-surface px-2"
+                            value={l.price}
+                            onChange={(e) =>
+                              setLines(
+                                lines.map((x, j) =>
+                                  j === i ? { ...x, price: e.target.value } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <button
+                            className="text-red-700"
+                            aria-label="حذف"
+                            onClick={() => setLines(lines.filter((_, j) => j !== i))}
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
-                    <th className="py-2">#</th>
-                    <th>الصنف</th>
-                    <th>الكمية</th>
-                    <th>السعر</th>
-                    <th>المجموع</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inv.lines.map((l, i) => (
-                    <tr
-                      key={l.id}
-                      className={`border-b border-stone-100 ${l.kind === 'return' ? 'text-red-800' : ''}`}
-                    >
-                      <td className="py-2 text-brand-muted">{i + 1}</td>
-                      <td>
-                        {l.kind === 'return' && 'مرتجع: '}
-                        {l.description} <span className="text-xs text-brand-muted">{l.unit}</span>
-                      </td>
-                      <td>{l.quantity}</td>
-                      <td>
-                        {filsToJodString(l.unitPrice)}
-                        {l.listPrice > l.unitPrice && (
-                          <span className="mr-1 text-xs text-brand-muted line-through">
-                            {filsToJodString(l.listPrice)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="font-bold">{filsToJodString(l.lineTotal)}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                      <th className="py-2">#</th>
+                      <th>الصنف</th>
+                      <th>الكمية</th>
+                      <th>السعر</th>
+                      <th>المجموع</th>
                     </tr>
-                  ))}
-                  {inv.lines.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-3 text-brand-muted">
-                        {inv.notes}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {inv.lines.map((l, i) => (
+                      <tr
+                        key={l.id}
+                        className={`border-b border-stone-100 ${l.kind === 'return' ? 'text-red-800' : ''}`}
+                      >
+                        <td className="py-2 text-brand-muted">{i + 1}</td>
+                        <td>
+                          {l.kind === 'return' && 'مرتجع: '}
+                          {l.description} <span className="text-xs text-brand-muted">{l.unit}</span>
+                        </td>
+                        <td>{l.quantity}</td>
+                        <td>
+                          {filsToJodString(l.unitPrice)}
+                          {l.listPrice > l.unitPrice && (
+                            <span className="mr-1 text-xs text-brand-muted line-through">
+                              {filsToJodString(l.listPrice)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="font-bold">{filsToJodString(l.lineTotal)}</td>
+                      </tr>
+                    ))}
+                    {inv.lines.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-3 text-brand-muted">
+                          {inv.notes}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
             {editing && (
               <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">

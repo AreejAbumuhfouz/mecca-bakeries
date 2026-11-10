@@ -179,28 +179,30 @@ export default function AuditPage() {
                 {open === r.id && (
                   <div className="mt-2 space-y-2 rounded-lg bg-brand-cream/60 p-3 text-xs">
                     {diff && diff.length > 0 ? (
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-right text-brand-muted">
-                            <th>الحقل</th>
-                            <th>قبل</th>
-                            <th>بعد</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {diff.map((d) => (
-                            <tr key={d.key}>
-                              <td className="py-1 font-mono">{d.key}</td>
-                              <td className="text-red-800" dir="ltr">
-                                {short(d.from)}
-                              </td>
-                              <td className="text-green-800" dir="ltr">
-                                {short(d.to)}
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-right text-brand-muted">
+                              <th>الحقل</th>
+                              <th>قبل</th>
+                              <th>بعد</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {diff.map((d) => (
+                              <tr key={d.key}>
+                                <td className="py-1 font-mono">{d.key}</td>
+                                <td className="text-red-800" dir="ltr">
+                                  {short(d.from)}
+                                </td>
+                                <td className="text-green-800" dir="ltr">
+                                  {short(d.to)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     ) : (
                       <pre className="overflow-x-auto whitespace-pre-wrap" dir="ltr">
                         {JSON.stringify({ before: r.before, after: r.after }, null, 2)}

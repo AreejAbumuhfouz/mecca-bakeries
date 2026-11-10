@@ -164,39 +164,41 @@ export default function ProductionSetupPage() {
       </Card>
 
       <Card title="ربط أقسام الأصناف بخطوط الإنتاج">
-        <table className="w-full text-sm">
-          <tbody>
-            {sections.map((s) => (
-              <tr key={s.id} className="border-b border-stone-100">
-                <td className="py-2 font-bold">{s.name}</td>
-                <td>
-                  <select
-                    className={field}
-                    disabled={!can('items.manage')}
-                    value={s.productionLineId ?? ''}
-                    onChange={(e) =>
-                      void run(
-                        () =>
-                          api(`/api/items/sections/${s.id}`, {
-                            method: 'PATCH',
-                            body: JSON.stringify({ productionLineId: e.target.value || null }),
-                          }),
-                        'تعذّر الحفظ',
-                      )
-                    }
-                  >
-                    <option value="">— بدون خط —</option>
-                    {lines.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <tbody>
+              {sections.map((s) => (
+                <tr key={s.id} className="border-b border-stone-100">
+                  <td className="py-2 font-bold">{s.name}</td>
+                  <td>
+                    <select
+                      className={field}
+                      disabled={!can('items.manage')}
+                      value={s.productionLineId ?? ''}
+                      onChange={(e) =>
+                        void run(
+                          () =>
+                            api(`/api/items/sections/${s.id}`, {
+                              method: 'PATCH',
+                              body: JSON.stringify({ productionLineId: e.target.value || null }),
+                            }),
+                          'تعذّر الحفظ',
+                        )
+                      }
+                    >
+                      <option value="">— بدون خط —</option>
+                      {lines.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       <Card title="السيارات">

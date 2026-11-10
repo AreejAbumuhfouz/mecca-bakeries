@@ -213,43 +213,45 @@ export default function OrderPage() {
         </Card>
       ) : (
         <Card title={`الأصناف (${order.lines.length})`}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الكود</th>
-                <th>الصنف</th>
-                <th>الكمية</th>
-                <th>سعر الوحدة</th>
-                <th>المجموع</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.lines.map((l) => (
-                <tr key={l.itemId} className="border-b border-stone-100">
-                  <td className="py-2 pl-4 font-mono">{l.code}</td>
-                  <td className="font-bold">{l.name}</td>
-                  <td>
-                    {l.quantity} {ITEM_UNIT_LABELS_AR[l.unit]}
-                  </td>
-                  <td>
-                    {formatJod(l.unitPrice)}
-                    {l.priceSource === 'contract' && (
-                      <span className="mr-1 text-xs text-brand-gold">سعر خاص</span>
-                    )}
-                  </td>
-                  <td className="font-bold">{formatJod(l.lineTotal)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <th className="py-2">الكود</th>
+                  <th>الصنف</th>
+                  <th>الكمية</th>
+                  <th>سعر الوحدة</th>
+                  <th>المجموع</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={4} className="py-3 pl-4 text-left font-bold">
-                  المجموع
-                </td>
-                <td className="text-lg font-bold text-brand-brown">{formatJod(order.total)}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                {order.lines.map((l) => (
+                  <tr key={l.itemId} className="border-b border-stone-100">
+                    <td className="py-2 pl-4 font-mono">{l.code}</td>
+                    <td className="font-bold">{l.name}</td>
+                    <td>
+                      {l.quantity} {ITEM_UNIT_LABELS_AR[l.unit]}
+                    </td>
+                    <td>
+                      {formatJod(l.unitPrice)}
+                      {l.priceSource === 'contract' && (
+                        <span className="mr-1 text-xs text-brand-gold">سعر خاص</span>
+                      )}
+                    </td>
+                    <td className="font-bold">{formatJod(l.lineTotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={4} className="py-3 pl-4 text-left font-bold">
+                    المجموع
+                  </td>
+                  <td className="text-lg font-bold text-brand-brown">{formatJod(order.total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
           {order.notes && <p className="mt-2 text-sm">ملاحظات المطعم: {order.notes}</p>}
           {order.cancelReason && (
             <p className="mt-2 text-sm text-red-800">سبب الإلغاء: {order.cancelReason}</p>

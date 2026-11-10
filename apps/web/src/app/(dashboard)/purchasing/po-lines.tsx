@@ -23,72 +23,74 @@ export function PoLinesEditor({
           <option key={u} value={u} />
         ))}
       </datalist>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-right text-brand-muted">
-            <th className="w-8">#</th>
-            <th>المادة</th>
-            <th className="w-28">الكمية</th>
-            <th className="w-36">الوحدة</th>
-            <th>ملاحظة</th>
-            <th className="w-10" />
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((l, i) => (
-            <tr key={i}>
-              <td className="py-1 text-brand-muted">{i + 1}</td>
-              <td>
-                <input
-                  className={`${field} w-full`}
-                  aria-label={`المادة ${i + 1}`}
-                  placeholder="مثلاً: طحين زيرو"
-                  value={l.description}
-                  onChange={(e) => update(i, { description: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
-                  dir="ltr"
-                  inputMode="decimal"
-                  className={`${field} w-24`}
-                  aria-label={`الكمية ${i + 1}`}
-                  value={l.quantity}
-                  onChange={(e) => update(i, { quantity: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
-                  list="po-units"
-                  className={`${field} w-32`}
-                  aria-label={`الوحدة ${i + 1}`}
-                  value={l.unit}
-                  onChange={(e) => update(i, { unit: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
-                  className={`${field} w-full`}
-                  value={l.note}
-                  onChange={(e) => update(i, { note: e.target.value })}
-                />
-              </td>
-              <td>
-                {lines.length > 1 && (
-                  <button
-                    type="button"
-                    className="text-red-700"
-                    aria-label="حذف البند"
-                    onClick={() => setLines(lines.filter((_, j) => j !== i))}
-                  >
-                    ✕
-                  </button>
-                )}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-right text-brand-muted">
+              <th className="w-8">#</th>
+              <th>المادة</th>
+              <th className="w-28">الكمية</th>
+              <th className="w-36">الوحدة</th>
+              <th>ملاحظة</th>
+              <th className="w-10" />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {lines.map((l, i) => (
+              <tr key={i}>
+                <td className="py-1 text-brand-muted">{i + 1}</td>
+                <td>
+                  <input
+                    className={`${field} w-full`}
+                    aria-label={`المادة ${i + 1}`}
+                    placeholder="مثلاً: طحين زيرو"
+                    value={l.description}
+                    onChange={(e) => update(i, { description: e.target.value })}
+                  />
+                </td>
+                <td>
+                  <input
+                    dir="ltr"
+                    inputMode="decimal"
+                    className={`${field} w-24`}
+                    aria-label={`الكمية ${i + 1}`}
+                    value={l.quantity}
+                    onChange={(e) => update(i, { quantity: e.target.value })}
+                  />
+                </td>
+                <td>
+                  <input
+                    list="po-units"
+                    className={`${field} w-32`}
+                    aria-label={`الوحدة ${i + 1}`}
+                    value={l.unit}
+                    onChange={(e) => update(i, { unit: e.target.value })}
+                  />
+                </td>
+                <td>
+                  <input
+                    className={`${field} w-full`}
+                    value={l.note}
+                    onChange={(e) => update(i, { note: e.target.value })}
+                  />
+                </td>
+                <td>
+                  {lines.length > 1 && (
+                    <button
+                      type="button"
+                      className="text-red-700"
+                      aria-label="حذف البند"
+                      onClick={() => setLines(lines.filter((_, j) => j !== i))}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <button
         type="button"
         className="text-sm text-brand-brown underline"

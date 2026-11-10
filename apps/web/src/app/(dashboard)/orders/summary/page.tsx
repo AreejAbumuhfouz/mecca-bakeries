@@ -99,45 +99,47 @@ function SummaryView() {
             {data.items.length === 0 ? (
               <p className="text-sm text-brand-muted">لا توجد طلبات لهذا اليوم</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-brand-line text-right text-brand-muted">
-                    <th className="py-2">الكود</th>
-                    <th>الصنف</th>
-                    <th>الكمية الكلية</th>
-                    <th>منها مؤكد</th>
-                    <th>القيمة</th>
-                  </tr>
-                </thead>
-                {sections.map((sec) => (
-                  <tbody key={sec}>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
-                      >
-                        {sec}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-brand-line text-right text-brand-muted">
+                      <th className="py-2">الكود</th>
+                      <th>الصنف</th>
+                      <th>الكمية الكلية</th>
+                      <th>منها مؤكد</th>
+                      <th>القيمة</th>
                     </tr>
-                    {data.items
-                      .filter((i) => i.sectionName === sec)
-                      .map((i) => (
-                        <tr key={i.itemId} className="border-b border-stone-100">
-                          <td className="py-2 pl-4 font-mono">{i.code}</td>
-                          <td className="font-bold">{i.name}</td>
-                          <td className="text-lg font-bold">
-                            {i.quantity}{' '}
-                            <span className="text-sm font-normal">
-                              {ITEM_UNIT_LABELS_AR[i.unit]}
-                            </span>
-                          </td>
-                          <td>{i.confirmedQuantity}</td>
-                          <td>{formatJod(i.amount)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {sections.map((sec) => (
+                    <tbody key={sec}>
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="bg-brand-cream px-2 py-1.5 font-bold text-brand-brown"
+                        >
+                          {sec}
+                        </td>
+                      </tr>
+                      {data.items
+                        .filter((i) => i.sectionName === sec)
+                        .map((i) => (
+                          <tr key={i.itemId} className="border-b border-stone-100">
+                            <td className="py-2 pl-4 font-mono">{i.code}</td>
+                            <td className="font-bold">{i.name}</td>
+                            <td className="text-lg font-bold">
+                              {i.quantity}{' '}
+                              <span className="text-sm font-normal">
+                                {ITEM_UNIT_LABELS_AR[i.unit]}
+                              </span>
+                            </td>
+                            <td>{i.confirmedQuantity}</td>
+                            <td>{formatJod(i.amount)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  ))}
+                </table>
+              </div>
             )}
           </Card>
 

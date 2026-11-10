@@ -144,42 +144,44 @@ export default function CustomerAccountPage() {
           </div>
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">التاريخ</th>
-              <th>الرقم</th>
-              <th>البيان</th>
-              <th>مدين</th>
-              <th>دائن</th>
-              <th>الرصيد</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b border-stone-100 bg-brand-cream/50">
-              <td className="py-2" colSpan={5}>
-                <b>رصيد سابق</b>
-              </td>
-              <td className="font-bold">{filsToJodString(st.opening)}</td>
-            </tr>
-            {st.rows.map((r, i) => (
-              <tr key={i} className="border-b border-stone-100">
-                <td className="py-2 font-mono">{r.date}</td>
-                <td className="font-mono">{r.number}</td>
-                <td>{r.description}</td>
-                <td>{r.debit ? filsToJodString(r.debit) : ''}</td>
-                <td className="text-green-800">{r.credit ? filsToJodString(r.credit) : ''}</td>
-                <td className="font-bold">{filsToJodString(r.balance)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-brand-line text-right text-brand-muted">
+                <th className="py-2">التاريخ</th>
+                <th>الرقم</th>
+                <th>البيان</th>
+                <th>مدين</th>
+                <th>دائن</th>
+                <th>الرصيد</th>
               </tr>
-            ))}
-            <tr className="bg-brand-cream/50">
-              <td className="py-2" colSpan={5}>
-                <b>الرصيد الختامي</b>
-              </td>
-              <td className="font-bold">{filsToJodString(st.closing)}</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <tr className="border-b border-stone-100 bg-brand-cream/50">
+                <td className="py-2" colSpan={5}>
+                  <b>رصيد سابق</b>
+                </td>
+                <td className="font-bold">{filsToJodString(st.opening)}</td>
+              </tr>
+              {st.rows.map((r, i) => (
+                <tr key={i} className="border-b border-stone-100">
+                  <td className="py-2 font-mono">{r.date}</td>
+                  <td className="font-mono">{r.number}</td>
+                  <td>{r.description}</td>
+                  <td>{r.debit ? filsToJodString(r.debit) : ''}</td>
+                  <td className="text-green-800">{r.credit ? filsToJodString(r.credit) : ''}</td>
+                  <td className="font-bold">{filsToJodString(r.balance)}</td>
+                </tr>
+              ))}
+              <tr className="bg-brand-cream/50">
+                <td className="py-2" colSpan={5}>
+                  <b>الرصيد الختامي</b>
+                </td>
+                <td className="font-bold">{filsToJodString(st.closing)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

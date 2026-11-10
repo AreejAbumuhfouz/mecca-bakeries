@@ -201,30 +201,32 @@ export default function PurchaseOrderPage() {
             </div>
           </>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">#</th>
-                <th>المادة</th>
-                <th>الكمية</th>
-                <th>الوحدة</th>
-                <th>ملاحظة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {po.lines.map((l, i) => (
-                <tr key={i} className="border-b border-stone-100">
-                  <td className="py-2 text-brand-muted">{i + 1}</td>
-                  <td className="font-bold">{l.description}</td>
-                  <td dir="ltr" className="text-right font-bold">
-                    {Number(l.quantity)}
-                  </td>
-                  <td>{l.unit}</td>
-                  <td className="text-brand-muted">{l.note ?? ''}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <th className="py-2">#</th>
+                  <th>المادة</th>
+                  <th>الكمية</th>
+                  <th>الوحدة</th>
+                  <th>ملاحظة</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {po.lines.map((l, i) => (
+                  <tr key={i} className="border-b border-stone-100">
+                    <td className="py-2 text-brand-muted">{i + 1}</td>
+                    <td className="font-bold">{l.description}</td>
+                    <td dir="ltr" className="text-right font-bold">
+                      {Number(l.quantity)}
+                    </td>
+                    <td>{l.unit}</td>
+                    <td className="text-brand-muted">{l.note ?? ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {po.notes && <p className="mt-3 text-sm">ملاحظات: {po.notes}</p>}
       </Card>

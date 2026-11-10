@@ -262,30 +262,32 @@ export default function ImportPage() {
             قارني المجموع مع دفاتر المخبز قبل الإطلاق. المجموع {formatJod(opening.total)}، المتبقي
             بعد الدفعات {formatJod(opening.remaining)}.
           </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الكود</th>
-                <th>العميل</th>
-                <th>الرصيد الافتتاحي</th>
-                <th>المدفوع منه</th>
-                <th>المتبقي</th>
-                <th>الاستحقاق</th>
-              </tr>
-            </thead>
-            <tbody>
-              {opening.items.map((o) => (
-                <tr key={o.code} className="border-b border-stone-100">
-                  <td className="py-2 font-mono">{o.code}</td>
-                  <td>{o.name}</td>
-                  <td className="tabular-nums">{filsToJodString(o.amount)}</td>
-                  <td className="tabular-nums">{filsToJodString(o.paid)}</td>
-                  <td className="font-bold tabular-nums">{filsToJodString(o.remaining)}</td>
-                  <td className="font-mono">{o.dueDate}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <th className="py-2">الكود</th>
+                  <th>العميل</th>
+                  <th>الرصيد الافتتاحي</th>
+                  <th>المدفوع منه</th>
+                  <th>المتبقي</th>
+                  <th>الاستحقاق</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {opening.items.map((o) => (
+                  <tr key={o.code} className="border-b border-stone-100">
+                    <td className="py-2 font-mono">{o.code}</td>
+                    <td>{o.name}</td>
+                    <td className="tabular-nums">{filsToJodString(o.amount)}</td>
+                    <td className="tabular-nums">{filsToJodString(o.paid)}</td>
+                    <td className="font-bold tabular-nums">{filsToJodString(o.remaining)}</td>
+                    <td className="font-mono">{o.dueDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
     </div>

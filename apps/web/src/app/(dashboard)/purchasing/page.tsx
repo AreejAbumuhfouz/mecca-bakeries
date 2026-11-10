@@ -93,45 +93,47 @@ export default function PurchasingPage() {
           </select>
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">الرقم</th>
-              <th>المورد</th>
-              <th>البنود</th>
-              <th>مطلوب بتاريخ</th>
-              <th>أُنشئ</th>
-              <th>الحالة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={o.id} className="border-b border-stone-100">
-                <td className="py-2 pl-4 font-mono">
-                  <Link href={`/purchasing/${o.id}`} className="text-brand-brown underline">
-                    {o.number}
-                  </Link>
-                </td>
-                <td className="font-bold">{o.supplierName}</td>
-                <td>{o.lineCount}</td>
-                <td className="font-mono">{o.neededDate ?? '—'}</td>
-                <td className="text-brand-muted">{formatAmman(o.createdAt)}</td>
-                <td>
-                  <Badge tone={PO_TONE[o.status]}>
-                    {PURCHASE_ORDER_STATUS_LABELS_AR[o.status]}
-                  </Badge>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-brand-line text-right text-brand-muted">
+                <th className="py-2">الرقم</th>
+                <th>المورد</th>
+                <th>البنود</th>
+                <th>مطلوب بتاريخ</th>
+                <th>أُنشئ</th>
+                <th>الحالة</th>
               </tr>
-            ))}
-            {orders.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-brand-muted">
-                  لا توجد طلبات شراء
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.id} className="border-b border-stone-100">
+                  <td className="py-2 pl-4 font-mono">
+                    <Link href={`/purchasing/${o.id}`} className="text-brand-brown underline">
+                      {o.number}
+                    </Link>
+                  </td>
+                  <td className="font-bold">{o.supplierName}</td>
+                  <td>{o.lineCount}</td>
+                  <td className="font-mono">{o.neededDate ?? '—'}</td>
+                  <td className="text-brand-muted">{formatAmman(o.createdAt)}</td>
+                  <td>
+                    <Badge tone={PO_TONE[o.status]}>
+                      {PURCHASE_ORDER_STATUS_LABELS_AR[o.status]}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-brand-muted">
+                    لا توجد طلبات شراء
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       <Card

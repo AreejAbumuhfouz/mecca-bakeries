@@ -462,45 +462,47 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
             اتركي الحقول فارغة ليُوزَّع المبلغ تلقائياً على الأقدم أولاً، أو اكتبي مبلغاً لفاتورة
             معيّنة.
           </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الفاتورة</th>
-                <th>التاريخ</th>
-                <th>الاستحقاق</th>
-                <th>المتبقي</th>
-                <th className="w-32">توزيع يدوي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.openInvoices.map((i) => (
-                <tr key={i.id} className="border-b border-stone-100">
-                  <td className="py-2 font-mono">{i.number}</td>
-                  <td className="font-mono">{i.issueDate}</td>
-                  <td className={`font-mono ${i.dueDate < ammanDate() ? 'text-red-800' : ''}`}>
-                    {i.dueDate}
-                  </td>
-                  <td className="font-bold">{filsToJodString(i.balance)}</td>
-                  <td>
-                    <input
-                      dir="ltr"
-                      aria-label={`توزيع على ${i.number}`}
-                      className="h-9 w-28 rounded-lg border border-brand-line bg-surface px-2"
-                      value={manual[i.id] ?? ''}
-                      onChange={(e) => setManual({ ...manual, [i.id]: e.target.value })}
-                    />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-right text-brand-muted">
+                  <th className="py-2">الفاتورة</th>
+                  <th>التاريخ</th>
+                  <th>الاستحقاق</th>
+                  <th>المتبقي</th>
+                  <th className="w-32">توزيع يدوي</th>
                 </tr>
-              ))}
-              {summary.openInvoices.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-3 text-brand-muted">
-                    لا فواتير مفتوحة — الدفعة تبقى رصيداً دائناً للعميل
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {summary.openInvoices.map((i) => (
+                  <tr key={i.id} className="border-b border-stone-100">
+                    <td className="py-2 font-mono">{i.number}</td>
+                    <td className="font-mono">{i.issueDate}</td>
+                    <td className={`font-mono ${i.dueDate < ammanDate() ? 'text-red-800' : ''}`}>
+                      {i.dueDate}
+                    </td>
+                    <td className="font-bold">{filsToJodString(i.balance)}</td>
+                    <td>
+                      <input
+                        dir="ltr"
+                        aria-label={`توزيع على ${i.number}`}
+                        className="h-9 w-28 rounded-lg border border-brand-line bg-surface px-2"
+                        value={manual[i.id] ?? ''}
+                        onChange={(e) => setManual({ ...manual, [i.id]: e.target.value })}
+                      />
+                    </td>
+                  </tr>
+                ))}
+                {summary.openInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-brand-muted">
+                      لا فواتير مفتوحة — الدفعة تبقى رصيداً دائناً للعميل
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
       <Button type="submit" disabled={busy || !customerId}>

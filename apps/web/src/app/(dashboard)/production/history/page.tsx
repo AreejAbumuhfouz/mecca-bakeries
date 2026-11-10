@@ -40,51 +40,53 @@ export default function ProductionHistoryPage() {
       </div>
       <ErrorBox message={error} />
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">اليوم</th>
-              <th>الحالة</th>
-              <th>الأصناف</th>
-              <th>مطلوب</th>
-              <th>مخطط</th>
-              <th>منتج</th>
-              <th>محمّل</th>
-              <th>تالف</th>
-              <th>مرتجع</th>
-              <th>فروقات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((d) => (
-              <tr key={d.id} className="border-b border-stone-100">
-                <td className="py-2 font-mono font-bold">{d.deliveryDate}</td>
-                <td>
-                  <Badge tone={DAY_TONE[d.status]}>
-                    {PRODUCTION_DAY_STATUS_LABELS_AR[d.status]}
-                  </Badge>
-                </td>
-                <td>{d.itemCount}</td>
-                <td>{d.ordered}</td>
-                <td>{d.planned}</td>
-                <td>{d.produced}</td>
-                <td>{d.loaded}</td>
-                <td>{d.waste}</td>
-                <td>{d.returned}</td>
-                <td className={d.flagged ? 'font-bold text-red-800' : 'text-green-800'}>
-                  {d.flagged || '✓'}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-brand-line text-right text-brand-muted">
+                <th className="py-2">اليوم</th>
+                <th>الحالة</th>
+                <th>الأصناف</th>
+                <th>مطلوب</th>
+                <th>مخطط</th>
+                <th>منتج</th>
+                <th>محمّل</th>
+                <th>تالف</th>
+                <th>مرتجع</th>
+                <th>فروقات</th>
               </tr>
-            ))}
-            {days.length === 0 && (
-              <tr>
-                <td colSpan={10} className="py-6 text-center text-brand-muted">
-                  لا يوجد سجل بعد
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {days.map((d) => (
+                <tr key={d.id} className="border-b border-stone-100">
+                  <td className="py-2 font-mono font-bold">{d.deliveryDate}</td>
+                  <td>
+                    <Badge tone={DAY_TONE[d.status]}>
+                      {PRODUCTION_DAY_STATUS_LABELS_AR[d.status]}
+                    </Badge>
+                  </td>
+                  <td>{d.itemCount}</td>
+                  <td>{d.ordered}</td>
+                  <td>{d.planned}</td>
+                  <td>{d.produced}</td>
+                  <td>{d.loaded}</td>
+                  <td>{d.waste}</td>
+                  <td>{d.returned}</td>
+                  <td className={d.flagged ? 'font-bold text-red-800' : 'text-green-800'}>
+                    {d.flagged || '✓'}
+                  </td>
+                </tr>
+              ))}
+              {days.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="py-6 text-center text-brand-muted">
+                    لا يوجد سجل بعد
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
         <p className="mt-3 text-xs text-brand-muted">
           لفتح يوم سابق: صفحة الإنتاج ← اختاري التاريخ. «فروقات» هو عدد الأصناف خارج السماحية
           (المعتمدة وغير المعتمدة).

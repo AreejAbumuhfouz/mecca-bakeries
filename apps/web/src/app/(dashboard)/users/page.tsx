@@ -193,70 +193,76 @@ export default function UsersPage() {
           />
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">الاسم</th>
-              <th>البريد</th>
-              <th>الدور</th>
-              <th>آخر دخول</th>
-              <th>الحالة</th>
-              {canManage && <th />}
-            </tr>
-          </thead>
-          <tbody>
-            {data?.items.map((u) => (
-              <tr key={u.id} className="border-b border-stone-100">
-                <td className="py-2.5 font-bold">{u.name}</td>
-                <td dir="ltr" className="text-right">
-                  {u.email}
-                </td>
-                <td>{ROLE_LABELS_AR[u.role]}</td>
-                <td className="text-brand-muted">
-                  {u.lastLoginAt
-                    ? new Date(u.lastLoginAt).toLocaleString('ar-JO', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                      })
-                    : '—'}
-                </td>
-                <td>
-                  {u.isActive ? <Badge tone="green">مفعّل</Badge> : <Badge tone="red">معطّل</Badge>}
-                </td>
-                {canManage && (
-                  <td className="text-xs">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        className="text-brand-brown underline"
-                        onClick={() => {
-                          setEditingId(u.id);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                      >
-                        تعديل
-                      </button>
-                      {u.id !== me?.id && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-brand-line text-right text-brand-muted">
+                <th className="py-2">الاسم</th>
+                <th>البريد</th>
+                <th>الدور</th>
+                <th>آخر دخول</th>
+                <th>الحالة</th>
+                {canManage && <th />}
+              </tr>
+            </thead>
+            <tbody>
+              {data?.items.map((u) => (
+                <tr key={u.id} className="border-b border-stone-100">
+                  <td className="py-2.5 font-bold">{u.name}</td>
+                  <td dir="ltr" className="text-right">
+                    {u.email}
+                  </td>
+                  <td>{ROLE_LABELS_AR[u.role]}</td>
+                  <td className="text-brand-muted">
+                    {u.lastLoginAt
+                      ? new Date(u.lastLoginAt).toLocaleString('ar-JO', {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })
+                      : '—'}
+                  </td>
+                  <td>
+                    {u.isActive ? (
+                      <Badge tone="green">مفعّل</Badge>
+                    ) : (
+                      <Badge tone="red">معطّل</Badge>
+                    )}
+                  </td>
+                  {canManage && (
+                    <td className="text-xs">
+                      <div className="flex justify-end gap-3">
                         <button
                           className="text-brand-brown underline"
-                          onClick={() => void toggleActive(u)}
+                          onClick={() => {
+                            setEditingId(u.id);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                         >
-                          {u.isActive ? 'تعطيل' : 'تفعيل'}
+                          تعديل
                         </button>
-                      )}
-                    </div>
+                        {u.id !== me?.id && (
+                          <button
+                            className="text-brand-brown underline"
+                            onClick={() => void toggleActive(u)}
+                          >
+                            {u.isActive ? 'تعطيل' : 'تفعيل'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {data && data.items.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-brand-muted">
+                    لا يوجد مستخدمون
                   </td>
-                )}
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-brand-muted">
-                  لا يوجد مستخدمون
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );
