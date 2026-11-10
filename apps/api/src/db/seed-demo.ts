@@ -464,6 +464,7 @@ const actor: AuthUser = {
   role: 'orders',
   customerId: null,
   permissions: [...ROLE_PERMISSIONS.orders, 'credit.override'],
+  locale: 'ar' as const,
 };
 const settingsSvc = createSettingsService(db);
 const { notifier } = captureNotifier(); // demo orders send no messages
@@ -559,6 +560,7 @@ const producer: AuthUser = {
   role: 'production',
   customerId: null,
   permissions: [...ROLE_PERMISSIONS.production, 'variances.approve'],
+  locale: 'ar' as const,
 };
 const productionAt = (at: Date) =>
   createProductionService({ db, settings: settingsSvc, now: () => at });
@@ -671,6 +673,7 @@ const purchaser: AuthUser = {
   role: 'purchasing',
   customerId: null,
   permissions: [...ROLE_PERMISSIONS.purchasing],
+  locale: 'ar' as const,
 };
 const pos: [
   number,
@@ -766,6 +769,7 @@ const admin = {
   ...actor,
   role: 'super_admin' as const,
   permissions: [...ROLE_PERMISSIONS.super_admin],
+  locale: 'ar' as const,
 };
 
 // History: the two weeks before today, delivered and invoiced, so reports and the home chart
@@ -964,6 +968,7 @@ const driverActor = (u: typeof driver1) => ({
   role: 'driver' as const,
   customerId: null,
   permissions: [...ROLE_PERMISSIONS.driver],
+  locale: 'ar' as const,
 });
 const drivers = [driver1, driver2, driver3];
 let deliveredCount = 0;

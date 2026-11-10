@@ -9,6 +9,7 @@ import { ROLE_LABELS_AR } from '@mecca/shared';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { NAV } from '@/components/nav';
+import { t } from '@/lib/i18n';
 
 const COLLAPSE_KEY = 'mb-sidebar-collapsed';
 
@@ -49,7 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center text-brand-muted">
-        جارٍ التحميل…
+        {t('جارٍ التحميل…')}
       </div>
     );
   }
@@ -60,18 +61,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md space-y-4 rounded-2xl border border-brand-line bg-surface p-8 text-center">
           <div className="mx-auto w-fit rounded-xl bg-white p-2">
-            <Image src="/logo.png" alt="مخابز مكة" width={90} height={76} />
+            <Image src="/logo.png" alt={t('مخابز مكة')} width={90} height={76} />
           </div>
-          <h1 className="text-xl font-bold text-brand-brown">هذا الحساب للتطبيق</h1>
+          <h1 className="text-xl font-bold text-brand-brown">{t('هذا الحساب للتطبيق')}</h1>
           <p className="text-sm leading-7 text-brand-muted">
-            حساب {user.role === 'driver' ? 'السائق' : 'المطعم'} «{user.name}» يعمل من تطبيق مخابز
-            مكة على الجوال. لوحة التحكم لموظفي المخبز فقط.
+            {t('حساب')} {user.role === 'driver' ? t('السائق') : t('المطعم')}{' '}
+            {t(
+              '«{0}» يعمل من تطبيق مخابز مكة على الجوال. لوحة التحكم لموظفي المخبز فقط.',
+              user.name,
+            )}
           </p>
           <button
             onClick={() => void logout()}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-on-primary"
           >
-            <LogOut size={16} /> خروج والدخول بحساب آخر
+            <LogOut size={16} /> {t('خروج والدخول بحساب آخر')}
           </button>
         </div>
       </div>
@@ -87,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       {mobileOpen && (
         <button
-          aria-label="إغلاق القائمة"
+          aria-label={t('إغلاق القائمة')}
           className="fixed inset-0 z-30 bg-black/40 md:hidden print:hidden"
           onClick={() => setMobileOpen(false)}
         />
@@ -101,7 +105,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className={`rounded-xl bg-white p-1.5 ${narrow ? 'w-12' : 'flex-1'} transition-all`}>
             <Image
               src="/logo.png"
-              alt="مخابز مكة"
+              alt={t('مخابز مكة')}
               width={narrow ? 40 : 80}
               height={narrow ? 34 : 67}
               className="mx-auto"
@@ -109,7 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <button
             className="rounded-lg p-1.5 hover:bg-white/10 md:hidden"
-            aria-label="إغلاق القائمة"
+            aria-label={t('إغلاق القائمة')}
             onClick={() => setMobileOpen(false)}
           >
             <X size={20} />
@@ -125,7 +129,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.ready ? item.href : '#'}
                 aria-disabled={!item.ready}
-                title={narrow ? item.label + (item.ready ? '' : ' (قريباً)') : undefined}
+                title={narrow ? item.label + (item.ready ? '' : t(' (قريباً)')) : undefined}
                 className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                   narrow ? 'justify-center' : ''
                 } ${
@@ -136,7 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <Icon size={19} strokeWidth={active ? 2.3 : 1.8} className="shrink-0" />
                 {!narrow && <span className="flex-1 truncate">{item.label}</span>}
-                {!narrow && !item.ready && <span className="text-[10px]">قريباً</span>}
+                {!narrow && !item.ready && <span className="text-[10px]">{t('قريباً')}</span>}
               </Link>
             );
           })}
@@ -148,10 +152,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-ink/80 hover:bg-white/10 ${
               narrow ? 'justify-center' : ''
             }`}
-            title={narrow ? 'توسيع القائمة' : undefined}
+            title={narrow ? t('توسيع القائمة') : undefined}
           >
             {narrow ? <PanelRightOpen size={19} /> : <PanelRightClose size={19} />}
-            {!narrow && 'تصغير القائمة'}
+            {!narrow && t('تصغير القائمة')}
           </button>
         </div>
       </aside>
@@ -161,21 +165,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <button
               className="rounded-lg p-2 text-brand-brown hover:bg-brand-cream md:hidden"
-              aria-label="فتح القائمة"
+              aria-label={t('فتح القائمة')}
               onClick={() => setMobileOpen(true)}
             >
               <Menu size={20} />
             </button>
             <div className="hidden text-sm text-brand-muted sm:block">
-              نظام إدارة الطلبات والإنتاج والتوزيع
+              {t('نظام إدارة الطلبات والإنتاج والتوزيع')}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggle}
               className="rounded-lg border border-brand-line p-2 text-brand-brown hover:bg-brand-cream"
-              aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
-              title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+              aria-label={theme === 'dark' ? t('الوضع الفاتح') : t('الوضع الداكن')}
+              title={theme === 'dark' ? t('الوضع الفاتح') : t('الوضع الداكن')}
             >
               {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             </button>
@@ -193,7 +197,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="flex items-center gap-1.5 rounded-lg border border-brand-line px-3 py-2 text-xs text-brand-brown hover:bg-brand-cream"
             >
               <LogOut size={15} />
-              <span className="hidden sm:inline">خروج</span>
+              <span className="hidden sm:inline">{t('خروج')}</span>
             </button>
           </div>
         </header>

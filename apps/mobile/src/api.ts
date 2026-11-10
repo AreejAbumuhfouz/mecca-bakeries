@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { ApiResponse, LoginResult } from '@mecca/shared';
+import { t } from './i18n';
 
 /** On a real phone "localhost" is the phone itself: set your Mac's Wi-Fi IP in apps/mobile/.env */
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -44,7 +45,7 @@ export const setExpiredHandler = (fn: (() => void) | null) => {
 
 async function parse<T>(res: Response): Promise<T> {
   const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
-  if (!body) throw new ApiError(res.status, 'BAD_RESPONSE', 'تعذّر الاتصال بالخادم');
+  if (!body) throw new ApiError(res.status, 'BAD_RESPONSE', t('تعذّر الاتصال بالخادم'));
   if (!body.ok)
     throw new ApiError(res.status, body.error.code, body.error.message, body.error.details);
   return body.data;
@@ -103,7 +104,7 @@ export async function api<T>(
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
   } catch {
-    throw new ApiError(0, 'NETWORK', 'لا يوجد اتصال بالخادم — تأكد من الإنترنت');
+    throw new ApiError(0, 'NETWORK', t('لا يوجد اتصال بالخادم — تأكد من الإنترنت'));
   }
   if (res.status === 401 && retry && !path.startsWith('/api/auth/')) {
     if (await refreshSession()) return api<T>(path, init, false);
@@ -120,7 +121,7 @@ export async function fetchBlob(path: string) {
     });
   let res = await load();
   if (res.status === 401 && (await refreshSession())) res = await load();
-  if (!res.ok) throw new ApiError(res.status, 'FILE_ERROR', 'تعذّر فتح الملف');
+  if (!res.ok) throw new ApiError(res.status, 'FILE_ERROR', t('تعذّر فتح الملف'));
   return res.blob();
 }
 

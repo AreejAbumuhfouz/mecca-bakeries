@@ -35,6 +35,7 @@ import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { FilesService } from '../files/files.service.js';
 import type { BillingService } from '../billing/billing.service.js';
 import { loadingSheetHtml } from '../billing/billing-pdf.js';
+import { t } from '../../lib/i18n.js';
 
 export type RouteInput = {
   name?: string;
@@ -79,14 +80,15 @@ export function createDistributionService(deps: {
   const now = () => deps.now?.() ?? new Date();
 
   async function tripOrThrow(id: string) {
-    const t = await db.query.trips.findFirst({ where: eq(trips.id, id) });
-    if (!t) throw notFound('Trip');
-    return t;
+    const tr = await db.query.trips.findFirst({ where: eq(trips.id, id) });
+    if (!tr) throw notFound('Trip');
+    return tr;
   }
 
   function assertDriver(trip: { driverId: string | null }, actor: AuthUser) {
     if (actor.permissions.includes('deliveries.manage')) return;
-    if (trip.driverId !== actor.id) throw new AppError(403, 'NOT_YOUR_TRIP', 'هذا المسار ليس لك');
+    if (trip.driverId !== actor.id)
+      throw new AppError(403, 'NOT_YOUR_TRIP', t('هذا المسار ليس لك'));
   }
 
   /** Everything the driver needs for one trip, so the phone can work without a connection. */
@@ -328,7 +330,7 @@ export function createDistributionService(deps: {
       if (data.driverId) {
         const d = await db.query.users.findFirst({ where: eq(users.id, data.driverId) });
         if (!d || d.role !== 'driver')
-          throw new AppError(422, 'NOT_A_DRIVER', 'المستخدم ليس سائقاً');
+          throw new AppError(422, 'NOT_A_DRIVER', t('المستخدم ليس سائقاً'));
       }
       try {
         return await db.transaction(async (tx) => {
@@ -351,7 +353,7 @@ export function createDistributionService(deps: {
         });
       } catch (err) {
         if ((err as { cause?: { code?: string } }).cause?.code === '23505')
-          throw new AppError(409, 'NAME_TAKEN', 'يوجد مسار بنفس الاسم');
+          throw new AppError(409, 'NAME_TAKEN', t('يوجد مسار بنفس الاسم'));
         throw err;
       }
     },
@@ -404,7 +406,7 @@ export function createDistributionService(deps: {
         const tripOf = new Map<string, string>();
         for (const routeId of new Set(confirmed.map((c) => c.routeId))) {
           const route = routeRows.find((r) => r.id === routeId)!;
-          const [t] = await tx
+          const [tr] = await tx
             .insert(trips)
             .values({
               deliveryDate: date,
@@ -421,7 +423,7 @@ export function createDistributionService(deps: {
               },
             })
             .returning({ id: trips.id });
-          tripOf.set(routeId, t!.id);
+          tripOf.set(routeId, tr!.id);
         }
         for (const c of confirmed) {
           if (c.deliveryId) {
@@ -503,7 +505,7 @@ export function createDistributionService(deps: {
             .where(
               inArray(
                 deliveries.tripId,
-                dayTrips.map((t) => t.trip.id),
+                dayTrips.map((tr) => tr.trip.id),
               ),
             )
             .orderBy(asc(deliveries.position), asc(branches.name))
@@ -535,14 +537,14 @@ export function createDistributionService(deps: {
         );
       return {
         date,
-        trips: dayTrips.map((t) => {
-          const ds = rows.filter((r) => r.tripId === t.trip.id);
+        trips: dayTrips.map((tr) => {
+          const ds = rows.filter((r) => r.tripId === tr.trip.id);
           const count = (s: DeliveryStatus) => ds.filter((d) => d.status === s).length;
           return {
-            ...t.trip,
-            routeName: t.routeName,
-            driverName: t.driverName,
-            vehicleName: t.vehicleName,
+            ...tr.trip,
+            routeName: tr.routeName,
+            driverName: tr.driverName,
+            vehicleName: tr.vehicleName,
             counts: {
               total: ds.length,
               pending: count('pending'),
@@ -563,12 +565,12 @@ export function createDistributionService(deps: {
     trip: tripDetail,
 
     async loadingSheetPdf(tripId: string) {
-      const t = await tripDetail(tripId);
+      const tr = await tripDetail(tripId);
       const totals = new Map<
         string,
         { code: string; name: string; unit: string; quantity: number }
       >();
-      for (const s of t.stops)
+      for (const s of tr.stops)
         for (const i of s.items) {
           const row = totals.get(i.itemId) ?? {
             code: i.code,
@@ -582,14 +584,14 @@ export function createDistributionService(deps: {
       const bytes = await deps.pdf(
         loadingSheetHtml({
           brand: await brandHeader(db, deps.files),
-          deliveryDate: t.deliveryDate,
-          routeName: t.route.name,
-          driverName: t.driver?.name ?? null,
-          vehicleName: t.vehicle
-            ? `${t.vehicle.name}${t.vehicle.plate ? ` (${t.vehicle.plate})` : ''}`
+          deliveryDate: tr.deliveryDate,
+          routeName: tr.route.name,
+          driverName: tr.driver?.name ?? null,
+          vehicleName: tr.vehicle
+            ? `${tr.vehicle.name}${tr.vehicle.plate ? ` (${tr.vehicle.plate})` : ''}`
             : null,
           totals: [...totals.values()].sort((a, b) => a.code.localeCompare(b.code)),
-          stops: t.stops.map((s) => ({
+          stops: tr.stops.map((s) => ({
             position: s.position,
             customerName: s.customer.name,
             branchName: s.branch.name,
@@ -603,7 +605,7 @@ export function createDistributionService(deps: {
           })),
         }),
       );
-      return { bytes, filename: `loading-${t.deliveryDate}-${t.route.name}.pdf` };
+      return { bytes, filename: `loading-${tr.deliveryDate}-${tr.route.name}.pdf` };
     },
 
     // ---------------------------------------------------------- driver
@@ -619,7 +621,7 @@ export function createDistributionService(deps: {
         .orderBy(asc(routes.sortOrder));
       return {
         date,
-        trips: await Promise.all(mine.map((t) => tripDetail(t.id))),
+        trips: await Promise.all(mine.map((tr) => tripDetail(tr.id))),
         catalog: await db
           .select({ id: items.id, code: items.code, name: items.name, unit: items.unit })
           .from(items)
@@ -656,7 +658,7 @@ export function createDistributionService(deps: {
       if (d.status !== 'pending') {
         if (d.clientRef && d.clientRef === input.clientRef)
           return { duplicate: true, trip: await tripDetail(trip.id) };
-        throw new AppError(409, 'ALREADY_CONFIRMED', 'تم تأكيد هذا التسليم من قبل', {
+        throw new AppError(409, 'ALREADY_CONFIRMED', t('تم تأكيد هذا التسليم من قبل'), {
           status: d.status,
           confirmedAt: d.confirmedAt,
         });
@@ -666,7 +668,7 @@ export function createDistributionService(deps: {
         throw new AppError(
           409,
           'ORDER_NOT_DELIVERABLE',
-          'الطلب ألغي أو تغيّر بعد تحميله؛ راجع المكتب',
+          t('الطلب ألغي أو تغيّر بعد تحميله؛ راجع المكتب'),
         );
       const ordered = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
       const contract = order.contractId
@@ -701,34 +703,34 @@ export function createDistributionService(deps: {
       ];
       for (const l of lines) {
         if (l.deliveredQty < 0 || l.returnedQty < 0)
-          throw new AppError(422, 'BAD_QTY', 'الكميات لا تكون سالبة');
+          throw new AppError(422, 'BAD_QTY', t('الكميات لا تكون سالبة'));
         if (l.deliveredQty > l.orderedQty)
           throw new AppError(
             422,
             'OVER_DELIVERED',
-            'الكمية المسلّمة أكبر من المطلوب؛ عدّل الطلب أولاً',
+            t('الكمية المسلّمة أكبر من المطلوب؛ عدّل الطلب أولاً'),
           );
         if (input.outcome === 'delivered' && l.deliveredQty < l.orderedQty && !l.shortReason)
-          throw new AppError(422, 'SHORT_REASON', 'اختر سبب النقص لكل صنف ناقص');
+          throw new AppError(422, 'SHORT_REASON', t('اختر سبب النقص لكل صنف ناقص'));
         if (l.returnedQty > 0 && !l.returnReason)
-          throw new AppError(422, 'RETURN_REASON', 'اختر سبب المرتجع');
+          throw new AppError(422, 'RETURN_REASON', t('اختر سبب المرتجع'));
       }
       if (lines.some((l) => l.returnedQty > 0) && !contract?.allowReturns)
-        throw new AppError(422, 'RETURNS_NOT_ALLOWED', 'عقد هذا العميل لا يسمح بالمرتجعات');
+        throw new AppError(422, 'RETURNS_NOT_ALLOWED', t('عقد هذا العميل لا يسمح بالمرتجعات'));
       if (input.outcome === 'failed' && !input.failReason)
-        throw new AppError(422, 'FAIL_REASON', 'اختر سبب عدم التسليم');
+        throw new AppError(422, 'FAIL_REASON', t('اختر سبب عدم التسليم'));
       if (input.outcome === 'delivered') {
         if (!lines.some((l) => l.deliveredQty > 0 || l.returnedQty > 0))
           throw new AppError(
             422,
             'NOTHING_DELIVERED',
-            'لم تُسلَّم أي كمية؛ اختر «لم يُسلَّم» بدلاً من ذلك',
+            t('لم تُسلَّم أي كمية؛ اختر «لم يُسلَّم» بدلاً من ذلك'),
           );
         if ((input.receiverName?.trim().length ?? 0) < 2 && !input.signatureSvg)
-          throw new AppError(422, 'RECEIVER_REQUIRED', 'اكتب اسم المستلم أو خذ توقيعه');
+          throw new AppError(422, 'RECEIVER_REQUIRED', t('اكتب اسم المستلم أو خذ توقيعه'));
       }
       if (input.collected && input.collected.amount < 0)
-        throw new AppError(422, 'BAD_AMOUNT', 'المبلغ المحصّل غير صحيح');
+        throw new AppError(422, 'BAD_AMOUNT', t('المبلغ المحصّل غير صحيح'));
 
       const status: DeliveryStatus =
         input.outcome === 'failed'
@@ -764,7 +766,8 @@ export function createDistributionService(deps: {
             // Guards against two phones confirming at the same moment.
             .where(and(eq(deliveries.id, deliveryId), eq(deliveries.status, 'pending')))
             .returning();
-          if (!updated) throw new AppError(409, 'ALREADY_CONFIRMED', 'تم تأكيد هذا التسليم من قبل');
+          if (!updated)
+            throw new AppError(409, 'ALREADY_CONFIRMED', t('تم تأكيد هذا التسليم من قبل'));
           await tx.insert(deliveryLines).values(lines.map((l) => ({ ...l, deliveryId })));
 
           let invoiceId: string | null = null;
@@ -784,10 +787,10 @@ export function createDistributionService(deps: {
             actorId: actor.id,
             note:
               status === 'failed'
-                ? `لم يُسلَّم`
+                ? t('لم يُسلَّم')
                 : status === 'partial'
-                  ? 'تسليم ناقص'
-                  : 'تم التسليم',
+                  ? t('تسليم ناقص')
+                  : t('تم التسليم'),
             data: { deliveryId, invoiceId, receiver: input.receiverName ?? null },
           });
           if (collected)
@@ -799,7 +802,7 @@ export function createDistributionService(deps: {
                 method: collected.method,
                 receivedOn: ammanDate(at),
                 reference: collected.reference ?? null,
-                note: `تحصيل السائق عند التسليم (${order.number})`,
+                note: t('تحصيل السائق عند التسليم ({0})', order.number),
               },
               { source: 'driver', deliveryId, receivedBy: actor.id },
             );
@@ -822,7 +825,7 @@ export function createDistributionService(deps: {
         });
       } catch (err) {
         if ((err as { cause?: { code?: string } }).cause?.code === '23505')
-          throw new AppError(409, 'ALREADY_CONFIRMED', 'تم تأكيد هذا التسليم من قبل');
+          throw new AppError(409, 'ALREADY_CONFIRMED', t('تم تأكيد هذا التسليم من قبل'));
         throw err;
       }
       return { duplicate: false, trip: await tripDetail(trip.id) };

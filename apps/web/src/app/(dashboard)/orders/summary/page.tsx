@@ -12,6 +12,7 @@ import {
 } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 type Summary = {
   deliveryDate: string;
@@ -48,7 +49,7 @@ function SummaryView() {
         setData(s);
         if (!date) setDate(s.deliveryDate);
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر تحميل الكشف')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر تحميل الكشف'))));
   }, [date]);
 
   const sections = [...new Set(data?.items.map((i) => i.sectionName))];
@@ -58,11 +59,11 @@ function SummaryView() {
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
           <Link href="/orders" className="text-sm text-brand-muted underline">
-            ← الطلبات
+            {t('← الطلبات')}
           </Link>
-          <h1 className="mt-1 text-2xl font-bold text-brand-brown">الكشف المبدئي للإنتاج</h1>
+          <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('الكشف المبدئي للإنتاج')}</h1>
           <p className="text-sm text-brand-muted">
-            مجموع كل صنف من الطلبات المرسلة والمؤكدة والموقوفة.
+            {t('مجموع كل صنف من الطلبات المرسلة والمؤكدة والموقوفة.')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -73,7 +74,7 @@ function SummaryView() {
             onChange={(e) => setDate(e.target.value)}
           />
           <Button variant="outline" onClick={() => window.print()}>
-            طباعة
+            {t('طباعة')}
           </Button>
         </div>
       </div>
@@ -82,7 +83,7 @@ function SummaryView() {
       {data && (
         <>
           <h2 className="hidden text-xl font-bold print:block">
-            الكشف المبدئي ليوم {data.deliveryDate}
+            {t('الكشف المبدئي ليوم {0}', data.deliveryDate)}
           </h2>
           <div className="flex flex-wrap gap-3 text-sm">
             {data.counts.map((c) => (
@@ -95,19 +96,19 @@ function SummaryView() {
             ))}
           </div>
 
-          <Card title={`الأصناف ليوم ${data.deliveryDate}`}>
+          <Card title={t('الأصناف ليوم {0}', data.deliveryDate)}>
             {data.items.length === 0 ? (
-              <p className="text-sm text-brand-muted">لا توجد طلبات لهذا اليوم</p>
+              <p className="text-sm text-brand-muted">{t('لا توجد طلبات لهذا اليوم')}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-brand-line text-right text-brand-muted">
-                      <th className="py-2">الكود</th>
-                      <th>الصنف</th>
-                      <th>الكمية الكلية</th>
-                      <th>منها مؤكد</th>
-                      <th>القيمة</th>
+                      <th className="py-2">{t('الكود')}</th>
+                      <th>{t('الصنف')}</th>
+                      <th>{t('الكمية الكلية')}</th>
+                      <th>{t('منها مؤكد')}</th>
+                      <th>{t('القيمة')}</th>
                     </tr>
                   </thead>
                   {sections.map((sec) => (
@@ -143,7 +144,7 @@ function SummaryView() {
             )}
           </Card>
 
-          <Card title={`فروع لم تطلب (${data.branchesWithoutOrder.length})`}>
+          <Card title={t('فروع لم تطلب ({0})', data.branchesWithoutOrder.length)}>
             <ul className="grid grid-cols-1 gap-1 text-sm md:grid-cols-2">
               {data.branchesWithoutOrder.map((b) => (
                 <li key={b.branchId}>
@@ -157,7 +158,7 @@ function SummaryView() {
                 </li>
               ))}
               {data.branchesWithoutOrder.length === 0 && (
-                <li className="text-brand-muted">كل الفروع طلبت ✓</li>
+                <li className="text-brand-muted">{t('كل الفروع طلبت ✓')}</li>
               )}
             </ul>
           </Card>

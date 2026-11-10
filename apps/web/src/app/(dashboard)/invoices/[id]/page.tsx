@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Textarea } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { INVOICE_TONE, jodToFils, type Invoice } from '@/lib/billing';
+import { t } from '@/lib/i18n';
 
 type EditLine = {
   kind: 'sale' | 'return';
@@ -48,7 +49,7 @@ export default function InvoicePage() {
     [id],
   );
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>, fallback: string) {
@@ -91,7 +92,7 @@ export default function InvoicePage() {
 
   async function save() {
     const bps = parsePercentToBps(discount2 || '0');
-    if (bps === null) return setError('نسبة الخصم الثاني غير صحيحة');
+    if (bps === null) return setError(t('نسبة الخصم الثاني غير صحيحة'));
     const out: {
       kind: 'sale' | 'return';
       itemId: string | null;
@@ -105,7 +106,7 @@ export default function InvoicePage() {
       const q = Number(l.quantity);
       const p = jodToFils(l.price);
       if (!Number.isInteger(q) || q < 1 || p === null)
-        return setError(`تحقّقي من الكمية والسعر: ${l.description}`);
+        return setError(t('تحقّقي من الكمية والسعر: {0}', l.description));
       out.push({
         kind: l.kind,
         itemId: l.itemId,
@@ -127,7 +128,7 @@ export default function InvoicePage() {
             ...(locked ? { reason } : {}),
           }),
         }),
-      'تعذّر الحفظ',
+      t('تعذّر الحفظ'),
     );
     if (ok) setEditing(false);
   }
@@ -147,10 +148,10 @@ export default function InvoicePage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/invoices" className="text-sm text-brand-muted underline">
-            ← الفواتير
+            {t('← الفواتير')}
           </Link>
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold text-brand-brown">
-            {inv.kind === 'opening' ? 'رصيد افتتاحي' : 'فاتورة'}{' '}
+            {inv.kind === 'opening' ? t('رصيد افتتاحي') : t('فاتورة')}{' '}
             <span className="font-mono">{inv.number}</span>
             {locked && <Lock size={18} className="text-brand-muted" />}
           </h1>
@@ -163,11 +164,11 @@ export default function InvoicePage() {
             <Badge tone={INVOICE_TONE[inv.status]}>{INVOICE_STATUS_LABELS_AR[inv.status]}</Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
-            التاريخ {inv.issueDate} — الاستحقاق {inv.dueDate}
+            {t('التاريخ {0} — الاستحقاق {1}', inv.issueDate, inv.dueDate)}
             {inv.orderNumber && (
               <>
                 {' '}
-                — الطلب{' '}
+                {t('— الطلب')}{' '}
                 <Link href={`/orders/${inv.orderId}`} className="font-mono underline">
                   {inv.orderNumber}
                 </Link>
@@ -180,7 +181,7 @@ export default function InvoicePage() {
             variant="outline"
             onClick={() =>
               void openAuthed(`/api/billing/invoices/${id}/pdf`).catch((err) =>
-                setError(errorMessage(err, 'تعذّر فتح PDF')),
+                setError(errorMessage(err, t('تعذّر فتح PDF'))),
               )
             }
           >
@@ -197,16 +198,16 @@ export default function InvoicePage() {
                       method: 'POST',
                       body: JSON.stringify({ ids: [id] }),
                     }),
-                  'تعذّر الاعتماد',
+                  t('تعذّر الاعتماد'),
                 )
               }
             >
-              اعتماد وقفل
+              {t('اعتماد وقفل')}
             </Button>
           )}
           {canEdit && !editing && (
             <Button variant="outline" onClick={startEdit}>
-              تعديل
+              {t('تعديل')}
             </Button>
           )}
         </div>
@@ -214,26 +215,26 @@ export default function InvoicePage() {
       <ErrorBox message={error} />
       {inv.flags.length > 0 && (
         <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          <AlertTriangle size={16} /> {inv.flags.join('، ')}
+          <AlertTriangle size={16} /> {inv.flags.join(t('، '))}
         </div>
       )}
       {locked && !canEditLocked && (
         <p className="text-sm text-brand-muted">
-          الفاتورة معتمدة ومقفلة. تعديلها يحتاج صلاحية «تعديل الفواتير المعتمدة».
+          {t('الفاتورة معتمدة ومقفلة. تعديلها يحتاج صلاحية «تعديل الفواتير المعتمدة».')}
         </p>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card title="البنود">
+          <Card title={t('البنود')}>
             {editing && inv.kind === 'sale' ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-right text-brand-muted">
-                      <th>الصنف</th>
-                      <th className="w-24">الكمية</th>
-                      <th className="w-28">السعر</th>
+                      <th>{t('الصنف')}</th>
+                      <th className="w-24">{t('الكمية')}</th>
+                      <th className="w-28">{t('السعر')}</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -241,13 +242,15 @@ export default function InvoicePage() {
                     {lines.map((l, i) => (
                       <tr key={i}>
                         <td className="py-1">
-                          {l.kind === 'return' && <span className="text-red-800">مرتجع: </span>}
+                          {l.kind === 'return' && (
+                            <span className="text-red-800">{t('مرتجع:')} </span>
+                          )}
                           {l.description}
                         </td>
                         <td>
                           <input
                             dir="ltr"
-                            aria-label={`كمية ${l.description}`}
+                            aria-label={t('كمية {0}', l.description)}
                             className="h-9 w-20 rounded-lg border border-brand-line bg-surface px-2"
                             value={l.quantity}
                             onChange={(e) =>
@@ -262,7 +265,7 @@ export default function InvoicePage() {
                         <td>
                           <input
                             dir="ltr"
-                            aria-label={`سعر ${l.description}`}
+                            aria-label={t('سعر {0}', l.description)}
                             className="h-9 w-24 rounded-lg border border-brand-line bg-surface px-2"
                             value={l.price}
                             onChange={(e) =>
@@ -277,7 +280,7 @@ export default function InvoicePage() {
                         <td>
                           <button
                             className="text-red-700"
-                            aria-label="حذف"
+                            aria-label={t('حذف')}
                             onClick={() => setLines(lines.filter((_, j) => j !== i))}
                           >
                             ✕
@@ -294,10 +297,10 @@ export default function InvoicePage() {
                   <thead>
                     <tr className="border-b border-brand-line text-right text-brand-muted">
                       <th className="py-2">#</th>
-                      <th>الصنف</th>
-                      <th>الكمية</th>
-                      <th>السعر</th>
-                      <th>المجموع</th>
+                      <th>{t('الصنف')}</th>
+                      <th>{t('الكمية')}</th>
+                      <th>{t('السعر')}</th>
+                      <th>{t('المجموع')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -308,7 +311,7 @@ export default function InvoicePage() {
                       >
                         <td className="py-2 text-brand-muted">{i + 1}</td>
                         <td>
-                          {l.kind === 'return' && 'مرتجع: '}
+                          {l.kind === 'return' && t('مرتجع: ')}
                           {l.description} <span className="text-xs text-brand-muted">{l.unit}</span>
                         </td>
                         <td>{l.quantity}</td>
@@ -338,21 +341,21 @@ export default function InvoicePage() {
               <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {inv.kind === 'sale' && (
                   <Input
-                    label="الخصم الثاني %"
+                    label={t('الخصم الثاني %')}
                     dir="ltr"
                     value={discount2}
                     onChange={(e) => setDiscount2(e.target.value)}
                   />
                 )}
                 <Textarea
-                  label="ملاحظات"
+                  label={t('ملاحظات')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
                 {locked && (
                   <div className="md:col-span-2">
                     <Input
-                      label="سبب تعديل الفاتورة المعتمدة (مطلوب)"
+                      label={t('سبب تعديل الفاتورة المعتمدة (مطلوب)')}
                       required
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
@@ -361,10 +364,10 @@ export default function InvoicePage() {
                 )}
                 <div className="flex gap-2 md:col-span-2">
                   <Button disabled={busy} onClick={() => void save()}>
-                    حفظ
+                    {t('حفظ')}
                   </Button>
                   <Button variant="outline" onClick={() => setEditing(false)}>
-                    إلغاء
+                    {t('إلغاء')}
                   </Button>
                 </div>
               </div>
@@ -373,30 +376,31 @@ export default function InvoicePage() {
         </div>
 
         <div className="space-y-6">
-          <Card title="المجموع">
+          <Card title={t('المجموع')}>
             <div className="text-sm">
-              {inv.discount1Amount > 0 && row('قبل الخصم', filsToJodString(inv.grossTotal))}
+              {inv.discount1Amount > 0 && row(t('قبل الخصم'), filsToJodString(inv.grossTotal))}
               {inv.discount1Amount > 0 &&
-                row('الخصم الأول (العقد)', `− ${filsToJodString(inv.discount1Amount)}`)}
-              {inv.kind === 'sale' && row('المبيعات', filsToJodString(sales))}
+                row(t('الخصم الأول (العقد)'), `− ${filsToJodString(inv.discount1Amount)}`)}
+              {inv.kind === 'sale' && row(t('المبيعات'), filsToJodString(sales))}
               {inv.discount2Amount > 0 &&
                 row(
-                  `الخصم الثاني (${bpsToPercentString(inv.discount2Bps)}%)`,
+                  t('الخصم الثاني ({0}%)', bpsToPercentString(inv.discount2Bps)),
                   `− ${filsToJodString(inv.discount2Amount)}`,
                 )}
-              {inv.returnsTotal > 0 && row('المرتجعات', `− ${filsToJodString(inv.returnsTotal)}`)}
-              {row('الصافي', formatJod(inv.total), true)}
-              {row('المدفوع', formatJod(inv.paid))}
+              {inv.returnsTotal > 0 &&
+                row(t('المرتجعات'), `− ${filsToJodString(inv.returnsTotal)}`)}
+              {row(t('الصافي'), formatJod(inv.total), true)}
+              {row(t('المدفوع'), formatJod(inv.paid))}
               <div
                 className={`flex justify-between py-1 font-bold ${inv.balance > 0 ? 'text-red-800' : 'text-green-800'}`}
               >
-                <span>المتبقي</span>
+                <span>{t('المتبقي')}</span>
                 <span dir="ltr">{formatJod(Math.max(0, inv.balance))}</span>
               </div>
             </div>
           </Card>
 
-          <Card title="الدفعات">
+          <Card title={t('الدفعات')}>
             <ul className="space-y-1 text-sm">
               {inv.payments.map((p) => (
                 <li key={p.paymentId} className="flex justify-between">
@@ -407,15 +411,17 @@ export default function InvoicePage() {
                   <b>{formatJod(p.amount)}</b>
                 </li>
               ))}
-              {inv.payments.length === 0 && <li className="text-brand-muted">لا دفعات بعد</li>}
+              {inv.payments.length === 0 && (
+                <li className="text-brand-muted">{t('لا دفعات بعد')}</li>
+              )}
             </ul>
           </Card>
 
           {inv.delivery && (
-            <Card title="التسليم">
+            <Card title={t('التسليم')}>
               <div className="space-y-1 text-sm">
                 <div>
-                  المستلم: <b>{inv.delivery.receiverName ?? '—'}</b>
+                  {t('المستلم:')} <b>{inv.delivery.receiverName ?? '—'}</b>
                 </div>
                 {inv.delivery.deliveredAt && <div>{formatAmman(inv.delivery.deliveredAt)}</div>}
                 {inv.delivery.latitude != null && (
@@ -425,21 +431,21 @@ export default function InvoicePage() {
                     className="flex items-center gap-1 text-brand-gold underline"
                     href={`https://www.google.com/maps?q=${inv.delivery.latitude},${inv.delivery.longitude}`}
                   >
-                    <MapPin size={14} /> موقع التسليم
+                    <MapPin size={14} /> {t('موقع التسليم')}
                   </a>
                 )}
                 {inv.delivery.hasSignature && (
-                  <div className="text-brand-muted">موقّع من المستلم</div>
+                  <div className="text-brand-muted">{t('موقّع من المستلم')}</div>
                 )}
               </div>
             </Card>
           )}
 
           {canEdit && inv.status !== 'cancelled' && (
-            <Card title="إلغاء الفاتورة">
+            <Card title={t('إلغاء الفاتورة')}>
               <div className="space-y-2">
                 <Input
-                  label="سبب الإلغاء"
+                  label={t('سبب الإلغاء')}
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                 />
@@ -454,24 +460,26 @@ export default function InvoicePage() {
                           method: 'POST',
                           body: JSON.stringify({ reason: cancelReason }),
                         }),
-                      'تعذّر الإلغاء',
+                      t('تعذّر الإلغاء'),
                     )
                   }
                 >
-                  إلغاء الفاتورة
+                  {t('إلغاء الفاتورة')}
                 </Button>
                 <p className="text-xs text-brand-muted">
-                  أي مبلغ مدفوع عليها يرجع رصيداً للعميل ويُوزَّع على فواتيره الأخرى.
+                  {t('أي مبلغ مدفوع عليها يرجع رصيداً للعميل ويُوزَّع على فواتيره الأخرى.')}
                 </p>
               </div>
             </Card>
           )}
-          {inv.cancelReason && <p className="text-sm text-red-800">أُلغيت: {inv.cancelReason}</p>}
+          {inv.cancelReason && (
+            <p className="text-sm text-red-800">{t('أُلغيت: {0}', inv.cancelReason)}</p>
+          )}
         </div>
       </div>
 
       {inv.revisions.length > 0 && (
-        <Card title="سجل تعديل الفاتورة المعتمدة">
+        <Card title={t('سجل تعديل الفاتورة المعتمدة')}>
           <ul className="divide-y divide-stone-100 text-sm">
             {inv.revisions.map((r) => (
               <li key={r.id} className="flex flex-wrap gap-3 py-2">
@@ -480,7 +488,7 @@ export default function InvoicePage() {
                 <span>
                   {formatJod(r.before.total)} ← {formatJod(r.after.total)}
                 </span>
-                <span className="text-brand-muted">السبب: {r.reason}</span>
+                <span className="text-brand-muted">{t('السبب: {0}', r.reason)}</span>
               </li>
             ))}
           </ul>

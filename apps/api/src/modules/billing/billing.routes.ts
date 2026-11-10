@@ -9,10 +9,11 @@ import {
   PAYMENT_SOURCES,
 } from '@mecca/shared';
 import { requireAnyPermission, requirePermission } from '../../middleware/auth.js';
-import { AppError } from '../../lib/errors.js';
+import { AppError, notFound } from '../../lib/errors.js';
 import { boolQuery, fils, Id, isoDate, optionalText, pageQuery } from '../../lib/validation.js';
 import type { BillingService } from './billing.service.js';
 import type { BalanceAlerts } from './balance-alerts.js';
+import { t } from '../../lib/i18n.js';
 
 const reason = z.string().trim().min(3, 'اكتب السبب').max(500);
 
@@ -149,7 +150,7 @@ export function billingRouter(
   router.post('/payments', managePayments, async (req, res) => {
     const body = Payment.parse(req.body);
     if (body.method === 'cheque' && !body.reference)
-      throw new AppError(422, 'CHEQUE_NUMBER', 'اكتب رقم الشيك');
+      throw new AppError(422, 'CHEQUE_NUMBER', t('اكتب رقم الشيك'));
     res.status(201).json({ ok: true, data: await svc.createPayment(body, req.auth!, req.audit) });
   });
   router.post('/payments/:id/cancel', managePayments, async (req, res) => {
@@ -197,13 +198,12 @@ export function accountRouter(svc: BillingService, authenticate: RequestHandler)
   router.use(authenticate, requirePermission('own_account.view'));
   const customerOf = (req: { auth?: { customerId: string | null } }) => {
     const id = req.auth?.customerId;
-    if (!id) throw new AppError(403, 'NO_CUSTOMER', 'الحساب غير مربوط بعميل');
+    if (!id) throw new AppError(403, 'NO_CUSTOMER', t('الحساب غير مربوط بعميل'));
     return id;
   };
   async function ownInvoice(req: Parameters<RequestHandler>[0]) {
     const inv = await svc.get(Id.parse(req.params).id);
-    if (inv.customerId !== customerOf(req) || inv.status === 'cancelled')
-      throw new AppError(404, 'NOT_FOUND', 'Invoice not found');
+    if (inv.customerId !== customerOf(req) || inv.status === 'cancelled') throw notFound('Invoice');
     return inv;
   }
 

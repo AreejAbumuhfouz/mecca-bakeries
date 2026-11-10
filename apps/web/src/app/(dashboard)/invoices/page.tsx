@@ -14,6 +14,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { INVOICE_TONE, type InvoiceRow } from '@/lib/billing';
+import { t } from '@/lib/i18n';
 
 type List = {
   items: InvoiceRow[];
@@ -53,7 +54,7 @@ export default function InvoicesPage() {
     setSelected(new Set());
   }, [from, to, status, unpaid, search, page]);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function approve(body: object) {
@@ -64,10 +65,10 @@ export default function InvoicesPage() {
         method: 'POST',
         body: JSON.stringify(body),
       });
-      setNotice(`تم اعتماد ${r.approved} فاتورة`);
+      setNotice(t('تم اعتماد {0} فاتورة', r.approved));
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الاعتماد'));
+      setError(errorMessage(err, t('تعذّر الاعتماد')));
     }
   }
 
@@ -78,17 +79,18 @@ export default function InvoicesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-brand-brown">
-            <Receipt size={24} /> الفواتير
+            <Receipt size={24} /> {t('الفواتير')}
           </h1>
           <p className="text-sm text-brand-muted">
-            تُنشأ الفاتورة تلقائياً عند تأكيد السائق للتسليم، على الكمية المسلّمة وباسم الاسم
-            التجاري للعميل.
+            {t(
+              'تُنشأ الفاتورة تلقائياً عند تأكيد السائق للتسليم، على الكمية المسلّمة وباسم الاسم التجاري للعميل.',
+            )}
           </p>
         </div>
         {canManage && from === to && (
           <Button variant="gold" onClick={() => void approve({ date: from })}>
             <span className="flex items-center gap-1.5">
-              <CheckCheck size={16} /> اعتماد كل مسودات {from}
+              <CheckCheck size={16} /> {t('اعتماد كل مسودات {0}', from)}
             </span>
           </Button>
         )}
@@ -101,7 +103,7 @@ export default function InvoicesPage() {
       <Card>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <label className="flex items-center gap-1">
-            من{' '}
+            {t('من')}{' '}
             <input
               type="date"
               className={field}
@@ -113,7 +115,7 @@ export default function InvoicesPage() {
             />
           </label>
           <label className="flex items-center gap-1">
-            إلى{' '}
+            {t('إلى')}{' '}
             <input
               type="date"
               className={field}
@@ -132,7 +134,7 @@ export default function InvoicesPage() {
               setPage(1);
             }}
           >
-            <option value="">كل الحالات</option>
+            <option value="">{t('كل الحالات')}</option>
             {INVOICE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {INVOICE_STATUS_LABELS_AR[s]}
@@ -148,11 +150,11 @@ export default function InvoicesPage() {
                 setPage(1);
               }}
             />{' '}
-            غير مدفوعة فقط
+            {t('غير مدفوعة فقط')}
           </label>
           <input
             className={`${field} flex-1`}
-            placeholder="رقم الفاتورة أو العميل"
+            placeholder={t('رقم الفاتورة أو العميل')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -166,26 +168,26 @@ export default function InvoicesPage() {
               setTo('');
             }}
           >
-            كل التواريخ
+            {t('كل التواريخ')}
           </button>
         </div>
       </Card>
 
       {data && (
         <Card
-          title={`${data.total} فاتورة — المجموع ${formatJod(data.sumTotal)}`}
+          title={t('{0} فاتورة — المجموع {1}', data.total, formatJod(data.sumTotal))}
           actions={
             canManage &&
             selected.size > 0 && (
               <Button onClick={() => void approve({ ids: [...selected] })}>
-                اعتماد المحدد ({selected.size})
+                {t('اعتماد المحدد ({0})', selected.size)}
               </Button>
             )
           }
         >
           {data.drafts > 0 && (
             <p className="mb-3 text-sm text-brand-muted">
-              {data.drafts} مسودة تحتاج مراجعة واعتماداً.
+              {t('{0} مسودة تحتاج مراجعة واعتماداً.', data.drafts)}
             </p>
           )}
           <div className="overflow-x-auto">
@@ -196,7 +198,7 @@ export default function InvoicesPage() {
                     <th className="w-8 py-2">
                       <input
                         type="checkbox"
-                        aria-label="تحديد كل المسودات"
+                        aria-label={t('تحديد كل المسودات')}
                         checked={drafts.length > 0 && drafts.every((d) => selected.has(d.id))}
                         onChange={(e) =>
                           setSelected(new Set(e.target.checked ? drafts.map((d) => d.id) : []))
@@ -204,14 +206,14 @@ export default function InvoicesPage() {
                       />
                     </th>
                   )}
-                  <th className="py-2">الرقم</th>
-                  <th>التاريخ</th>
-                  <th>العميل</th>
-                  <th>الاسم التجاري</th>
-                  <th>المجموع</th>
-                  <th>المتبقي</th>
-                  <th>الاستحقاق</th>
-                  <th>الحالة</th>
+                  <th className="py-2">{t('الرقم')}</th>
+                  <th>{t('التاريخ')}</th>
+                  <th>{t('العميل')}</th>
+                  <th>{t('الاسم التجاري')}</th>
+                  <th>{t('المجموع')}</th>
+                  <th>{t('المتبقي')}</th>
+                  <th>{t('الاستحقاق')}</th>
+                  <th>{t('الحالة')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,7 +224,7 @@ export default function InvoicesPage() {
                         {i.status === 'draft' && (
                           <input
                             type="checkbox"
-                            aria-label={`تحديد ${i.number}`}
+                            aria-label={t('تحديد {0}', i.number)}
                             checked={selected.has(i.id)}
                             onChange={(e) => {
                               const next = new Set(selected);
@@ -240,7 +242,7 @@ export default function InvoicesPage() {
                       </Link>
                       {i.flags.length > 0 && (
                         <span
-                          title={i.flags.join('، ')}
+                          title={i.flags.join(t('، '))}
                           className="mr-1 inline-block text-amber-900"
                         >
                           <AlertTriangle size={14} />
@@ -259,7 +261,7 @@ export default function InvoicesPage() {
                         ? '—'
                         : i.balance > 0
                           ? formatJod(i.balance)
-                          : 'مدفوعة ✓'}
+                          : t('مدفوعة ✓')}
                     </td>
                     <td className="font-mono text-brand-muted">{i.dueDate}</td>
                     <td>
@@ -272,7 +274,7 @@ export default function InvoicesPage() {
                 {data.items.length === 0 && (
                   <tr>
                     <td colSpan={9} className="py-6 text-center text-brand-muted">
-                      لا توجد فواتير
+                      {t('لا توجد فواتير')}
                     </td>
                   </tr>
                 )}
@@ -282,17 +284,15 @@ export default function InvoicesPage() {
           {data.total > data.pageSize && (
             <div className="mt-4 flex items-center gap-3 text-sm">
               <Button variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>
-                السابق
+                {t('السابق')}
               </Button>
-              <span>
-                صفحة {page} من {Math.ceil(data.total / data.pageSize)}
-              </span>
+              <span>{t('صفحة {0} من {1}', page, Math.ceil(data.total / data.pageSize))}</span>
               <Button
                 variant="outline"
                 disabled={page * data.pageSize >= data.total}
                 onClick={() => setPage(page + 1)}
               >
-                التالي
+                {t('التالي')}
               </Button>
             </div>
           )}

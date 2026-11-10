@@ -56,6 +56,7 @@ import type { FilesService } from '../files/files.service.js';
 import type { OpenInvoicesProvider } from '../contracts/contracts.service.js';
 import { effectivePrice } from '../credit/credit-engine.js';
 import { invoiceHtml, statementHtml } from './billing-pdf.js';
+import { t } from '../../lib/i18n.js';
 
 export type LineInput = {
   kind: InvoiceLineKind;
@@ -216,7 +217,7 @@ export function createBillingService(deps: {
       .set({ nextInvoiceNumber: sql`${tradeNames.nextInvoiceNumber} + 1` })
       .where(eq(tradeNames.id, tradeNameId))
       .returning({ prefix: tradeNames.invoicePrefix, n: tradeNames.nextInvoiceNumber });
-    if (!tn) throw new AppError(409, 'NO_TRADE_NAME', 'العميل بدون اسم تجاري للفوترة');
+    if (!tn) throw new AppError(409, 'NO_TRADE_NAME', t('العميل بدون اسم تجاري للفوترة'));
     return invoiceNumber(tn.prefix, tn.n - 1);
   }
 
@@ -287,16 +288,16 @@ export function createBillingService(deps: {
     }
     if (!sale.length && !ret.length) return null;
     const lines = [...sale, ...ret];
-    const t = invoiceTotals(lines, 0);
+    const tr = invoiceTotals(lines, 0);
 
     const flags: string[] = [];
-    if (t.returnsTotal > 0) {
-      if (!contract?.allowReturns) flags.push('المرتجعات غير مسموحة في عقد العميل');
+    if (tr.returnsTotal > 0) {
+      if (!contract?.allowReturns) flags.push(t('المرتجعات غير مسموحة في عقد العميل'));
       else if (
-        t.returnsTotal >
-        Math.round(((t.grossTotal - t.discount1Amount) * contract.maxReturnBps) / 10_000)
+        tr.returnsTotal >
+        Math.round(((tr.grossTotal - tr.discount1Amount) * contract.maxReturnBps) / 10_000)
       )
-        flags.push(`المرتجعات أكثر من الحد المسموح (${contract.maxReturnBps / 100}%)`);
+        flags.push(t('المرتجعات أكثر من الحد المسموح ({0}%)', contract.maxReturnBps / 100));
     }
 
     const [inv] = await tx
@@ -311,7 +312,7 @@ export function createBillingService(deps: {
         deliveryId: input.deliveryId,
         issueDate: order.deliveryDate,
         dueDate: addDays(order.deliveryDate, contract?.paymentTermsDays ?? 0),
-        ...t,
+        ...tr,
         flags,
         createdBy: input.actorId,
       })
@@ -408,7 +409,7 @@ export function createBillingService(deps: {
         date: i.issueDate,
         at: i.createdAt.getTime(),
         number: i.number,
-        description: i.kind === 'opening' ? 'رصيد افتتاحي' : 'فاتورة مبيعات',
+        description: i.kind === 'opening' ? t('رصيد افتتاحي') : t('فاتورة مبيعات'),
         debit: Math.max(0, i.total),
         credit: Math.max(0, -i.total),
       })),
@@ -416,8 +417,14 @@ export function createBillingService(deps: {
         date: p.receivedOn,
         at: p.createdAt.getTime(),
         number: p.number,
-        description:
-          `دفعة ${p.method === 'cash' ? 'نقدية' : p.method === 'cheque' ? `بشيك ${p.reference ?? ''}` : 'بتحويل'}`.trim(),
+        description: t(
+          'دفعة {0}',
+          p.method === 'cash'
+            ? t('نقدية')
+            : p.method === 'cheque'
+              ? t('بشيك {0}', p.reference ?? '')
+              : t('بتحويل'),
+        ).trim(),
         debit: 0,
         credit: p.amount,
       })),
@@ -510,16 +517,17 @@ export function createBillingService(deps: {
     actor: AuthUser,
     reason?: string | null,
   ) {
-    if (inv.status === 'cancelled') throw new AppError(409, 'INVOICE_CANCELLED', 'الفاتورة ملغاة');
+    if (inv.status === 'cancelled')
+      throw new AppError(409, 'INVOICE_CANCELLED', t('الفاتورة ملغاة'));
     if (inv.status === 'approved') {
       if (!actor.permissions.includes('invoices.edit_locked'))
         throw new AppError(
           403,
           'INVOICE_LOCKED',
-          'الفاتورة معتمدة ومقفلة؛ التعديل يحتاج صلاحية خاصة',
+          t('الفاتورة معتمدة ومقفلة؛ التعديل يحتاج صلاحية خاصة'),
         );
       if (!reason || reason.trim().length < 3)
-        throw new AppError(422, 'REASON_REQUIRED', 'اكتب سبب تعديل الفاتورة المعتمدة');
+        throw new AppError(422, 'REASON_REQUIRED', t('اكتب سبب تعديل الفاتورة المعتمدة'));
     }
   }
 
@@ -530,7 +538,8 @@ export function createBillingService(deps: {
     input: PaymentInput,
     extra: { source: PaymentSource; deliveryId?: string | null; receivedBy: string | null },
   ) {
-    if (input.amount <= 0) throw new AppError(422, 'BAD_AMOUNT', 'المبلغ يجب أن يكون أكبر من صفر');
+    if (input.amount <= 0)
+      throw new AppError(422, 'BAD_AMOUNT', t('المبلغ يجب أن يكون أكبر من صفر'));
     const [n] = await tx.execute<{ n: string }>(sql`select nextval('payment_number_seq') as n`);
     const [p] = await tx
       .insert(payments)
@@ -551,16 +560,17 @@ export function createBillingService(deps: {
     const manual = (input.allocations ?? []).filter((a) => a.amount > 0);
     if (manual.length) {
       if (manual.reduce((s, a) => s + a.amount, 0) > input.amount)
-        throw new AppError(422, 'OVER_ALLOCATED', 'مجموع التوزيع أكبر من مبلغ الدفعة');
+        throw new AppError(422, 'OVER_ALLOCATED', t('مجموع التوزيع أكبر من مبلغ الدفعة'));
       const openRows = await open(tx, input.customerId);
       for (const a of manual) {
         const inv = openRows.find((r) => r.id === a.invoiceId);
-        if (!inv) throw new AppError(422, 'BAD_INVOICE', 'الفاتورة غير موجودة أو مدفوعة بالكامل');
+        if (!inv)
+          throw new AppError(422, 'BAD_INVOICE', t('الفاتورة غير موجودة أو مدفوعة بالكامل'));
         if (a.amount > inv.balance)
           throw new AppError(
             422,
             'OVER_INVOICE',
-            `المبلغ أكبر من المتبقي على الفاتورة ${inv.number}`,
+            t('المبلغ أكبر من المتبقي على الفاتورة {0}', inv.number),
           );
       }
       await tx.insert(paymentAllocations).values(
@@ -679,7 +689,7 @@ export function createBillingService(deps: {
       const before = await invoiceDetail(id);
       assertCanChange(before, actor, input.reason);
       if (before.kind === 'opening' && input.lines)
-        throw new AppError(422, 'OPENING_NO_LINES', 'الرصيد الافتتاحي بدون أصناف');
+        throw new AppError(422, 'OPENING_NO_LINES', t('الرصيد الافتتاحي بدون أصناف'));
       const lines: LineInput[] =
         input.lines ??
         before.lines.map((l) => ({
@@ -692,12 +702,12 @@ export function createBillingService(deps: {
           listPrice: l.listPrice,
         }));
       const discount2Bps = input.discount2Bps ?? before.discount2Bps;
-      const t = before.kind === 'opening' ? null : invoiceTotals(lines, discount2Bps);
+      const tr = before.kind === 'opening' ? null : invoiceTotals(lines, discount2Bps);
       await db.transaction(async (tx) => {
         await tx
           .update(invoices)
           .set({
-            ...(t ?? {}),
+            ...(tr ?? {}),
             discount2Bps,
             ...(input.notes !== undefined ? { notes: input.notes?.trim() || null } : {}),
           })
@@ -706,7 +716,7 @@ export function createBillingService(deps: {
         const after = {
           discount2Bps,
           notes: input.notes,
-          total: t?.total ?? before.total,
+          total: tr?.total ?? before.total,
           lines: input.lines,
         };
         if (before.status === 'approved')
@@ -794,9 +804,13 @@ export function createBillingService(deps: {
         ),
       });
       if (exists)
-        throw new AppError(409, 'OPENING_EXISTS', 'للعميل رصيد افتتاحي مسجل؛ عدّله أو ألغه أولاً');
+        throw new AppError(
+          409,
+          'OPENING_EXISTS',
+          t('للعميل رصيد افتتاحي مسجل؛ عدّله أو ألغه أولاً'),
+        );
       if (input.amount <= 0)
-        throw new AppError(422, 'BAD_AMOUNT', 'المبلغ يجب أن يكون أكبر من صفر');
+        throw new AppError(422, 'BAD_AMOUNT', t('المبلغ يجب أن يكون أكبر من صفر'));
       const id = await db.transaction(async (tx) => {
         const cancelled = await tx
           .select({ n: sql<number>`count(*)::int` })
@@ -815,7 +829,7 @@ export function createBillingService(deps: {
             status: 'approved',
             grossTotal: input.amount,
             total: input.amount,
-            notes: input.note?.trim() || 'رصيد افتتاحي',
+            notes: input.note?.trim() || t('رصيد افتتاحي'),
             approvedBy: actor.id,
             approvedAt: now(),
             createdBy: actor.id,
@@ -944,7 +958,7 @@ export function createBillingService(deps: {
       const customer = await db.query.customers.findFirst({
         where: eq(customers.id, input.customerId),
       });
-      if (!customer) throw new AppError(422, 'BAD_CUSTOMER', 'العميل غير موجود');
+      if (!customer) throw new AppError(422, 'BAD_CUSTOMER', t('العميل غير موجود'));
       const id = await db.transaction(async (tx) => {
         const p = await insertPayment(tx, input, { source: 'office', receivedBy: actor.id });
         await rebalance(tx, input.customerId);
@@ -962,7 +976,7 @@ export function createBillingService(deps: {
     async cancelPayment(id: string, reason: string, ctx: AuditContext) {
       const p = await db.query.payments.findFirst({ where: eq(payments.id, id) });
       if (!p) throw notFound('Payment');
-      if (p.status === 'cancelled') throw new AppError(409, 'PAYMENT_CANCELLED', 'الدفعة ملغاة');
+      if (p.status === 'cancelled') throw new AppError(409, 'PAYMENT_CANCELLED', t('الدفعة ملغاة'));
       await db.transaction(async (tx) => {
         await tx
           .update(payments)
@@ -1067,11 +1081,11 @@ export function createBillingService(deps: {
         .filter((c) => !q.onlyOverdue || c.overdue > 0)
         .sort((a, b) => b.overdue - a.overdue || b.balance - a.balance);
       const totals = list.reduce(
-        (t, c) => {
-          t.balance += c.balance;
-          t.overdue += c.overdue;
-          for (const b of AGING_BUCKETS) t.aging[b] += c.aging[b];
-          return t;
+        (tr, c) => {
+          tr.balance += c.balance;
+          tr.overdue += c.overdue;
+          for (const b of AGING_BUCKETS) tr.aging[b] += c.aging[b];
+          return tr;
         },
         {
           balance: 0,

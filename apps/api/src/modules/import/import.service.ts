@@ -24,6 +24,7 @@ import type { BillingService } from '../billing/billing.service.js';
 import type { createContractsService } from '../contracts/contracts.service.js';
 import type { createCustomersService } from '../customers/customers.service.js';
 import type { createItemsService } from '../items/items.service.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Moving the bakery's existing data in from Excel. Each kind has a template; an upload is
@@ -87,7 +88,13 @@ const COLUMNS: Record<ImportKind, Col[]> = {
     { key: 'customer', label: 'كود العميل أو اسمه', required: true, example: 'C0001' },
     { key: 'startDate', label: 'تاريخ البداية', required: true, example: '2027-01-01' },
     { key: 'endDate', label: 'تاريخ النهاية', required: true, example: '2027-12-31' },
-    { key: 'paymentType', label: 'نوع الدفع', required: true, example: 'آجل', help: 'نقدي أو آجل' },
+    {
+      key: 'paymentType',
+      label: 'نوع الدفع',
+      required: true,
+      example: 'آجل',
+      help: 'نقدي أو آجل',
+    },
     { key: 'creditLimit', label: 'سقف الائتمان (دينار)', example: 1500 },
     { key: 'paymentTermsDays', label: 'مدة السداد (يوم)', example: 30 },
     { key: 'overdueGraceDays', label: 'أيام السماح', example: 7 },
@@ -125,7 +132,7 @@ export type PreviewRow = {
   note?: string;
 };
 
-const digits = (s: string) => s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+const digits = (s: string) => s.replace(/[٠-٩]/g, (d) => String(t('٠١٢٣٤٥٦٧٨٩').indexOf(d)));
 const text = (v: Cell) =>
   v === null || v === undefined
     ? ''
@@ -159,7 +166,7 @@ const date = (v: Cell) => {
       : '';
   return iso && !Number.isNaN(new Date(iso).getTime()) ? iso : 'bad';
 };
-const yes = (v: Cell) => ['نعم', 'yes', 'y', '1', 'true'].includes(text(v).toLowerCase());
+const yes = (v: Cell) => [t('نعم'), 'yes', 'y', '1', 'true'].includes(text(v).toLowerCase());
 const unitOf = (v: Cell): ItemUnit | null => {
   const s = text(v);
   const found = ITEM_UNITS.find((u) => u === s || ITEM_UNIT_LABELS_AR[u] === s);
@@ -179,7 +186,7 @@ export function createImportService(deps: {
 
   async function template(kind: ImportKind) {
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('البيانات', {
+    const ws = wb.addWorksheet(t('البيانات'), {
       views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }],
     });
     const cols = COLUMNS[kind];
@@ -192,15 +199,18 @@ export function createImportService(deps: {
     ws.getRow(2).font = { italic: true, color: { argb: 'FF7A6E62' } };
     cols.forEach((c, i) => (ws.getColumn(i + 1).width = Math.max(14, c.label.length + 6)));
 
-    const help = wb.addWorksheet('طريقة التعبئة', { views: [{ rightToLeft: true }] });
-    help.addRow([`قالب استيراد: ${IMPORT_LABELS_AR[kind]}`]).font = { bold: true, size: 14 };
-    help.addRow(['• عبّئ البيانات في ورقة «البيانات» بدءاً من السطر الثاني (امسح سطر المثال).']);
+    const help = wb.addWorksheet(t('طريقة التعبئة'), { views: [{ rightToLeft: true }] });
+    help.addRow([t('قالب استيراد: {0}', IMPORT_LABELS_AR[kind])]).font = { bold: true, size: 14 };
+    help.addRow([t('• عبّئ البيانات في ورقة «البيانات» بدءاً من السطر الثاني (امسح سطر المثال).')]);
     help.addRow([
-      '• الأعمدة التي عليها * مطلوبة. المبالغ بالدينار (مثل 12.500). التواريخ بالشكل 2027-01-31.',
+      t(
+        '• الأعمدة التي عليها * مطلوبة. المبالغ بالدينار (مثل 12.500). التواريخ بالشكل 2027-01-31.',
+      ),
     ]);
-    help.addRow(['• لا تغيّر عناوين الأعمدة.']);
+    help.addRow([t('• لا تغيّر عناوين الأعمدة.')]);
     help.addRow([]);
-    for (const c of cols) help.addRow([c.label, c.required ? 'مطلوب' : 'اختياري', c.help ?? '']);
+    for (const c of cols)
+      help.addRow([c.label, c.required ? t('مطلوب') : t('اختياري'), c.help ?? '']);
     if (kind === 'customers' || kind === 'items') {
       help.addRow([]);
       const [tns, cats, secs] = await Promise.all([
@@ -209,12 +219,12 @@ export function createImportService(deps: {
         db.select({ name: itemSections.name }).from(itemSections),
       ]);
       if (kind === 'customers') {
-        help.addRow(['الأسماء التجارية المتاحة', tns.map((t) => t.name).join('، ')]);
+        help.addRow([t('الأسماء التجارية المتاحة'), tns.map((tr) => tr.name).join(t('، '))]);
         help.addRow([
-          'التصنيفات الحالية',
-          cats.map((t) => t.name).join('، ') || '— (يُنشأ التصنيف إن لم يكن موجوداً)',
+          t('التصنيفات الحالية'),
+          cats.map((tr) => tr.name).join(t('، ')) || t('— (يُنشأ التصنيف إن لم يكن موجوداً)'),
         ]);
-      } else help.addRow(['الأقسام الحالية', secs.map((t) => t.name).join('، ')]);
+      } else help.addRow([t('الأقسام الحالية'), secs.map((tr) => tr.name).join(t('، '))]);
     }
     help.getColumn(1).width = 34;
     help.getColumn(2).width = 14;
@@ -227,10 +237,10 @@ export function createImportService(deps: {
     try {
       await wb.xlsx.load(file as unknown as ArrayBuffer);
     } catch {
-      throw new AppError(422, 'BAD_FILE', 'الملف ليس Excel صالحاً (xlsx)');
+      throw new AppError(422, 'BAD_FILE', t('الملف ليس Excel صالحاً (xlsx)'));
     }
-    const ws = wb.getWorksheet('البيانات') ?? wb.worksheets[0];
-    if (!ws) throw new AppError(422, 'BAD_FILE', 'الملف فارغ');
+    const ws = wb.getWorksheet(t('البيانات')) ?? wb.worksheets[0];
+    if (!ws) throw new AppError(422, 'BAD_FILE', t('الملف فارغ'));
     const cols = COLUMNS[kind];
     const header = (ws.getRow(1).values as Cell[])
       .slice(1)
@@ -241,7 +251,7 @@ export function createImportService(deps: {
       throw new AppError(
         422,
         'BAD_TEMPLATE',
-        `أعمدة ناقصة في الملف: ${missing.join('، ')}. استخدم القالب.`,
+        t('أعمدة ناقصة في الملف: {0}. استخدم القالب.', missing.join(t('، '))),
       );
     const rows: { row: number; values: Record<string, Cell> }[] = [];
     ws.eachRow((r, n) => {
@@ -261,7 +271,7 @@ export function createImportService(deps: {
       if (Object.values(values).some((v) => text(v) !== '')) rows.push({ row: n, values });
     });
     if (rows.length > 5000)
-      throw new AppError(422, 'TOO_MANY', 'الحد الأقصى 5000 سطر في الملف الواحد');
+      throw new AppError(422, 'TOO_MANY', t('الحد الأقصى 5000 سطر في الملف الواحد'));
     return rows;
   }
 
@@ -304,7 +314,7 @@ export function createImportService(deps: {
       const errors: string[] = [];
       const need = (key: string) => {
         const c = COLUMNS[kind].find((x) => x.key === key)!;
-        if (!text(v[key])) errors.push(`«${c.label}» مطلوب`);
+        if (!text(v[key])) errors.push(t('«{0}» مطلوب', c.label));
       };
       COLUMNS[kind].filter((c) => c.required).forEach((c) => need(c.key));
       let action: PreviewRow['action'] = 'create';
@@ -314,54 +324,60 @@ export function createImportService(deps: {
         const name = text(v.name);
         if (name && L.cs.some((c) => c.name === name)) {
           action = 'skip';
-          note = 'عميل بنفس الاسم موجود — لن يُكرَّر';
+          note = t('عميل بنفس الاسم موجود — لن يُكرَّر');
         }
         if (text(v.code) && L.cs.some((c) => c.code === text(v.code)))
-          errors.push('الكود مستخدم لعميل آخر');
+          errors.push(t('الكود مستخدم لعميل آخر'));
         if (text(v.tradeName) && !L.find(L.tns, v.tradeName))
-          errors.push(`الاسم التجاري «${text(v.tradeName)}» غير موجود في النظام`);
-        if (seen.has(name)) errors.push('الاسم مكرر في الملف');
+          errors.push(t('الاسم التجاري «{0}» غير موجود في النظام', text(v.tradeName)));
+        if (seen.has(name)) errors.push(t('الاسم مكرر في الملف'));
         seen.add(name);
-        if (text(v.email) && !/^\S+@\S+\.\S+$/.test(text(v.email))) errors.push('البريد غير صحيح');
+        if (text(v.email) && !/^\S+@\S+\.\S+$/.test(text(v.email)))
+          errors.push(t('البريد غير صحيح'));
       }
       if (kind === 'items') {
         const name = text(v.name);
         if (name && L.its.some((i) => i.name === name)) {
           action = 'skip';
-          note = 'صنف بنفس الاسم موجود — لن يُكرَّر';
+          note = t('صنف بنفس الاسم موجود — لن يُكرَّر');
         }
-        if (text(v.unit) && !unitOf(v.unit)) errors.push(`الوحدة «${text(v.unit)}» غير معروفة`);
-        if (Number.isNaN(jod(v.basePrice))) errors.push('السعر غير صحيح');
-        if (seen.has(name)) errors.push('الاسم مكرر في الملف');
+        if (text(v.unit) && !unitOf(v.unit))
+          errors.push(t('الوحدة «{0}» غير معروفة', text(v.unit)));
+        if (Number.isNaN(jod(v.basePrice))) errors.push(t('السعر غير صحيح'));
+        if (seen.has(name)) errors.push(t('الاسم مكرر في الملف'));
         seen.add(name);
       }
       if (kind === 'contracts') {
         const c = text(v.customer) ? L.find(L.cs, v.customer) : null;
-        if (text(v.customer) && !c) errors.push(`العميل «${text(v.customer)}» غير موجود`);
+        if (text(v.customer) && !c) errors.push(t('العميل «{0}» غير موجود', text(v.customer)));
         const s = date(v.startDate);
         const e = date(v.endDate);
-        if (s === 'bad') errors.push('تاريخ البداية غير صحيح');
-        if (e === 'bad') errors.push('تاريخ النهاية غير صحيح');
-        if (s && e && s !== 'bad' && e !== 'bad' && e < s) errors.push('النهاية قبل البداية');
-        if (text(v.paymentType) && !['نقدي', 'آجل', 'cash', 'credit'].includes(text(v.paymentType)))
-          errors.push('نوع الدفع: نقدي أو آجل');
+        if (s === 'bad') errors.push(t('تاريخ البداية غير صحيح'));
+        if (e === 'bad') errors.push(t('تاريخ النهاية غير صحيح'));
+        if (s && e && s !== 'bad' && e !== 'bad' && e < s) errors.push(t('النهاية قبل البداية'));
+        if (
+          text(v.paymentType) &&
+          ![t('نقدي'), t('آجل'), 'cash', 'credit'].includes(text(v.paymentType))
+        )
+          errors.push(t('نوع الدفع: نقدي أو آجل'));
         for (const k of ['creditLimit'])
-          if (Number.isNaN(jod(v[k]))) errors.push('سقف الائتمان غير صحيح');
+          if (Number.isNaN(jod(v[k]))) errors.push(t('سقف الائتمان غير صحيح'));
         for (const k of ['paymentTermsDays', 'overdueGraceDays', 'discount', 'maxReturn'])
           if (Number.isNaN(Number(digits(text(v[k])) || 0)))
-            errors.push(`«${COLUMNS.contracts.find((x) => x.key === k)!.label}» غير صحيح`);
+            errors.push(t('«{0}» غير صحيح', COLUMNS.contracts.find((x) => x.key === k)!.label));
       }
       if (kind === 'prices') {
         const c = text(v.customer) ? L.find(L.cs, v.customer) : null;
-        if (text(v.customer) && !c) errors.push(`العميل «${text(v.customer)}» غير موجود`);
-        else if (c && !(await currentContract(c.id))) errors.push('لا يوجد عقد ساري لهذا العميل');
+        if (text(v.customer) && !c) errors.push(t('العميل «{0}» غير موجود', text(v.customer)));
+        else if (c && !(await currentContract(c.id)))
+          errors.push(t('لا يوجد عقد ساري لهذا العميل'));
         if (text(v.item) && !L.find(L.its, v.item))
-          errors.push(`الصنف «${text(v.item)}» غير موجود`);
-        if (Number.isNaN(jod(v.price))) errors.push('السعر غير صحيح');
+          errors.push(t('الصنف «{0}» غير موجود', text(v.item)));
+        if (Number.isNaN(jod(v.price))) errors.push(t('السعر غير صحيح'));
       }
       if (kind === 'opening') {
         const c = text(v.customer) ? L.find(L.cs, v.customer) : null;
-        if (text(v.customer) && !c) errors.push(`العميل «${text(v.customer)}» غير موجود`);
+        if (text(v.customer) && !c) errors.push(t('العميل «{0}» غير موجود', text(v.customer)));
         if (c) {
           const has = await db.query.invoices.findFirst({
             where: and(
@@ -372,14 +388,14 @@ export function createImportService(deps: {
           });
           if (has) {
             action = 'skip';
-            note = 'للعميل رصيد افتتاحي مسجل — لن يُكرَّر';
+            note = t('للعميل رصيد افتتاحي مسجل — لن يُكرَّر');
           }
-          if (seen.has(c.id)) errors.push('العميل مكرر في الملف');
+          if (seen.has(c.id)) errors.push(t('العميل مكرر في الملف'));
           seen.add(c.id);
         }
         const a = jod(v.amount);
-        if (Number.isNaN(a) || a === 0) errors.push('المبلغ غير صحيح');
-        if (date(v.dueDate) === 'bad') errors.push('التاريخ غير صحيح');
+        if (Number.isNaN(a) || a === 0) errors.push(t('المبلغ غير صحيح'));
+        if (date(v.dueDate) === 'bad') errors.push(t('التاريخ غير صحيح'));
       }
       out.push({ row, values: v, action: errors.length ? 'skip' : action, errors, note });
     }
@@ -408,7 +424,7 @@ export function createImportService(deps: {
       throw new AppError(
         422,
         'IMPORT_ERRORS',
-        `في الملف ${preview.summary.errors} سطر فيه أخطاء؛ صحّحها ثم أعد الرفع`,
+        t('في الملف {0} سطر فيه أخطاء؛ صحّحها ثم أعد الرفع', preview.summary.errors),
         preview,
       );
     const L = await lookups();
@@ -448,7 +464,7 @@ export function createImportService(deps: {
           await deps.customers.createBranch(
             c.id,
             {
-              name: text(v.branchName) || 'الفرع الرئيسي',
+              name: text(v.branchName) || t('الفرع الرئيسي'),
               address: text(v.branchAddress) || text(v.address) || null,
               phone: digits(text(v.branchPhone)) || digits(text(v.phone)) || null,
               city: text(v.city) || null,
@@ -479,7 +495,7 @@ export function createImportService(deps: {
           );
         }
         if (kind === 'contracts') {
-          const pt = ['نقدي', 'cash'].includes(text(v.paymentType)) ? 'cash' : 'credit';
+          const pt = [t('نقدي'), 'cash'].includes(text(v.paymentType)) ? 'cash' : 'credit';
           await deps.contracts.create(
             {
               customerId: L.find(L.cs, v.customer)!.id,
@@ -510,7 +526,7 @@ export function createImportService(deps: {
             {
               amount: jod(v.amount)!,
               date: date(v.dueDate)!,
-              note: text(v.note) || 'رصيد افتتاحي (استيراد Excel)',
+              note: text(v.note) || t('رصيد افتتاحي (استيراد Excel)'),
             },
             actor,
             ctx,

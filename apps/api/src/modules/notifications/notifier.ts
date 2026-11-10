@@ -7,6 +7,7 @@ import type { SettingsService } from '../settings/settings.service.js';
 import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import type { TemplateName } from '../whatsapp/templates.js';
 import type { PushService } from './push.js';
+import { t } from '../../lib/i18n.js';
 
 export type OrderNotice = {
   type:
@@ -42,7 +43,7 @@ function formatCutoff(at: Date) {
     hourCycle: 'h23',
   }).format(at);
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Amman' }).format(at);
-  return `${time} يوم ${day}`;
+  return t('{0} يوم {1}', time, day);
 }
 
 const TEMPLATE_BY_TYPE: Record<OrderNotice['type'], TemplateName> = {
@@ -91,7 +92,7 @@ export function createNotifier(deps: {
         const params: Record<OrderNotice['type'], string[]> = {
           order_placed: [...base, filsToJodString(order.total), cutoff],
           order_updated: [...base, filsToJodString(order.total)],
-          order_on_hold: [...base, (order.creditReasons ?? []).map((r) => r.message).join('، ')],
+          order_on_hold: [...base, (order.creditReasons ?? []).map((r) => r.message).join(t('، '))],
           order_approved: base,
           order_rejected: base,
           order_cancelled: base,
@@ -132,8 +133,13 @@ export function createNotifier(deps: {
         }
         if (s.pushEnabled)
           await push.toCustomer(target.customerId, {
-            title: 'تذكير بطلب الغد',
-            body: `لم يصلنا طلب ${target.branchName} ليوم ${deliveryDate}. آخر موعد ${cutoff}`,
+            title: t('تذكير بطلب الغد'),
+            body: t(
+              'لم يصلنا طلب {0} ليوم {1}. آخر موعد {2}',
+              target.branchName,
+              deliveryDate,
+              cutoff,
+            ),
           });
       } catch (err) {
         logger.error({ err }, 'reminder failed');

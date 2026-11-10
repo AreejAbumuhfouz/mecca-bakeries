@@ -3,6 +3,7 @@ import { asc, eq } from 'drizzle-orm';
 import type { Db } from '../db/client.js';
 import { files, tradeNames } from '../db/schema/index.js';
 import type { FilesService } from '../modules/files/files.service.js';
+import { t } from './i18n.js';
 
 export type BrandHeader = {
   name: string;
@@ -39,7 +40,7 @@ export async function brandHeader(
     }
   }
   return {
-    name: tn?.name ?? 'مخابز مكة',
+    name: tn?.name ?? t('مخابز مكة'),
     nameEn: tn?.nameEn ?? null,
     phone: tn?.phone ?? null,
     email: tn?.email ?? null,

@@ -6,6 +6,7 @@ import { AppError, notFound } from '../../lib/errors.js';
 import { clean, type Conn, type Tx } from '../../lib/db-utils.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { FilesService } from '../files/files.service.js';
+import { t } from '../../lib/i18n.js';
 
 export type SectionInput = {
   name: string;
@@ -37,7 +38,7 @@ export type ItemListQuery = {
 };
 
 const itemCodeFor = (n: number) => `I${String(n).padStart(4, '0')}`;
-const codeTaken = () => new AppError(409, 'CODE_TAKEN', 'كود الصنف مستخدم مسبقاً');
+const codeTaken = () => new AppError(409, 'CODE_TAKEN', t('كود الصنف مستخدم مسبقاً'));
 
 export function createItemsService(db: Db, filesSvc: FilesService) {
   async function codeExists(conn: Conn, code: string, exceptId?: string) {
@@ -59,7 +60,7 @@ export function createItemsService(db: Db, filesSvc: FilesService) {
   async function assertSection(sectionId: string | undefined) {
     if (!sectionId) return;
     const s = await db.query.itemSections.findFirst({ where: eq(itemSections.id, sectionId) });
-    if (!s) throw new AppError(400, 'BAD_SECTION', 'القسم غير موجود');
+    if (!s) throw new AppError(400, 'BAD_SECTION', t('القسم غير موجود'));
   }
 
   async function assertSectionName(name: string | undefined, exceptId?: string) {
@@ -67,7 +68,7 @@ export function createItemsService(db: Db, filesSvc: FilesService) {
     const clash = await db.query.itemSections.findFirst({
       where: and(eq(itemSections.name, name), exceptId ? ne(itemSections.id, exceptId) : undefined),
     });
-    if (clash) throw new AppError(409, 'NAME_TAKEN', 'اسم القسم موجود مسبقاً');
+    if (clash) throw new AppError(409, 'NAME_TAKEN', t('اسم القسم موجود مسبقاً'));
   }
 
   return {

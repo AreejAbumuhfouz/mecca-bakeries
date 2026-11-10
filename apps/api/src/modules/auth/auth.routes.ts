@@ -1,10 +1,11 @@
 import { Router, type CookieOptions, type Request, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import type { ApiSuccess, AuthUser, LoginResult } from '@mecca/shared';
+import { LOCALES, type ApiSuccess, type AuthUser, type LoginResult } from '@mecca/shared';
 import { AppError } from '../../lib/errors.js';
 import type { AuthService } from './auth.service.js';
 import type { RequestHandler } from 'express';
+import { t } from '../../lib/i18n.js';
 
 export const REFRESH_COOKIE = 'mb_refresh';
 
@@ -43,7 +44,7 @@ export function authRouter(opts: {
     const fromBody = RefreshBody.parse(req.body ?? {}).refreshToken;
     const fromCookie = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
     const token = fromBody ?? fromCookie;
-    if (!token) throw new AppError(401, 'INVALID_REFRESH', 'انتهت الجلسة، يرجى تسجيل الدخول');
+    if (!token) throw new AppError(401, 'INVALID_REFRESH', t('انتهت الجلسة، يرجى تسجيل الدخول'));
     return token;
   };
 
@@ -91,6 +92,13 @@ export function authRouter(opts: {
 
   router.get('/me', opts.authenticate, (req, res) => {
     res.json({ ok: true, data: req.auth } satisfies ApiSuccess<AuthUser | undefined>);
+  });
+
+  // A preference, not business data, so it is not written to the audit log.
+  router.patch('/me/locale', opts.authenticate, async (req, res) => {
+    const { locale } = z.object({ locale: z.enum(LOCALES) }).parse(req.body);
+    await auth.setLocale(req.auth!.id, locale);
+    res.json({ ok: true, data: { locale } } satisfies ApiSuccess<{ locale: string }>);
   });
 
   return router;

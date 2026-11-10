@@ -1,4 +1,5 @@
 import { embeddedFontCss, escapeHtml } from '../../lib/pdf.js';
+import { t } from '../../lib/i18n.js';
 
 export type PurchaseOrderDoc = {
   number: string;
@@ -62,26 +63,26 @@ footer{margin-top:28px;display:flex;justify-content:space-between;color:#7A6E62;
 </style></head><body>
 <header>
   <div>
-    <h1>طلب شراء</h1>
-    <div class="muted">رقم <b dir="ltr">${e(po.number)}</b> — تاريخ <span dir="ltr">${fmtDate(po.createdAt)}</span></div>
+    <h1>${t('طلب شراء')}</h1>
+    <div class="muted">${t('رقم')} <b dir="ltr">${e(po.number)}</b> ${t('— تاريخ')} <span dir="ltr">${fmtDate(po.createdAt)}</span></div>
   </div>
   <div style="text-align:left">
     ${po.bakery.logoDataUrl ? `<img src="${po.bakery.logoDataUrl}" alt="">` : `<b>${e(po.bakery.name)}</b>`}
   </div>
 </header>
 <div class="meta">
-  <div class="box"><b>من</b>${e(po.bakery.name)}<br><span class="muted">${e(po.bakery.phone)} ${e(po.bakery.address)}</span></div>
-  <div class="box"><b>إلى المورد</b>${e(po.supplier.name)}${po.supplier.contactName ? ` — ${e(po.supplier.contactName)}` : ''}<br>
+  <div class="box"><b>${t('من')}</b>${e(po.bakery.name)}<br><span class="muted">${e(po.bakery.phone)} ${e(po.bakery.address)}</span></div>
+  <div class="box"><b>${t('إلى المورد')}</b>${e(po.supplier.name)}${po.supplier.contactName ? ` — ${e(po.supplier.contactName)}` : ''}<br>
     <span class="muted" dir="ltr">${e(po.supplier.phone)}</span> <span class="muted">${e(po.supplier.address)}</span></div>
-  <div class="box"><b>مطلوب بتاريخ</b><span dir="ltr">${e(po.neededDate ?? '—')}</span></div>
-  <div class="box"><b>عدد البنود</b>${po.lines.length}</div>
+  <div class="box"><b>${t('مطلوب بتاريخ')}</b><span dir="ltr">${e(po.neededDate ?? '—')}</span></div>
+  <div class="box"><b>${t('عدد البنود')}</b>${po.lines.length}</div>
 </div>
 <table>
-  <thead><tr><th>#</th><th>المادة</th><th>الكمية</th><th>الوحدة</th><th>ملاحظة</th></tr></thead>
+  <thead><tr><th>#</th><th>${t('المادة')}</th><th>${t('الكمية')}</th><th>${t('الوحدة')}</th><th>${t('ملاحظة')}</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>
-${po.notes ? `<div class="notes box"><b>ملاحظات</b>${e(po.notes)}</div>` : ''}
-<div class="sign"><div>توقيع المخبز</div><div>توقيع المورد بالاستلام</div></div>
+${po.notes ? `<div class="notes box"><b>${t('ملاحظات')}</b>${e(po.notes)}</div>` : ''}
+<div class="sign"><div>${t('توقيع المخبز')}</div><div>${t('توقيع المورد بالاستلام')}</div></div>
 <footer><span>${e(po.bakery.name)}</span><span dir="ltr">${e(po.number)}</span></footer>
 </body></html>`;
 }

@@ -21,6 +21,7 @@ import { api, errorMessage, fetchAuthedBlob, openAuthed } from '@/lib/api';
 import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { DELIVERY_TONE, TRIP_TONE } from '@/lib/billing';
+import { t } from '@/lib/i18n';
 
 type Stop = {
   deliveryId: string;
@@ -82,7 +83,11 @@ function Signature({ deliveryId }: { deliveryId: string }) {
   }, [deliveryId]);
   if (!src) return null;
   return (
-    <img src={src} alt="توقيع المستلم" className="h-16 rounded border border-brand-line bg-white" />
+    <img
+      src={src}
+      alt={t('توقيع المستلم')}
+      className="h-16 rounded border border-brand-line bg-white"
+    />
   );
 }
 
@@ -93,7 +98,7 @@ export default function TripPage() {
   useEffect(() => {
     void api<Trip>(`/api/distribution/trips/${id}`)
       .then(setTrip)
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [id]);
   if (!trip) return <ErrorBox message={error} />;
 
@@ -102,27 +107,27 @@ export default function TripPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/deliveries" className="text-sm text-brand-muted underline">
-            ← التوزيع
+            {t('← التوزيع')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
             {trip.route.name} — <span className="font-mono">{trip.deliveryDate}</span>
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-brand-muted">
             <Badge tone={TRIP_TONE[trip.status]}>{TRIP_STATUS_LABELS_AR[trip.status]}</Badge>
-            {trip.driver?.name ?? 'بدون سائق'} — {trip.vehicle?.name ?? 'بدون سيارة'}
-            {trip.startedAt && <span>خرج {formatAmman(trip.startedAt)}</span>}
-            {trip.finishedAt && <span>انتهى {formatAmman(trip.finishedAt)}</span>}
+            {trip.driver?.name ?? t('بدون سائق')} — {trip.vehicle?.name ?? t('بدون سيارة')}
+            {trip.startedAt && <span>{t('خرج {0}', formatAmman(trip.startedAt))}</span>}
+            {trip.finishedAt && <span>{t('انتهى {0}', formatAmman(trip.finishedAt))}</span>}
           </div>
         </div>
         <Button
           variant="outline"
           onClick={() =>
             void openAuthed(`/api/distribution/trips/${id}/sheet`).catch((err) =>
-              setError(errorMessage(err, 'تعذّر فتح الكشف')),
+              setError(errorMessage(err, t('تعذّر فتح الكشف'))),
             )
           }
         >
-          كشف التحميل PDF
+          {t('كشف التحميل PDF')}
         </Button>
       </div>
       <ErrorBox message={error} />
@@ -139,24 +144,24 @@ export default function TripPage() {
             <span>{s.branch.address}</span>
             <span dir="ltr">{s.branch.phone ?? s.customer.phone}</span>
             <span>
-              الطلب{' '}
+              {t('الطلب')}{' '}
               <Link href={`/orders/${s.order.id}`} className="font-mono underline">
                 {s.order.number}
               </Link>{' '}
               {formatJod(s.order.total)}
             </span>
             <span>{PAYMENT_TYPE_LABELS_AR[s.paymentType]}</span>
-            <span>الرصيد الحالي {formatJod(s.balance)}</span>
+            <span>{t('الرصيد الحالي {0}', formatJod(s.balance))}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-line text-right text-brand-muted">
-                  <th className="py-1.5">الصنف</th>
-                  <th>المطلوب</th>
-                  <th>المسلّم</th>
-                  <th>الناقص</th>
-                  <th>المرتجع</th>
+                  <th className="py-1.5">{t('الصنف')}</th>
+                  <th>{t('المطلوب')}</th>
+                  <th>{t('المسلّم')}</th>
+                  <th>{t('الناقص')}</th>
+                  <th>{t('المرتجع')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,7 +180,7 @@ export default function TripPage() {
                   const short = l.deliveredQty == null ? 0 : l.orderedQty - l.deliveredQty;
                   return (
                     <tr key={l.itemId} className="border-b border-stone-100">
-                      <td className="py-1.5">{item?.name ?? 'صنف مرتجع'}</td>
+                      <td className="py-1.5">{item?.name ?? t('صنف مرتجع')}</td>
                       <td>{l.orderedQty}</td>
                       <td className="font-bold">{l.deliveredQty ?? '—'}</td>
                       <td className={short ? 'text-red-800' : ''}>
@@ -207,7 +212,7 @@ export default function TripPage() {
               )}
               {s.result.receiverName && (
                 <span>
-                  المستلم: <b>{s.result.receiverName}</b>
+                  {t('المستلم:')} <b>{s.result.receiverName}</b>
                 </span>
               )}
               {s.result.deliveredAt && <span>{formatAmman(s.result.deliveredAt)}</span>}
@@ -218,13 +223,16 @@ export default function TripPage() {
                   rel="noreferrer"
                   href={`https://www.google.com/maps?q=${s.result.latitude},${s.result.longitude}`}
                 >
-                  <MapPin size={14} /> الموقع
+                  <MapPin size={14} /> {t('الموقع')}
                 </a>
               )}
               {s.result.collectedAmount > 0 && (
                 <span>
-                  حصّل {formatJod(s.result.collectedAmount)}{' '}
-                  {s.result.collectedMethod && PAYMENT_METHOD_LABELS_AR[s.result.collectedMethod]}
+                  {t(
+                    'حصّل {0} {1}',
+                    formatJod(s.result.collectedAmount),
+                    s.result.collectedMethod && PAYMENT_METHOD_LABELS_AR[s.result.collectedMethod],
+                  )}
                 </span>
               )}
               {s.result.invoice && (

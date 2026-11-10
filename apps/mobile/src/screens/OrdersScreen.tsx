@@ -5,6 +5,7 @@ import { api, errorText } from '../api';
 import { Empty, StatusBadge } from '../components';
 import { ui } from '../theme';
 import type { OrderRow } from '../types';
+import { t } from '../i18n';
 
 export function OrdersScreen({
   onOpenOrder,
@@ -26,7 +27,7 @@ export function OrdersScreen({
       );
       setError('');
     } catch (err) {
-      setError(errorText(err, 'تعذّر التحميل'));
+      setError(errorText(err, t('تعذّر التحميل')));
     } finally {
       setLoading(false);
     }
@@ -41,7 +42,7 @@ export function OrdersScreen({
       contentContainerStyle={ui.content}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} />}
     >
-      <Text style={ui.h1}>طلباتي</Text>
+      <Text style={ui.h1}>{t('طلباتي')}</Text>
       {error ? <Text style={ui.error}>{error}</Text> : null}
       {orders?.map((o) => (
         <Pressable key={o.id} onPress={() => onOpenOrder(o.branchId, o.id)}>
@@ -53,13 +54,11 @@ export function OrdersScreen({
             <Text style={ui.text}>
               {o.branchName} — {o.number}
             </Text>
-            <Text style={ui.muted}>
-              {o.itemCount} أصناف — {formatJod(o.total)}
-            </Text>
+            <Text style={ui.muted}>{t('{0} أصناف — {1}', o.itemCount, formatJod(o.total))}</Text>
           </View>
         </Pressable>
       ))}
-      {orders?.length === 0 && <Empty>لا توجد طلبات بعد</Empty>}
+      {orders?.length === 0 && <Empty>{t('لا توجد طلبات بعد')}</Empty>}
     </ScrollView>
   );
 }

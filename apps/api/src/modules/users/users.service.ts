@@ -4,6 +4,7 @@ import type { Db } from '../../db/client.js';
 import { customers, userPermissionOverrides, users } from '../../db/schema/index.js';
 import { AppError, notFound } from '../../lib/errors.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
+import { t } from '../../lib/i18n.js';
 
 export type UserInput = {
   email: string;
@@ -58,15 +59,16 @@ export function createUsersService(db: Db) {
         and(eq(users.role, ROLES.SUPER_ADMIN), eq(users.isActive, true), ne(users.id, userId)),
       );
     if ((row?.n ?? 0) === 0)
-      throw new AppError(409, 'LAST_SUPER_ADMIN', 'لا يمكن تعطيل أو تغيير دور آخر مدير للنظام');
+      throw new AppError(409, 'LAST_SUPER_ADMIN', t('لا يمكن تعطيل أو تغيير دور آخر مدير للنظام'));
   }
 
   /** Restaurant accounts must belong to a customer; other roles must not. */
   async function resolveCustomer(role: Role, customerId: string | null | undefined) {
     if (role !== ROLES.RESTAURANT) return null;
-    if (!customerId) throw new AppError(400, 'CUSTOMER_REQUIRED', 'حساب المطعم يجب أن يُربط بعميل');
+    if (!customerId)
+      throw new AppError(400, 'CUSTOMER_REQUIRED', t('حساب المطعم يجب أن يُربط بعميل'));
     const c = await db.query.customers.findFirst({ where: eq(customers.id, customerId) });
-    if (!c) throw new AppError(400, 'BAD_CUSTOMER', 'العميل غير موجود');
+    if (!c) throw new AppError(400, 'BAD_CUSTOMER', t('العميل غير موجود'));
     return customerId;
   }
 
@@ -112,7 +114,7 @@ export function createUsersService(db: Db) {
     async create(input: UserInput, ctx: AuditContext) {
       const email = input.email.trim().toLowerCase();
       const exists = await db.query.users.findFirst({ where: eq(users.email, email) });
-      if (exists) throw new AppError(409, 'EMAIL_TAKEN', 'البريد الإلكتروني مستخدم مسبقاً');
+      if (exists) throw new AppError(409, 'EMAIL_TAKEN', t('البريد الإلكتروني مستخدم مسبقاً'));
       const customerId = await resolveCustomer(input.role, input.customerId);
       return db.transaction(async (tx) => {
         const [created] = await tx
@@ -143,7 +145,7 @@ export function createUsersService(db: Db) {
         const clash = await db.query.users.findFirst({
           where: and(eq(users.email, fields.email), ne(users.id, id)),
         });
-        if (clash) throw new AppError(409, 'EMAIL_TAKEN', 'البريد الإلكتروني مستخدم مسبقاً');
+        if (clash) throw new AppError(409, 'EMAIL_TAKEN', t('البريد الإلكتروني مستخدم مسبقاً'));
       }
       if (fields.role !== undefined || fields.customerId !== undefined)
         fields.customerId = await resolveCustomer(

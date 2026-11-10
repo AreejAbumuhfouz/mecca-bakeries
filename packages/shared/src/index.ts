@@ -10,3 +10,4 @@ export * from './contracts.js';
 export * from './orders.js';
 export * from './production.js';
 export * from './billing.js';
+export * from './i18n/index.js';

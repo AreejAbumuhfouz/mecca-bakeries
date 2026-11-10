@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { ROLE_VALUES } from '@mecca/shared';
+import { LOCALES, ROLE_VALUES } from '@mecca/shared';
 import { timestamps } from './common.js';
 import { customers } from './customers.js';
 
@@ -29,6 +29,8 @@ export const users = pgTable(
       onDelete: 'restrict',
     }),
     isActive: boolean('is_active').notNull().default(true),
+    /** Interface language chosen by the user (dashboard and app). */
+    locale: text('locale', { enum: LOCALES }).notNull().default('ar'),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     ...timestamps,
   },

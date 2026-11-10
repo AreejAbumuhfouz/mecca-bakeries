@@ -19,6 +19,7 @@ import type { FilesService } from '../files/files.service.js';
 import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import { normalizePhone } from '../whatsapp/templates.js';
 import { purchaseOrderHtml } from './purchase-order-pdf.js';
+import { t } from '../../lib/i18n.js';
 
 export type SupplierInput = {
   name: string;
@@ -74,8 +75,8 @@ export function createPurchasingService(deps: {
 
   async function assertSupplier(id: string) {
     const s = await db.query.suppliers.findFirst({ where: eq(suppliers.id, id) });
-    if (!s) throw new AppError(400, 'BAD_SUPPLIER', 'المورد غير موجود');
-    if (!s.isActive) throw new AppError(409, 'SUPPLIER_INACTIVE', 'المورد موقوف');
+    if (!s) throw new AppError(400, 'BAD_SUPPLIER', t('المورد غير موجود'));
+    if (!s.isActive) throw new AppError(409, 'SUPPLIER_INACTIVE', t('المورد موقوف'));
     return s;
   }
 
@@ -94,7 +95,7 @@ export function createPurchasingService(deps: {
       }
     }
     return {
-      name: tn?.name ?? 'مخابز مكة',
+      name: tn?.name ?? t('مخابز مكة'),
       phone: tn?.phone ?? null,
       address: tn?.address ?? null,
       logoDataUrl,
@@ -132,7 +133,7 @@ export function createPurchasingService(deps: {
         const clash = await db.query.suppliers.findFirst({
           where: and(eq(suppliers.name, data.name), id ? ne(suppliers.id, id) : undefined),
         });
-        if (clash) throw new AppError(409, 'NAME_TAKEN', 'اسم المورد موجود مسبقاً');
+        if (clash) throw new AppError(409, 'NAME_TAKEN', t('اسم المورد موجود مسبقاً'));
       }
       return db.transaction(async (tx) => {
         const before = id
@@ -263,7 +264,7 @@ export function createPurchasingService(deps: {
         throw new AppError(
           409,
           'PO_LOCKED',
-          'لا يمكن تعديل طلب الشراء بعد إرساله — ألغِه وأنشئ طلباً جديداً',
+          t('لا يمكن تعديل طلب الشراء بعد إرساله — ألغِه وأنشئ طلباً جديداً'),
         );
       if (input.supplierId) await assertSupplier(input.supplierId);
       const beforeLines = await db
@@ -290,7 +291,7 @@ export function createPurchasingService(deps: {
     async setStatus(id: string, status: PurchaseOrderStatus, ctx: AuditContext) {
       const before = await getRow(id);
       if (!PURCHASE_ORDER_TRANSITIONS[before.status].includes(status))
-        throw new AppError(409, 'BAD_TRANSITION', 'لا يمكن تغيير حالة الطلب بهذا الشكل');
+        throw new AppError(409, 'BAD_TRANSITION', t('لا يمكن تغيير حالة الطلب بهذا الشكل'));
       await db.transaction(async (tx) => {
         const [after] = await tx
           .update(purchaseOrders)
@@ -328,14 +329,14 @@ export function createPurchasingService(deps: {
     async send(id: string, actor: AuthUser, ctx: AuditContext) {
       const po = await this.get(id);
       if (!['draft', 'sent', 'confirmed'].includes(po.status))
-        throw new AppError(409, 'PO_CLOSED', 'الطلب مستلم أو ملغى');
+        throw new AppError(409, 'PO_CLOSED', t('الطلب مستلم أو ملغى'));
       const phone = normalizePhone(po.supplier.whatsappPhone ?? po.supplier.phone);
-      if (!phone) throw new AppError(400, 'NO_PHONE', 'لا يوجد رقم واتساب صحيح للمورد');
+      if (!phone) throw new AppError(400, 'NO_PHONE', t('لا يوجد رقم واتساب صحيح للمورد'));
       const { bytes, filename } = await this.pdf(id);
       const message = await whatsapp.sendDocumentTemplate(
         phone,
         'mb_purchase_order',
-        [po.number, po.neededDate ?? 'أقرب وقت'],
+        [po.number, po.neededDate ?? t('أقرب وقت')],
         { buffer: bytes, mimeType: 'application/pdf', filename },
         { sentBy: actor.id },
       );
@@ -343,7 +344,7 @@ export function createPurchasingService(deps: {
         throw new AppError(
           502,
           'SEND_FAILED',
-          `تعذّر الإرسال عبر واتساب${message?.error ? `: ${message.error}` : ''}`,
+          t('تعذّر الإرسال عبر واتساب{0}', message?.error ? `: ${message.error}` : ''),
         );
       await db.transaction(async (tx) => {
         await tx

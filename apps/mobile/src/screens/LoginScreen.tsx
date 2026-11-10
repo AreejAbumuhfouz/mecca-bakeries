@@ -12,6 +12,7 @@ import { useAuth } from '../auth';
 import { errorText } from '../api';
 import { Button } from '../components';
 import { colors, ui } from '../theme';
+import { t } from '../i18n';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const logo = require('../../assets/logo.png') as number;
@@ -31,7 +32,7 @@ export function LoginScreen() {
       await requestCode(email.trim().toLowerCase());
       setStep('code');
     } catch (err) {
-      setError(errorText(err, 'تعذّر إرسال الرمز'));
+      setError(errorText(err, t('تعذّر إرسال الرمز')));
     } finally {
       setBusy(false);
     }
@@ -43,7 +44,7 @@ export function LoginScreen() {
     try {
       await verifyCode(email.trim().toLowerCase(), code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : errorText(err, 'الرمز غير صحيح'));
+      setError(err instanceof Error ? err.message : errorText(err, t('الرمز غير صحيح')));
       setBusy(false);
     }
   }
@@ -58,13 +59,13 @@ export function LoginScreen() {
       >
         <View style={{ alignItems: 'center', marginBottom: 12 }}>
           <Image source={logo} style={{ width: 150, height: 125 }} resizeMode="contain" />
-          <Text style={[ui.h1, { marginTop: 8 }]}>مخابز مكة</Text>
-          <Text style={ui.muted}>تطبيق طلبات المطاعم</Text>
+          <Text style={[ui.h1, { marginTop: 8 }]}>{t('مخابز مكة')}</Text>
+          <Text style={ui.muted}>{t('تطبيق طلبات المطاعم')}</Text>
         </View>
 
         {step === 'email' ? (
           <>
-            <Text style={ui.h2}>البريد الإلكتروني</Text>
+            <Text style={ui.h2}>{t('البريد الإلكتروني')}</Text>
             <TextInput
               style={[ui.input, { textAlign: 'left' }]}
               value={email}
@@ -77,7 +78,7 @@ export function LoginScreen() {
             />
             {error ? <Text style={ui.error}>{error}</Text> : null}
             <Button
-              title="إرسال رمز الدخول"
+              title={t('إرسال رمز الدخول')}
               onPress={() => void send()}
               busy={busy}
               disabled={!email.includes('@')}
@@ -85,7 +86,7 @@ export function LoginScreen() {
           </>
         ) : (
           <>
-            <Text style={ui.muted}>أرسلنا رمزاً من 6 أرقام إلى {email}</Text>
+            <Text style={ui.muted}>{t('أرسلنا رمزاً من 6 أرقام إلى {0}', email)}</Text>
             <TextInput
               style={[ui.input, { textAlign: 'center', fontSize: 24, letterSpacing: 8 }]}
               value={code}
@@ -97,13 +98,13 @@ export function LoginScreen() {
             />
             {error ? <Text style={ui.error}>{error}</Text> : null}
             <Button
-              title="دخول"
+              title={t('دخول')}
               onPress={() => void verify()}
               busy={busy}
               disabled={code.length !== 6}
             />
             <Button
-              title="تغيير البريد أو إعادة الإرسال"
+              title={t('تغيير البريد أو إعادة الإرسال')}
               variant="outline"
               onPress={() => {
                 setStep('email');
@@ -114,7 +115,7 @@ export function LoginScreen() {
           </>
         )}
         <Text style={[ui.muted, { textAlign: 'center', marginTop: 8, color: colors.muted }]}>
-          الحسابات يضيفها المخبز. للتسجيل تواصل مع مخابز مكة.
+          {t('الحسابات يضيفها المخبز. للتسجيل تواصل مع مخابز مكة.')}
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

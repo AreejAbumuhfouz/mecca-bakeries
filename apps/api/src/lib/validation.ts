@@ -26,8 +26,8 @@ export const isoDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'تاريخ غير صالح')
   // Round-trip check: rejects impossible days like 2026-02-30 that Date.parse rolls over.
   .refine((d) => {
-    const t = Date.parse(`${d}T00:00:00Z`);
-    return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === d;
+    const tr = Date.parse(`${d}T00:00:00Z`);
+    return !Number.isNaN(tr) && new Date(tr).toISOString().slice(0, 10) === d;
   }, 'تاريخ غير صالح');
 
 export const Id = z.object({ id: z.string().uuid() });

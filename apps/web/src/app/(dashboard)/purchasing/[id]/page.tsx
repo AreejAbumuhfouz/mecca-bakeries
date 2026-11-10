@@ -14,19 +14,20 @@ import { Badge, Button, Card, ErrorBox } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { PO_TONE, type PurchaseOrder } from '@/lib/purchasing';
 import { PoLinesEditor, toPoLines, type LineDraft } from '../po-lines';
+import { t } from '@/lib/i18n';
 
 const NEXT_LABEL: Partial<Record<PurchaseOrderStatus, string>> = {
-  confirmed: 'المورد أكّد الطلب',
-  received: 'تم الاستلام',
-  cancelled: 'إلغاء الطلب',
+  confirmed: t('المورد أكّد الطلب'),
+  received: t('تم الاستلام'),
+  cancelled: t('إلغاء الطلب'),
 };
 const MESSAGE_LABEL: Record<string, string> = {
-  skipped: 'لم يُرسل فعلياً (واتساب غير مربوط)',
-  sent: 'أُرسل',
-  delivered: 'وصل',
-  read: 'قُرئ',
-  failed: 'فشل',
-  queued: 'في الانتظار',
+  skipped: t('لم يُرسل فعلياً (واتساب غير مربوط)'),
+  sent: t('أُرسل'),
+  delivered: t('وصل'),
+  read: t('قُرئ'),
+  failed: t('فشل'),
+  queued: t('في الانتظار'),
 };
 
 export default function PurchaseOrderPage() {
@@ -44,7 +45,7 @@ export default function PurchaseOrderPage() {
     [id],
   );
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>, fallback: string) {
@@ -68,13 +69,13 @@ export default function PurchaseOrderPage() {
       const r = await api<PurchaseOrder>(`/api/purchasing/orders/${id}/send`, { method: 'POST' });
       setNotice(
         r.delivered
-          ? { ok: true, text: 'تم إرسال طلب الشراء للمورد على واتساب ✓' }
+          ? { ok: true, text: t('تم إرسال طلب الشراء للمورد على واتساب ✓') }
           : {
               ok: false,
-              text: 'تم تسجيل الإرسال، لكن واتساب غير مربوط بعد فلم يصل الطلب للمورد فعلياً.',
+              text: t('تم تسجيل الإرسال، لكن واتساب غير مربوط بعد فلم يصل الطلب للمورد فعلياً.'),
             },
       );
-    }, 'تعذّر الإرسال');
+    }, t('تعذّر الإرسال'));
   }
 
   if (!po)
@@ -91,21 +92,25 @@ export default function PurchaseOrderPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/purchasing" className="text-sm text-brand-muted underline">
-            ← طلبات الشراء
+            {t('← طلبات الشراء')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
-            طلب شراء <span className="font-mono">{po.number}</span>
+            {t('طلب شراء')} <span className="font-mono">{po.number}</span>
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             <b>{po.supplier.name}</b>
             <span dir="ltr" className="font-mono text-brand-muted">
-              {po.supplier.whatsappPhone ?? po.supplier.phone ?? 'بدون رقم'}
+              {po.supplier.whatsappPhone ?? po.supplier.phone ?? t('بدون رقم')}
             </span>
             <Badge tone={PO_TONE[po.status]}>{PURCHASE_ORDER_STATUS_LABELS_AR[po.status]}</Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
-            مطلوب بتاريخ {po.neededDate ?? '—'} — أنشأه {po.createdByName ?? '—'}{' '}
-            {formatAmman(po.createdAt)}
+            {t(
+              'مطلوب بتاريخ {0} — أنشأه {1} {2}',
+              po.neededDate ?? '—',
+              po.createdByName ?? '—',
+              formatAmman(po.createdAt),
+            )}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -113,15 +118,15 @@ export default function PurchaseOrderPage() {
             variant="outline"
             onClick={() =>
               void openAuthed(`/api/purchasing/orders/${id}/pdf`).catch((err) =>
-                setError(errorMessage(err, 'تعذّر فتح PDF')),
+                setError(errorMessage(err, t('تعذّر فتح PDF'))),
               )
             }
           >
-            عرض PDF
+            {t('عرض PDF')}
           </Button>
           {canManage && ['draft', 'sent', 'confirmed'].includes(po.status) && (
             <Button variant="gold" disabled={busy} onClick={() => void send()}>
-              {po.status === 'draft' ? 'إرسال للمورد على واتساب' : 'إعادة الإرسال'}
+              {po.status === 'draft' ? t('إرسال للمورد على واتساب') : t('إعادة الإرسال')}
             </Button>
           )}
           {canManage && po.status === 'draft' && !editing && (
@@ -138,7 +143,7 @@ export default function PurchaseOrderPage() {
                 )
               }
             >
-              تعديل البنود
+              {t('تعديل البنود')}
             </Button>
           )}
           {canManage &&
@@ -154,7 +159,7 @@ export default function PurchaseOrderPage() {
                         method: 'POST',
                         body: JSON.stringify({ status: s }),
                       }),
-                    'تعذّر تغيير الحالة',
+                    t('تعذّر تغيير الحالة'),
                   )
                 }
               >
@@ -173,7 +178,7 @@ export default function PurchaseOrderPage() {
         </div>
       )}
 
-      <Card title={`البنود (${po.lines.length})`}>
+      <Card title={t('البنود ({0})', po.lines.length)}>
         {editing ? (
           <>
             <PoLinesEditor lines={editing} setLines={setEditing} />
@@ -189,14 +194,14 @@ export default function PurchaseOrderPage() {
                         method: 'PATCH',
                         body: JSON.stringify({ lines: parsed }),
                       }),
-                    'تعذّر الحفظ',
+                    t('تعذّر الحفظ'),
                   ).then((ok) => ok && setEditing(null));
                 }}
               >
-                حفظ
+                {t('حفظ')}
               </Button>
               <Button variant="outline" onClick={() => setEditing(null)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </>
@@ -206,10 +211,10 @@ export default function PurchaseOrderPage() {
               <thead>
                 <tr className="border-b border-brand-line text-right text-brand-muted">
                   <th className="py-2">#</th>
-                  <th>المادة</th>
-                  <th>الكمية</th>
-                  <th>الوحدة</th>
-                  <th>ملاحظة</th>
+                  <th>{t('المادة')}</th>
+                  <th>{t('الكمية')}</th>
+                  <th>{t('الوحدة')}</th>
+                  <th>{t('ملاحظة')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,10 +233,10 @@ export default function PurchaseOrderPage() {
             </table>
           </div>
         )}
-        {po.notes && <p className="mt-3 text-sm">ملاحظات: {po.notes}</p>}
+        {po.notes && <p className="mt-3 text-sm">{t('ملاحظات: {0}', po.notes)}</p>}
       </Card>
 
-      <Card title="الإرسال على واتساب">
+      <Card title={t('الإرسال على واتساب')}>
         <ul className="divide-y divide-stone-100 text-sm">
           {po.messages.map((m) => (
             <li key={m.id} className="flex flex-wrap gap-3 py-2">
@@ -245,7 +250,9 @@ export default function PurchaseOrderPage() {
               {m.error && <span className="text-red-700">{m.error}</span>}
             </li>
           ))}
-          {po.messages.length === 0 && <li className="py-2 text-brand-muted">لم يُرسل بعد</li>}
+          {po.messages.length === 0 && (
+            <li className="py-2 text-brand-muted">{t('لم يُرسل بعد')}</li>
+          )}
         </ul>
       </Card>
     </div>

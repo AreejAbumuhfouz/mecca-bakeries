@@ -16,6 +16,7 @@ import { api, errorMessage, openAuthed } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Button, Card, ErrorBox, Input } from '@/components/ui';
 import { jodToFils, type Statement } from '@/lib/billing';
+import { t } from '@/lib/i18n';
 
 export default function CustomerAccountPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +32,7 @@ export default function CustomerAccountPage() {
     setSt(await api<Statement>(`/api/billing/customers/${id}/statement?from=${from}&to=${to}`));
   }, [id, from, to]);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>, ok: string, fallback: string) {
@@ -54,10 +55,10 @@ export default function CustomerAccountPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/payments" className="text-sm text-brand-muted underline">
-            ← المقبوضات والذمم
+            {t('← المقبوضات والذمم')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
-            كشف حساب {st.customer.name}{' '}
+            {t('كشف حساب {0}', st.customer.name)}{' '}
             <span className="font-mono text-base text-brand-muted">{st.customer.code}</span>
           </h1>
         </div>
@@ -67,7 +68,7 @@ export default function CustomerAccountPage() {
             onClick={() =>
               void openAuthed(
                 `/api/billing/customers/${id}/statement/pdf?from=${from}&to=${to}`,
-              ).catch((err) => setError(errorMessage(err, 'تعذّر فتح PDF')))
+              ).catch((err) => setError(errorMessage(err, t('تعذّر فتح PDF'))))
             }
           >
             <span className="flex items-center gap-1.5">
@@ -85,17 +86,17 @@ export default function CustomerAccountPage() {
                       { method: 'POST' },
                     );
                     if (r.whatsapp === 'skipped')
-                      throw new Error('سُجّل الإرسال لكن واتساب غير مربوط بعد');
+                      throw new Error(t('سُجّل الإرسال لكن واتساب غير مربوط بعد'));
                     if (r.whatsapp === 'no_phone')
-                      throw new Error('لا يوجد رقم هاتف للعميل أو فروعه');
+                      throw new Error(t('لا يوجد رقم هاتف للعميل أو فروعه'));
                   },
-                  'تم إرسال كشف الحساب على واتساب ✓',
-                  'تعذّر الإرسال',
+                  t('تم إرسال كشف الحساب على واتساب ✓'),
+                  t('تعذّر الإرسال'),
                 )
               }
             >
               <span className="flex items-center gap-1.5">
-                <Send size={15} /> إرسال على واتساب
+                <Send size={15} /> {t('إرسال على واتساب')}
               </span>
             </Button>
           )}
@@ -108,11 +109,11 @@ export default function CustomerAccountPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-7">
         <Card>
-          <div className="text-sm text-brand-muted">الرصيد</div>
+          <div className="text-sm text-brand-muted">{t('الرصيد')}</div>
           <div className="mt-1 text-xl font-bold text-brand-brown">{formatJod(s.balance)}</div>
         </Card>
         <Card>
-          <div className="text-sm text-brand-muted">المتأخر</div>
+          <div className="text-sm text-brand-muted">{t('المتأخر')}</div>
           <div className="mt-1 text-xl font-bold text-red-800">{formatJod(s.overdue)}</div>
         </Card>
         {AGING_BUCKETS.map((b) => (
@@ -124,17 +125,17 @@ export default function CustomerAccountPage() {
       </div>
 
       <Card
-        title="الحركات"
+        title={t('الحركات')}
         actions={
           <div className="flex items-center gap-2 text-sm">
-            من{' '}
+            {t('من')}{' '}
             <input
               type="date"
               className="h-10 rounded-lg border border-brand-line bg-surface px-3"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
             />
-            إلى{' '}
+            {t('إلى')}{' '}
             <input
               type="date"
               className="h-10 rounded-lg border border-brand-line bg-surface px-3"
@@ -148,18 +149,18 @@ export default function CustomerAccountPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">التاريخ</th>
-                <th>الرقم</th>
-                <th>البيان</th>
-                <th>مدين</th>
-                <th>دائن</th>
-                <th>الرصيد</th>
+                <th className="py-2">{t('التاريخ')}</th>
+                <th>{t('الرقم')}</th>
+                <th>{t('البيان')}</th>
+                <th>{t('مدين')}</th>
+                <th>{t('دائن')}</th>
+                <th>{t('الرصيد')}</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-stone-100 bg-brand-cream/50">
                 <td className="py-2" colSpan={5}>
-                  <b>رصيد سابق</b>
+                  <b>{t('رصيد سابق')}</b>
                 </td>
                 <td className="font-bold">{filsToJodString(st.opening)}</td>
               </tr>
@@ -175,7 +176,7 @@ export default function CustomerAccountPage() {
               ))}
               <tr className="bg-brand-cream/50">
                 <td className="py-2" colSpan={5}>
-                  <b>الرصيد الختامي</b>
+                  <b>{t('الرصيد الختامي')}</b>
                 </td>
                 <td className="font-bold">{filsToJodString(st.closing)}</td>
               </tr>
@@ -185,7 +186,7 @@ export default function CustomerAccountPage() {
       </Card>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card title="التذكير اليومي بالرصيد">
+        <Card title={t('التذكير اليومي بالرصيد')}>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -198,28 +199,28 @@ export default function CustomerAccountPage() {
                       method: 'PATCH',
                       body: JSON.stringify({ enabled: e.target.checked }),
                     }),
-                  'تم الحفظ',
-                  'تعذّر الحفظ',
+                  t('تم الحفظ'),
+                  t('تعذّر الحفظ'),
                 )
               }
             />
-            إرسال كشف الحساب لهذا العميل على واتساب والتطبيق ضمن التذكير اليومي
+            {t('إرسال كشف الحساب لهذا العميل على واتساب والتطبيق ضمن التذكير اليومي')}
           </label>
           <p className="mt-2 text-xs text-brand-muted">
-            وقت التذكير والحد الأدنى للمبلغ من «الإعدادات».
+            {t('وقت التذكير والحد الأدنى للمبلغ من «الإعدادات».')}
           </p>
         </Card>
         {can('invoices.manage') && (
-          <Card title="رصيد افتتاحي (من قبل النظام)">
+          <Card title={t('رصيد افتتاحي (من قبل النظام)')}>
             <div className="grid grid-cols-2 items-end gap-3">
               <Input
-                label="المبلغ (دينار)"
+                label={t('المبلغ (دينار)')}
                 dir="ltr"
                 value={opening.amount}
                 onChange={(e) => setOpening({ ...opening, amount: e.target.value })}
               />
               <Input
-                label="تاريخ الاستحقاق"
+                label={t('تاريخ الاستحقاق')}
                 type="date"
                 value={opening.date}
                 onChange={(e) => setOpening({ ...opening, date: e.target.value })}
@@ -229,19 +230,19 @@ export default function CustomerAccountPage() {
                 disabled={!opening.amount || !opening.date}
                 onClick={() => {
                   const amount = jodToFils(opening.amount);
-                  if (!amount) return setError('المبلغ غير صحيح');
+                  if (!amount) return setError(t('المبلغ غير صحيح'));
                   void run(
                     () =>
                       api(`/api/billing/customers/${id}/opening`, {
                         method: 'POST',
                         body: JSON.stringify({ amount, date: opening.date }),
                       }),
-                    'تم تسجيل الرصيد الافتتاحي',
-                    'تعذّر الحفظ',
+                    t('تم تسجيل الرصيد الافتتاحي'),
+                    t('تعذّر الحفظ'),
                   ).then(() => setOpening({ amount: '', date: '' }));
                 }}
               >
-                تسجيل الرصيد الافتتاحي
+                {t('تسجيل الرصيد الافتتاحي')}
               </Button>
             </div>
           </Card>

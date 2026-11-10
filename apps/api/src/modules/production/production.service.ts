@@ -26,6 +26,7 @@ import { AppError, notFound } from '../../lib/errors.js';
 import { clean } from '../../lib/db-utils.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { SettingsService } from '../settings/settings.service.js';
+import { t } from '../../lib/i18n.js';
 
 export type ItemUpdate = {
   itemId: string;
@@ -78,12 +79,12 @@ export function varianceFor(
   const loadingDiff = row.loaded - row.ordered;
   const leftover = produced - row.loaded - row.waste;
   const reasons: string[] = [];
-  if (row.produced === null) reasons.push('لم تُسجَّل الكمية المنتجة');
+  if (row.produced === null) reasons.push(t('لم تُسجَّل الكمية المنتجة'));
   else if (Math.abs(productionDiff) > allowance(row.planned, toleranceBps))
-    reasons.push(productionDiff > 0 ? 'إنتاج أكثر من المخطط' : 'إنتاج أقل من المخطط');
+    reasons.push(productionDiff > 0 ? t('إنتاج أكثر من المخطط') : t('إنتاج أقل من المخطط'));
   if (Math.abs(loadingDiff) > allowance(row.ordered, toleranceBps))
-    reasons.push(loadingDiff > 0 ? 'تحميل أكثر من المطلوب' : 'تحميل أقل من المطلوب');
-  if (row.produced !== null && leftover < 0) reasons.push('المحمّل والتالف أكثر من المنتج');
+    reasons.push(loadingDiff > 0 ? t('تحميل أكثر من المطلوب') : t('تحميل أقل من المطلوب'));
+  if (row.produced !== null && leftover < 0) reasons.push(t('المحمّل والتالف أكثر من المنتج'));
   return { productionDiff, loadingDiff, leftover, reasons, needsApproval: reasons.length > 0 };
 }
 
@@ -99,12 +100,12 @@ export function createProductionService(deps: {
     const day = await db.query.productionDays.findFirst({
       where: eq(productionDays.deliveryDate, date),
     });
-    if (!day) throw new AppError(404, 'NO_PLAN', 'لم تُنشأ خطة إنتاج لهذا اليوم بعد');
+    if (!day) throw new AppError(404, 'NO_PLAN', t('لم تُنشأ خطة إنتاج لهذا اليوم بعد'));
     return day;
   }
   function assertOpen(day: { status: ProductionDayStatus }) {
     if (day.status === 'closed')
-      throw new AppError(409, 'DAY_CLOSED', 'يوم الإنتاج مغلق ولا يمكن تعديله');
+      throw new AppError(409, 'DAY_CLOSED', t('يوم الإنتاج مغلق ولا يمكن تعديله'));
   }
 
   /** Every number of the day per item, used by the plan, the variance report and the history. */
@@ -166,7 +167,7 @@ export function createProductionService(deps: {
       where: eq(items.id, itemId),
       columns: { id: true },
     });
-    if (!item) throw new AppError(400, 'BAD_ITEM', 'صنف غير موجود');
+    if (!item) throw new AppError(400, 'BAD_ITEM', t('صنف غير موجود'));
     await db.insert(productionItems).values({ dayId, itemId }).onConflictDoNothing();
   }
 
@@ -195,7 +196,7 @@ export function createProductionService(deps: {
             id ? ne(productionLines.id, id) : undefined,
           ),
         });
-        if (clash) throw new AppError(409, 'NAME_TAKEN', 'اسم الخط موجود مسبقاً');
+        if (clash) throw new AppError(409, 'NAME_TAKEN', t('اسم الخط موجود مسبقاً'));
       }
       return db.transaction(async (tx) => {
         const before = id
@@ -236,7 +237,7 @@ export function createProductionService(deps: {
         const clash = await db.query.vehicles.findFirst({
           where: and(eq(vehicles.name, data.name), id ? ne(vehicles.id, id) : undefined),
         });
-        if (clash) throw new AppError(409, 'NAME_TAKEN', 'اسم السيارة موجود مسبقاً');
+        if (clash) throw new AppError(409, 'NAME_TAKEN', t('اسم السيارة موجود مسبقاً'));
       }
       return db.transaction(async (tx) => {
         const before = id
@@ -419,7 +420,7 @@ export function createProductionService(deps: {
         updates.some((u) => u.producedQty !== undefined) &&
         !actor.permissions.includes('production.manage')
       )
-        throw new AppError(403, 'FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء');
+        throw new AppError(403, 'FORBIDDEN', t('ليس لديك صلاحية لهذا الإجراء'));
       const before = await db
         .select()
         .from(productionItems)
@@ -461,7 +462,7 @@ export function createProductionService(deps: {
       const day = await dayOrThrow(date);
       assertOpen(day);
       const v = await db.query.vehicles.findFirst({ where: eq(vehicles.id, vehicleId) });
-      if (!v) throw new AppError(400, 'BAD_VEHICLE', 'السيارة غير موجودة');
+      if (!v) throw new AppError(400, 'BAD_VEHICLE', t('السيارة غير موجودة'));
       for (const l of lines) await ensureItemRow(day.id, l.itemId);
       const before = await db
         .select()
@@ -540,7 +541,7 @@ export function createProductionService(deps: {
       const row = full!.items.find((i) => i.itemId === itemId);
       if (!row) throw notFound('Item');
       if (!row.needsApproval)
-        throw new AppError(409, 'NO_VARIANCE', 'لا يوجد فرق يحتاج اعتماداً لهذا الصنف');
+        throw new AppError(409, 'NO_VARIANCE', t('لا يوجد فرق يحتاج اعتماداً لهذا الصنف'));
       await db.transaction(async (tx) => {
         await tx
           .insert(varianceApprovals)
@@ -574,12 +575,12 @@ export function createProductionService(deps: {
         throw new AppError(
           409,
           'NOT_FINAL',
-          'لا يمكن إغلاق خطة مبدئية — انتظر إغلاق الطلبات واعتماد الخطة النهائية',
+          t('لا يمكن إغلاق خطة مبدئية — انتظر إغلاق الطلبات واعتماد الخطة النهائية'),
         );
       const full = await this.getDay(date);
       const open = full!.items.filter((i) => i.open);
       if (open.length)
-        throw new AppError(409, 'OPEN_VARIANCES', 'يوجد فروقات لم تُعتمد بعد', {
+        throw new AppError(409, 'OPEN_VARIANCES', t('يوجد فروقات لم تُعتمد بعد'), {
           items: open.map((i) => ({ itemId: i.itemId, name: i.name, reasons: i.reasons })),
         });
       await db.transaction(async (tx) => {

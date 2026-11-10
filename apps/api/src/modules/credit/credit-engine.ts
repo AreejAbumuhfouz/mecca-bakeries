@@ -8,6 +8,7 @@ import {
   type ContractStatus,
   type PaymentType,
 } from '@mecca/shared';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Credit rules engine (pure, no database).
@@ -75,7 +76,7 @@ export function evaluateCredit(input: CreditInput): CreditDecision {
       outstanding,
       overdueAmount: 0,
       available: null,
-      reasons: [{ code: 'NO_CONTRACT', message: 'لا يوجد عقد لهذا العميل' }],
+      reasons: [{ code: 'NO_CONTRACT', message: t('لا يوجد عقد لهذا العميل') }],
     };
   }
 
@@ -92,7 +93,7 @@ export function evaluateCredit(input: CreditInput): CreditDecision {
   if (overdueAmount > 0) {
     reasons.push({
       code: 'OVERDUE_DEBT',
-      message: `يوجد ذمم متأخرة بقيمة ${formatJod(overdueAmount)}`,
+      message: t('يوجد ذمم متأخرة بقيمة {0}', formatJod(overdueAmount)),
     });
   }
 
@@ -102,7 +103,7 @@ export function evaluateCredit(input: CreditInput): CreditDecision {
     if (outstanding + orderAmount > contract.creditLimit) {
       reasons.push({
         code: 'CREDIT_LIMIT_EXCEEDED',
-        message: `الطلب يتجاوز سقف الائتمان (المتاح ${formatJod(Math.max(0, available))})`,
+        message: t('الطلب يتجاوز سقف الائتمان (المتاح {0})', formatJod(Math.max(0, available))),
       });
     }
   }

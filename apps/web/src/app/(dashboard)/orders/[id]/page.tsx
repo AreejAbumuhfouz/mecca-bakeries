@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
 import { OrderLinesEditor, toLines, type Quantities } from '@/components/order-lines-editor';
 import { formatAmman, STATUS_TONE, type CatalogItem, type Order } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Change = { before?: { total: number }; after?: { total: number } };
 
@@ -30,7 +31,7 @@ export default function OrderPage() {
 
   const load = useCallback(async () => setOrder(await api<Order>(`/api/orders/${id}`)), [id]);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر تحميل الطلب')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر تحميل الطلب'))));
   }, [load]);
 
   async function run(fn: () => Promise<unknown>, fallback: string) {
@@ -62,7 +63,7 @@ export default function OrderPage() {
     return (
       <div className="space-y-4">
         <ErrorBox message={error} />
-        {!error && <p className="text-brand-muted">جارٍ التحميل…</p>}
+        {!error && <p className="text-brand-muted">{t('جارٍ التحميل…')}</p>}
       </div>
     );
 
@@ -74,10 +75,10 @@ export default function OrderPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/orders" className="text-sm text-brand-muted underline">
-            ← الطلبات
+            {t('← الطلبات')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-brand-brown">
-            طلب <span className="font-mono">{order.number}</span>
+            {t('طلب')} <span className="font-mono">{order.number}</span>
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
             <Link href={`/customers/${order.customerId}`} className="font-bold underline">
@@ -87,8 +88,12 @@ export default function OrderPage() {
             <Badge tone={STATUS_TONE[order.status]}>{ORDER_STATUS_LABELS_AR[order.status]}</Badge>
           </div>
           <p className="mt-1 text-sm text-brand-muted">
-            التسليم يوم <b>{order.deliveryDate}</b> — إغلاق الطلبات {formatAmman(order.cutoffAt)} —
-            المصدر: {ORDER_SOURCE_LABELS_AR[order.source]}
+            {t('التسليم يوم')} <b>{order.deliveryDate}</b>{' '}
+            {t(
+              '— إغلاق الطلبات {0} — المصدر: {1}',
+              formatAmman(order.cutoffAt),
+              ORDER_SOURCE_LABELS_AR[order.source],
+            )}
           </p>
         </div>
         {canManage && !editing && (
@@ -99,15 +104,15 @@ export default function OrderPage() {
                 onClick={() =>
                   void run(
                     () => api(`/api/orders/${id}/submit`, { method: 'POST' }),
-                    'تعذّر الإرسال',
+                    t('تعذّر الإرسال'),
                   )
                 }
               >
-                إرسال المسودة كطلب
+                {t('إرسال المسودة كطلب')}
               </Button>
             )}
             <Button variant="outline" onClick={() => void startEdit()}>
-              تعديل الأصناف
+              {t('تعديل الأصناف')}
             </Button>
             <Button
               variant="outline"
@@ -119,11 +124,11 @@ export default function OrderPage() {
                       method: 'POST',
                       body: JSON.stringify({ reason: note || null }),
                     }),
-                  'تعذّر الإلغاء',
+                  t('تعذّر الإلغاء'),
                 )
               }
             >
-              إلغاء الطلب
+              {t('إلغاء الطلب')}
             </Button>
           </div>
         )}
@@ -132,7 +137,7 @@ export default function OrderPage() {
       <ErrorBox message={error} />
 
       {order.status === 'pending_approval' && (
-        <Card title="موقوف بسبب الائتمان">
+        <Card title={t('موقوف بسبب الائتمان')}>
           <ul className="mb-3 list-inside list-disc text-sm text-red-800">
             {order.creditReasons?.map((r) => (
               <li key={r.code}>{r.message}</li>
@@ -142,7 +147,7 @@ export default function OrderPage() {
             <div className="flex flex-wrap items-end gap-2">
               <div className="w-80">
                 <Input
-                  label="سبب القرار (يُحفظ في السجل)"
+                  label={t('سبب القرار (يُحفظ في السجل)')}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
@@ -156,11 +161,11 @@ export default function OrderPage() {
                         method: 'POST',
                         body: JSON.stringify({ note }),
                       }),
-                    'تعذّرت الموافقة',
+                    t('تعذّرت الموافقة'),
                   ).then((ok) => ok && setNote(''))
                 }
               >
-                موافقة استثنائية
+                {t('موافقة استثنائية')}
               </Button>
               <Button
                 variant="outline"
@@ -172,23 +177,23 @@ export default function OrderPage() {
                         method: 'POST',
                         body: JSON.stringify({ note }),
                       }),
-                    'تعذّر الرفض',
+                    t('تعذّر الرفض'),
                   ).then((ok) => ok && setNote(''))
                 }
               >
-                رفض
+                {t('رفض')}
               </Button>
             </div>
           ) : (
             <p className="text-sm text-brand-muted">
-              الموافقة تحتاج صلاحية «الموافقة على تجاوز الائتمان».
+              {t('الموافقة تحتاج صلاحية «الموافقة على تجاوز الائتمان».')}
             </p>
           )}
         </Card>
       )}
 
       {editing ? (
-        <Card title="تعديل الأصناف">
+        <Card title={t('تعديل الأصناف')}>
           <OrderLinesEditor catalog={catalog} quantities={editing} onChange={setEditing} />
           <div className="mt-4 flex gap-2">
             <Button
@@ -200,28 +205,28 @@ export default function OrderPage() {
                       method: 'PATCH',
                       body: JSON.stringify({ lines: toLines(editing) }),
                     }),
-                  'تعذّر حفظ التعديل',
+                  t('تعذّر حفظ التعديل'),
                 ).then((ok) => ok && setEditing(null))
               }
             >
-              حفظ التعديل
+              {t('حفظ التعديل')}
             </Button>
             <Button variant="outline" onClick={() => setEditing(null)}>
-              إلغاء
+              {t('إلغاء')}
             </Button>
           </div>
         </Card>
       ) : (
-        <Card title={`الأصناف (${order.lines.length})`}>
+        <Card title={t('الأصناف ({0})', order.lines.length)}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-line text-right text-brand-muted">
-                  <th className="py-2">الكود</th>
-                  <th>الصنف</th>
-                  <th>الكمية</th>
-                  <th>سعر الوحدة</th>
-                  <th>المجموع</th>
+                  <th className="py-2">{t('الكود')}</th>
+                  <th>{t('الصنف')}</th>
+                  <th>{t('الكمية')}</th>
+                  <th>{t('سعر الوحدة')}</th>
+                  <th>{t('المجموع')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,7 +240,7 @@ export default function OrderPage() {
                     <td>
                       {formatJod(l.unitPrice)}
                       {l.priceSource === 'contract' && (
-                        <span className="mr-1 text-xs text-brand-gold">سعر خاص</span>
+                        <span className="mr-1 text-xs text-brand-gold">{t('سعر خاص')}</span>
                       )}
                     </td>
                     <td className="font-bold">{formatJod(l.lineTotal)}</td>
@@ -245,21 +250,21 @@ export default function OrderPage() {
               <tfoot>
                 <tr>
                   <td colSpan={4} className="py-3 pl-4 text-left font-bold">
-                    المجموع
+                    {t('المجموع')}
                   </td>
                   <td className="text-lg font-bold text-brand-brown">{formatJod(order.total)}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
-          {order.notes && <p className="mt-2 text-sm">ملاحظات المطعم: {order.notes}</p>}
+          {order.notes && <p className="mt-2 text-sm">{t('ملاحظات المطعم: {0}', order.notes)}</p>}
           {order.cancelReason && (
-            <p className="mt-2 text-sm text-red-800">سبب الإلغاء: {order.cancelReason}</p>
+            <p className="mt-2 text-sm text-red-800">{t('سبب الإلغاء: {0}', order.cancelReason)}</p>
           )}
         </Card>
       )}
 
-      <Card title="سجل الطلب">
+      <Card title={t('سجل الطلب')}>
         <ol className="space-y-3 border-r-2 border-brand-line pr-4 text-sm">
           {order.events.map((e) => {
             const change = e.data as Change | null;
@@ -267,12 +272,16 @@ export default function OrderPage() {
               <li key={e.id}>
                 <div className="font-bold text-brand-brown">{ORDER_EVENT_LABELS_AR[e.type]}</div>
                 <div className="text-xs text-brand-muted">
-                  {formatAmman(e.createdAt)} — {e.actorName ?? 'النظام'}
+                  {formatAmman(e.createdAt)} — {e.actorName ?? t('النظام')}
                 </div>
                 {e.note && <div className="mt-1">{e.note}</div>}
                 {change?.before && change.after && (
                   <div className="mt-1 text-xs">
-                    المجموع: {formatJod(change.before.total)} ← {formatJod(change.after.total)}
+                    {t(
+                      'المجموع: {0} ← {1}',
+                      formatJod(change.before.total),
+                      formatJod(change.after.total),
+                    )}
                   </div>
                 )}
               </li>

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ORDER_STATUS_LABELS_AR, type OrderStatus } from '@mecca/shared';
 import { colors } from './theme';
+import { t } from './i18n';
 
 export function Button({
   title,
@@ -77,7 +78,9 @@ export function Countdown({ cutoffAt, serverNow }: { cutoffAt: string; serverNow
   const styles = makeStyles();
   return (
     <View style={styles.countdown}>
-      <Text style={styles.countdownLabel}>{left > 0 ? 'يُغلق الطلب بعد' : 'أُغلق الطلب'}</Text>
+      <Text style={styles.countdownLabel}>
+        {left > 0 ? t('يُغلق الطلب بعد') : t('أُغلق الطلب')}
+      </Text>
       {left > 0 && <Text style={styles.countdownTime}>{`${pad(h)}:${pad(m)}:${pad(s)}`}</Text>}
     </View>
   );

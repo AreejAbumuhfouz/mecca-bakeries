@@ -10,6 +10,7 @@ import { emptyTerms, termsToBody } from '@/lib/contracts';
 import type { CustomerRow } from '@/lib/customers';
 import { TermsFields } from '../terms-fields';
 import { draftToPrices, PricesEditor, type PriceDraft } from '../prices-editor';
+import { t } from '@/lib/i18n';
 
 function NewContract() {
   const router = useRouter();
@@ -24,7 +25,7 @@ function NewContract() {
   useEffect(() => {
     void api<{ items: CustomerRow[] }>('/api/customers?pageSize=100&isActive=true')
       .then((r) => setCustomers(r.items))
-      .catch(() => setError('تعذّر تحميل العملاء'));
+      .catch(() => setError(t('تعذّر تحميل العملاء')));
   }, []);
 
   async function save(e: FormEvent) {
@@ -42,7 +43,7 @@ function NewContract() {
       });
       router.push(`/contracts/${created.id}`);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر حفظ العقد'));
+      setError(errorMessage(err, t('تعذّر حفظ العقد')));
       setBusy(false);
     }
   }
@@ -53,22 +54,22 @@ function NewContract() {
     <form onSubmit={save} className="space-y-6">
       <div>
         <Link href="/contracts" className="text-sm text-brand-muted underline">
-          ← العقود
+          {t('← العقود')}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-brand-brown">عقد جديد</h1>
+        <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('عقد جديد')}</h1>
       </div>
 
       <ErrorBox message={error} />
 
-      <Card title="العميل">
+      <Card title={t('العميل')}>
         <div className="max-w-md">
           <Select
-            label="العميل"
+            label={t('العميل')}
             required
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
           >
-            <option value="">— اختر العميل —</option>
+            <option value="">{t('— اختر العميل —')}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code} — {c.name}
@@ -78,25 +79,26 @@ function NewContract() {
         </div>
       </Card>
 
-      <Card title="شروط العقد">
+      <Card title={t('شروط العقد')}>
         <TermsFields form={terms} setForm={setTerms} />
       </Card>
 
-      <Card title="الأسعار الخاصة">
+      <Card title={t('الأسعار الخاصة')}>
         <p className="mb-3 text-sm text-brand-muted">
-          اكتبي السعر الخاص فقط للأصناف المتفق عليها. باقي الأصناف تأخذ السعر الأساسي مع الخصم
-          العام.
+          {t(
+            'اكتبي السعر الخاص فقط للأصناف المتفق عليها. باقي الأصناف تأخذ السعر الأساسي مع الخصم العام.',
+          )}
         </p>
         <PricesEditor draft={draft} setDraft={setDraft} discountBps={discountBps} />
       </Card>
 
       <div className="flex gap-2">
         <Button type="submit" disabled={busy || !customerId}>
-          {busy ? 'جارٍ الحفظ…' : 'حفظ العقد'}
+          {busy ? t('جارٍ الحفظ…') : t('حفظ العقد')}
         </Button>
         <Link href="/contracts">
           <Button type="button" variant="outline">
-            إلغاء
+            {t('إلغاء')}
           </Button>
         </Link>
       </div>

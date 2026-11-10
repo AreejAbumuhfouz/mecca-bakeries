@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, I18nManager, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, SafeAreaView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/auth';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -11,18 +11,17 @@ import { AccountScreen } from './src/screens/AccountScreen';
 import { InvoicesScreen } from './src/screens/InvoicesScreen';
 import { DriverHome } from './src/driver/DriverHome';
 import { colors, ThemeProvider, useTheme } from './src/theme';
+import { t } from './src/i18n';
 
-// Arabic first. forceRTL takes effect after the first reload of the app.
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// The layout direction follows the language (set in src/i18n.ts before App loads).
 
 type Tab = 'home' | 'orders' | 'invoices' | 'account';
 type IconName = keyof typeof Ionicons.glyphMap;
 const TABS: { key: Tab; label: string; icon: IconName; active: IconName }[] = [
-  { key: 'home', label: 'طلب اليوم', icon: 'basket-outline', active: 'basket' },
-  { key: 'orders', label: 'طلباتي', icon: 'list-outline', active: 'list' },
-  { key: 'invoices', label: 'فواتيري', icon: 'receipt-outline', active: 'receipt' },
-  { key: 'account', label: 'حسابي', icon: 'person-outline', active: 'person' },
+  { key: 'home', label: t('طلب اليوم'), icon: 'basket-outline', active: 'basket' },
+  { key: 'orders', label: t('طلباتي'), icon: 'list-outline', active: 'list' },
+  { key: 'invoices', label: t('فواتيري'), icon: 'receipt-outline', active: 'receipt' },
+  { key: 'account', label: t('حسابي'), icon: 'person-outline', active: 'person' },
 ];
 
 function Main() {
@@ -81,18 +80,18 @@ function Main() {
             backgroundColor: colors.bar,
           }}
         >
-          {TABS.map((t) => {
-            const on = tab === t.key;
+          {TABS.map((tr) => {
+            const on = tab === tr.key;
             return (
               <Pressable
-                key={t.key}
-                onPress={() => setTab(t.key)}
+                key={tr.key}
+                onPress={() => setTab(tr.key)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
                 style={{ flex: 1, alignItems: 'center', paddingVertical: 8, gap: 2 }}
               >
                 <Ionicons
-                  name={on ? t.active : t.icon}
+                  name={on ? tr.active : tr.icon}
                   size={22}
                   color={on ? colors.gold : colors.muted}
                 />
@@ -103,7 +102,7 @@ function Main() {
                     color: on ? colors.gold : colors.muted,
                   }}
                 >
-                  {t.label}
+                  {tr.label}
                 </Text>
               </Pressable>
             );

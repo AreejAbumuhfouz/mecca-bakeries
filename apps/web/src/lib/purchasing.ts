@@ -1,4 +1,5 @@
 import type { PurchaseOrderStatus } from '@mecca/shared';
+import { t } from '@/lib/i18n';
 
 export type Supplier = {
   id: string;
@@ -50,4 +51,13 @@ export const PO_TONE: Record<PurchaseOrderStatus, 'neutral' | 'gold' | 'green' |
 };
 
 /** Common purchase units for the line form. */
-export const COMMON_UNITS = ['كغ', 'كيس', 'كرتونة', 'علبة', 'لتر', 'حبة', 'ربطة', 'رول'];
+export const COMMON_UNITS = [
+  t('كغ'),
+  t('كيس'),
+  t('كرتونة'),
+  t('علبة'),
+  t('لتر'),
+  t('حبة'),
+  t('ربطة'),
+  t('رول'),
+];

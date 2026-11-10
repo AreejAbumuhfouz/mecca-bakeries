@@ -5,6 +5,7 @@ import { filsToJodString, formatJod } from '@mecca/shared';
 import { api, errorText, fetchBlob } from '../api';
 import { Empty } from '../components';
 import { colors, ui } from '../theme';
+import { t } from '../i18n';
 
 type Row = {
   id: string;
@@ -56,13 +57,13 @@ export function InvoicesScreen() {
     void Promise.all([
       api<Balance>('/api/app/account/balance').then(setBalance),
       api<{ items: Row[] }>('/api/app/account/invoices?pageSize=50').then((r) => setRows(r.items)),
-    ]).catch((err) => setError(errorText(err, 'تعذّر التحميل')));
+    ]).catch((err) => setError(errorText(err, t('تعذّر التحميل'))));
   }, []);
   useEffect(() => {
     if (view === 'statement' && !statement)
       void api<Statement>('/api/app/account/statement')
         .then(setStatement)
-        .catch((err) => setError(errorText(err, 'تعذّر التحميل')));
+        .catch((err) => setError(errorText(err, t('تعذّر التحميل'))));
   }, [view, statement]);
 
   if (open)
@@ -70,17 +71,15 @@ export function InvoicesScreen() {
       <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
         <Pressable onPress={() => setOpen(null)} style={ui.row}>
           <Ionicons name="arrow-forward" size={18} color={colors.muted} />
-          <Text style={ui.muted}>فواتيري</Text>
+          <Text style={ui.muted}>{t('فواتيري')}</Text>
         </Pressable>
         <View style={ui.card}>
-          <Text style={ui.h1}>فاتورة {open.number}</Text>
-          <Text style={ui.muted}>
-            {open.issueDate} — الاستحقاق {open.dueDate}
-          </Text>
+          <Text style={ui.h1}>{t('فاتورة {0}', open.number)}</Text>
+          <Text style={ui.muted}>{t('{0} — الاستحقاق {1}', open.issueDate, open.dueDate)}</Text>
           {open.lines.map((l) => (
             <View key={l.id} style={ui.between}>
               <Text style={[ui.text, { flex: 1 }, l.kind === 'return' && { color: colors.red }]}>
-                {l.kind === 'return' ? 'مرتجع: ' : ''}
+                {l.kind === 'return' ? t('مرتجع: ') : ''}
                 {l.description} × {l.quantity}
               </Text>
               <Text style={ui.text}>{filsToJodString(l.lineTotal)}</Text>
@@ -88,22 +87,22 @@ export function InvoicesScreen() {
           ))}
           {open.discount2Amount > 0 && (
             <View style={ui.between}>
-              <Text style={ui.muted}>خصم</Text>
+              <Text style={ui.muted}>{t('خصم')}</Text>
               <Text style={ui.text}>− {filsToJodString(open.discount2Amount)}</Text>
             </View>
           )}
           <View
             style={[ui.between, { borderTopWidth: 1, borderColor: colors.line, paddingTop: 8 }]}
           >
-            <Text style={ui.h2}>المجموع</Text>
+            <Text style={ui.h2}>{t('المجموع')}</Text>
             <Text style={ui.h2}>{formatJod(open.total)}</Text>
           </View>
           <View style={ui.between}>
-            <Text style={ui.muted}>المدفوع</Text>
+            <Text style={ui.muted}>{t('المدفوع')}</Text>
             <Text style={ui.text}>{formatJod(open.paid)}</Text>
           </View>
           <View style={ui.between}>
-            <Text style={ui.muted}>المتبقي</Text>
+            <Text style={ui.muted}>{t('المتبقي')}</Text>
             <Text
               style={[
                 ui.text,
@@ -120,7 +119,7 @@ export function InvoicesScreen() {
             style={ui.row}
           >
             <Ionicons name="document-text-outline" size={18} color={colors.gold} />
-            <Text style={{ color: colors.gold, fontWeight: '700' }}>فتح PDF</Text>
+            <Text style={{ color: colors.gold, fontWeight: '700' }}>{t('فتح PDF')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -128,16 +127,16 @@ export function InvoicesScreen() {
 
   return (
     <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
-      <Text style={ui.h1}>فواتيري وحسابي</Text>
+      <Text style={ui.h1}>{t('فواتيري وحسابي')}</Text>
       {error ? <Text style={ui.error}>{error}</Text> : null}
       {balance && (
         <View style={[ui.card, { flexDirection: 'row', gap: 12 }]}>
           <View style={{ flex: 1 }}>
-            <Text style={ui.muted}>الرصيد المستحق</Text>
+            <Text style={ui.muted}>{t('الرصيد المستحق')}</Text>
             <Text style={[ui.h1, { color: colors.gold }]}>{formatJod(balance.balance)}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={ui.muted}>منها متأخر</Text>
+            <Text style={ui.muted}>{t('منها متأخر')}</Text>
             <Text style={[ui.h2, { color: balance.overdue ? colors.red : colors.green }]}>
               {formatJod(balance.overdue)}
             </Text>
@@ -147,8 +146,8 @@ export function InvoicesScreen() {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(
           [
-            ['invoices', 'الفواتير'],
-            ['statement', 'كشف الحساب'],
+            ['invoices', t('الفواتير')],
+            ['statement', t('كشف الحساب')],
           ] as const
         ).map(([k, label]) => (
           <Pressable
@@ -175,7 +174,7 @@ export function InvoicesScreen() {
         (rows === null ? (
           <ActivityIndicator color={colors.gold} />
         ) : rows.length === 0 ? (
-          <Empty>لا توجد فواتير بعد</Empty>
+          <Empty>{t('لا توجد فواتير بعد')}</Empty>
         ) : (
           rows.map((r) => (
             <Pressable
@@ -184,7 +183,7 @@ export function InvoicesScreen() {
               onPress={() =>
                 void api<Detail>(`/api/app/account/invoices/${r.id}`)
                   .then(setOpen)
-                  .catch((err) => setError(errorText(err, 'تعذّر الفتح')))
+                  .catch((err) => setError(errorText(err, t('تعذّر الفتح'))))
               }
             >
               <View style={ui.between}>
@@ -203,7 +202,7 @@ export function InvoicesScreen() {
                     color: r.balance > 0 ? colors.red : colors.green,
                   }}
                 >
-                  {r.balance > 0 ? `متبقي ${filsToJodString(r.balance)}` : 'مدفوعة ✓'}
+                  {r.balance > 0 ? t('متبقي {0}', filsToJodString(r.balance)) : t('مدفوعة ✓')}
                 </Text>
               </View>
             </Pressable>
@@ -215,11 +214,9 @@ export function InvoicesScreen() {
           <ActivityIndicator color={colors.gold} />
         ) : (
           <View style={ui.card}>
-            <Text style={ui.muted}>
-              من {statement.from} إلى {statement.to}
-            </Text>
+            <Text style={ui.muted}>{t('من {0} إلى {1}', statement.from, statement.to)}</Text>
             <View style={ui.between}>
-              <Text style={[ui.text, { fontWeight: '700' }]}>رصيد سابق</Text>
+              <Text style={[ui.text, { fontWeight: '700' }]}>{t('رصيد سابق')}</Text>
               <Text style={ui.text}>{filsToJodString(statement.opening)}</Text>
             </View>
             {statement.rows.map((r, i) => (
@@ -234,14 +231,14 @@ export function InvoicesScreen() {
                   <Text style={ui.muted}>
                     {r.date} — {r.number}
                   </Text>
-                  <Text style={ui.muted}>الرصيد {filsToJodString(r.balance)}</Text>
+                  <Text style={ui.muted}>{t('الرصيد {0}', filsToJodString(r.balance))}</Text>
                 </View>
               </View>
             ))}
             <View
               style={[ui.between, { borderTopWidth: 1, borderColor: colors.line, paddingTop: 8 }]}
             >
-              <Text style={ui.h2}>الرصيد الختامي</Text>
+              <Text style={ui.h2}>{t('الرصيد الختامي')}</Text>
               <Text style={ui.h2}>{formatJod(statement.closing)}</Text>
             </View>
             {Platform.OS === 'web' && (
@@ -250,7 +247,7 @@ export function InvoicesScreen() {
                 style={ui.row}
               >
                 <Ionicons name="document-text-outline" size={18} color={colors.gold} />
-                <Text style={{ color: colors.gold, fontWeight: '700' }}>فتح PDF</Text>
+                <Text style={{ color: colors.gold, fontWeight: '700' }}>{t('فتح PDF')}</Text>
               </Pressable>
             )}
           </View>

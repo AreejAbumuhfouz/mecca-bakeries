@@ -6,6 +6,7 @@ import { addDays, ammanDate } from '@mecca/shared';
 import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Entry = {
   id: number;
@@ -21,44 +22,44 @@ type Entry = {
 
 /** What each part of the system is called in the log. */
 const ENTITY_AR: Record<string, string> = {
-  user: 'مستخدم',
-  customer: 'عميل',
-  branch: 'فرع',
-  customer_category: 'تصنيف عملاء',
-  trade_name: 'اسم تجاري',
-  item: 'صنف',
-  item_section: 'قسم',
-  contract: 'عقد',
-  order: 'طلب',
-  production_day: 'يوم إنتاج',
-  production_line: 'خط إنتاج',
-  vehicle: 'سيارة',
-  supplier: 'مورد',
-  purchase_order: 'طلب شراء',
-  route: 'مسار',
-  trip: 'رحلة',
-  trip_day: 'مسارات اليوم',
-  delivery: 'تسليم',
-  invoice: 'فاتورة',
-  payment: 'دفعة',
-  settings: 'إعدادات',
-  file: 'ملف',
-  system: 'النظام',
+  user: t('مستخدم'),
+  customer: t('عميل'),
+  branch: t('فرع'),
+  customer_category: t('تصنيف عملاء'),
+  trade_name: t('اسم تجاري'),
+  item: t('صنف'),
+  item_section: t('قسم'),
+  contract: t('عقد'),
+  order: t('طلب'),
+  production_day: t('يوم إنتاج'),
+  production_line: t('خط إنتاج'),
+  vehicle: t('سيارة'),
+  supplier: t('مورد'),
+  purchase_order: t('طلب شراء'),
+  route: t('مسار'),
+  trip: t('رحلة'),
+  trip_day: t('مسارات اليوم'),
+  delivery: t('تسليم'),
+  invoice: t('فاتورة'),
+  payment: t('دفعة'),
+  settings: t('إعدادات'),
+  file: t('ملف'),
+  system: t('النظام'),
 };
 const VERB_AR: [RegExp, string][] = [
-  [/\.create$|\.opening$/, 'إضافة'],
-  [/\.update$|\.edit|\.stops$|\.items$|\.loads$/, 'تعديل'],
-  [/\.delete$|\.remove/, 'حذف'],
-  [/\.approve/, 'اعتماد'],
-  [/\.reject/, 'رفض'],
-  [/\.cancel/, 'إلغاء'],
-  [/\.confirm/, 'تأكيد'],
-  [/\.close$/, 'إغلاق'],
-  [/\.generate$/, 'تجهيز'],
-  [/\.send/, 'إرسال'],
-  [/login/, 'دخول'],
-  [/logout/, 'خروج'],
-  [/export/, 'تصدير'],
+  [/\.create$|\.opening$/, t('إضافة')],
+  [/\.update$|\.edit|\.stops$|\.items$|\.loads$/, t('تعديل')],
+  [/\.delete$|\.remove/, t('حذف')],
+  [/\.approve/, t('اعتماد')],
+  [/\.reject/, t('رفض')],
+  [/\.cancel/, t('إلغاء')],
+  [/\.confirm/, t('تأكيد')],
+  [/\.close$/, t('إغلاق')],
+  [/\.generate$/, t('تجهيز')],
+  [/\.send/, t('إرسال')],
+  [/login/, t('دخول')],
+  [/logout/, t('خروج')],
+  [/export/, t('تصدير')],
 ];
 const verb = (a: string) => VERB_AR.find(([re]) => re.test(a))?.[1] ?? a;
 
@@ -106,37 +107,37 @@ export default function AuditPage() {
         setRows(r);
         setMore(r.length === 100);
       })
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [query]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-brand-brown">
-          <History size={24} /> سجل التدقيق
+          <History size={24} /> {t('سجل التدقيق')}
         </h1>
         <p className="text-sm text-brand-muted">
-          كل تعديل في النظام: من، ومتى، وما الذي تغيّر. السجل للقراءة فقط ولا يمكن تعديله.
+          {t('كل تعديل في النظام: من، ومتى، وما الذي تغيّر. السجل للقراءة فقط ولا يمكن تعديله.')}
         </p>
       </div>
       <Card>
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          من{' '}
+          {t('من')}{' '}
           <input
             type="date"
             className={field}
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
-          إلى{' '}
+          {t('إلى')}{' '}
           <input type="date" className={field} value={to} onChange={(e) => setTo(e.target.value)} />
           <select
             className={field}
             value={entity}
             onChange={(e) => setEntity(e.target.value)}
-            aria-label="النوع"
+            aria-label={t('النوع')}
           >
-            <option value="">كل الأنواع</option>
+            <option value="">{t('كل الأنواع')}</option>
             {Object.entries(ENTITY_AR).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
@@ -146,7 +147,7 @@ export default function AuditPage() {
         </div>
       </Card>
       <ErrorBox message={error} />
-      <Card title={`${rows.length} عملية`}>
+      <Card title={t('{0} عملية', rows.length)}>
         <ul className="divide-y divide-stone-100 text-sm">
           {rows.map((r) => {
             const diff = changes(r.before, r.after);
@@ -169,7 +170,7 @@ export default function AuditPage() {
                       {diff
                         .slice(0, 3)
                         .map((d) => d.key)
-                        .join('، ')}
+                        .join(t('، '))}
                     </span>
                   )}
                   <span className="mr-auto font-mono text-xs text-brand-muted" dir="ltr">
@@ -183,9 +184,9 @@ export default function AuditPage() {
                         <table className="w-full">
                           <thead>
                             <tr className="text-right text-brand-muted">
-                              <th>الحقل</th>
-                              <th>قبل</th>
-                              <th>بعد</th>
+                              <th>{t('الحقل')}</th>
+                              <th>{t('قبل')}</th>
+                              <th>{t('بعد')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -217,7 +218,7 @@ export default function AuditPage() {
             );
           })}
           {rows.length === 0 && (
-            <li className="py-4 text-brand-muted">لا توجد عمليات في هذه الفترة</li>
+            <li className="py-4 text-brand-muted">{t('لا توجد عمليات في هذه الفترة')}</li>
           )}
         </ul>
         {more && rows.length > 0 && (
@@ -231,7 +232,7 @@ export default function AuditPage() {
               })
             }
           >
-            عرض المزيد
+            {t('عرض المزيد')}
           </Button>
         )}
       </Card>

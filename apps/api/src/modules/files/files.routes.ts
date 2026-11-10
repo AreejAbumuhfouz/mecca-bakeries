@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AppError } from '../../lib/errors.js';
 import { requireAnyPermission } from '../../middleware/auth.js';
 import type { FilesService } from './files.service.js';
+import { t } from '../../lib/i18n.js';
 
 const Id = z.object({ id: z.string().uuid() });
 
@@ -20,7 +21,9 @@ export function filesRouter(
   const single: RequestHandler = (req, res, next) =>
     upload.single('file')(req, res, (err: unknown) => {
       if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE')
-        return next(new AppError(413, 'FILE_TOO_LARGE', `حجم الملف أكبر من ${maxMb} ميغابايت`));
+        return next(
+          new AppError(413, 'FILE_TOO_LARGE', t('حجم الملف أكبر من {0} ميغابايت', maxMb)),
+        );
       next(err);
     });
 
@@ -30,7 +33,7 @@ export function filesRouter(
     requireAnyPermission('trade_names.manage', 'items.manage', 'contracts.manage'),
     single,
     async (req, res) => {
-      if (!req.file) throw new AppError(400, 'NO_FILE', 'لم يتم اختيار ملف');
+      if (!req.file) throw new AppError(400, 'NO_FILE', t('لم يتم اختيار ملف'));
       const saved = await svc.save(
         {
           buffer: req.file.buffer,
@@ -60,7 +63,7 @@ export function filesRouter(
         res.setHeader('Cache-Control', 'private, no-store');
       }
       res.sendFile(file.absolutePath, (err) => {
-        if (err && !res.headersSent) next(new AppError(404, 'NOT_FOUND', 'الملف غير موجود'));
+        if (err && !res.headersSent) next(new AppError(404, 'NOT_FOUND', t('الملف غير موجود')));
       });
     };
     if (file.isPublic) return send();
@@ -68,7 +71,7 @@ export function filesRouter(
     authenticate(req, res, (err?: unknown) => {
       if (err) return next(err);
       if (!req.auth?.permissions.includes('contracts.view'))
-        return next(new AppError(403, 'FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء'));
+        return next(new AppError(403, 'FORBIDDEN', t('ليس لديك صلاحية لهذا الإجراء')));
       send();
     });
   });

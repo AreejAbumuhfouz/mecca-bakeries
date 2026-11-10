@@ -17,6 +17,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Select } from '@/components/ui';
 import { jodToFils, type PaymentRow, type ReceivableRow, type Summary } from '@/lib/billing';
+import { t } from '@/lib/i18n';
 
 type Tab = 'receivables' | 'payments' | 'new';
 type Customer = { id: string; code: string; name: string };
@@ -29,19 +30,19 @@ export default function PaymentsPage() {
   const [error, setError] = useState('');
 
   const tabs: [Tab, string][] = [
-    ['receivables', 'الذمم وأعمارها'],
-    ['payments', 'سجل المقبوضات'],
-    ...(canManage ? ([['new', '+ تسجيل دفعة']] as [Tab, string][]) : []),
+    ['receivables', t('الذمم وأعمارها')],
+    ['payments', t('سجل المقبوضات')],
+    ...(canManage ? ([['new', t('+ تسجيل دفعة')]] as [Tab, string][]) : []),
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-brand-brown">
-          <Wallet size={24} /> المقبوضات والذمم
+          <Wallet size={24} /> {t('المقبوضات والذمم')}
         </h1>
         <p className="text-sm text-brand-muted">
-          كل دفعة تُوزَّع تلقائياً على أقدم فاتورة مستحقة، ويمكن توزيعها يدوياً عند التسجيل.
+          {t('كل دفعة تُوزَّع تلقائياً على أقدم فاتورة مستحقة، ويمكن توزيعها يدوياً عند التسجيل.')}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -77,20 +78,20 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
     });
     void api<typeof data>(`/api/billing/receivables?${qs}`)
       .then(setData)
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [onlyOverdue, search, setError]);
   if (!data) return null;
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-7">
         <Card>
-          <div className="text-sm text-brand-muted">إجمالي الذمم</div>
+          <div className="text-sm text-brand-muted">{t('إجمالي الذمم')}</div>
           <div className="mt-1 text-xl font-bold text-brand-brown">
             {formatJod(data.totals.balance)}
           </div>
         </Card>
         <Card>
-          <div className="text-sm text-brand-muted">المتأخر</div>
+          <div className="text-sm text-brand-muted">{t('المتأخر')}</div>
           <div className="mt-1 text-xl font-bold text-red-800">
             {formatJod(data.totals.overdue)}
           </div>
@@ -105,12 +106,12 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
         ))}
       </div>
       <Card
-        title={`العملاء (${data.items.length})`}
+        title={t('العملاء ({0})', data.items.length)}
         actions={
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <input
               className={field}
-              placeholder="بحث بالاسم أو الكود"
+              placeholder={t('بحث بالاسم أو الكود')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -120,7 +121,7 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
                 checked={onlyOverdue}
                 onChange={(e) => setOnlyOverdue(e.target.checked)}
               />{' '}
-              المتأخرون فقط
+              {t('المتأخرون فقط')}
             </label>
           </div>
         }
@@ -129,14 +130,14 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">العميل</th>
-                <th>الرصيد</th>
-                <th>المتأخر</th>
+                <th className="py-2">{t('العميل')}</th>
+                <th>{t('الرصيد')}</th>
+                <th>{t('المتأخر')}</th>
                 {AGING_BUCKETS.map((b) => (
                   <th key={b}>{AGING_LABELS_AR[b]}</th>
                 ))}
-                <th>آخر دفعة</th>
-                <th>التذكير</th>
+                <th>{t('آخر دفعة')}</th>
+                <th>{t('التذكير')}</th>
               </tr>
             </thead>
             <tbody>
@@ -163,9 +164,9 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
                   <td className="font-mono text-xs">{c.lastPaymentOn ?? '—'}</td>
                   <td>
                     {c.balanceAlerts ? (
-                      <Badge tone="green">مفعّل</Badge>
+                      <Badge tone="green">{t('مفعّل')}</Badge>
                     ) : (
-                      <Badge tone="neutral">موقوف</Badge>
+                      <Badge tone="neutral">{t('موقوف')}</Badge>
                     )}
                   </td>
                 </tr>
@@ -173,7 +174,7 @@ function Receivables({ setError }: { setError: (s: string) => void }) {
               {data.items.length === 0 && (
                 <tr>
                   <td colSpan={10} className="py-6 text-center text-brand-muted">
-                    لا توجد ذمم ✓
+                    {t('لا توجد ذمم ✓')}
                   </td>
                 </tr>
               )}
@@ -204,11 +205,11 @@ function Payments({ setError }: { setError: (s: string) => void }) {
     setData(await api(`/api/billing/payments?${qs}`));
   }, [from, to, method]);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load, setError]);
   return (
     <Card
-      title={data ? `${data.total} دفعة — ${formatJod(data.sumAmount)}` : 'الدفعات'}
+      title={data ? t('{0} دفعة — {1}', data.total, formatJod(data.sumAmount)) : t('الدفعات')}
       actions={
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <input
@@ -223,7 +224,7 @@ function Payments({ setError }: { setError: (s: string) => void }) {
             value={method}
             onChange={(e) => setMethod(e.target.value as '' | PaymentMethod)}
           >
-            <option value="">كل الطرق</option>
+            <option value="">{t('كل الطرق')}</option>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
                 {PAYMENT_METHOD_LABELS_AR[m]}
@@ -237,14 +238,14 @@ function Payments({ setError }: { setError: (s: string) => void }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-brand-line text-right text-brand-muted">
-              <th className="py-2">الإيصال</th>
-              <th>التاريخ</th>
-              <th>العميل</th>
-              <th>المبلغ</th>
-              <th>الطريقة</th>
-              <th>المصدر</th>
-              <th>غير موزّع</th>
-              <th>سجّله</th>
+              <th className="py-2">{t('الإيصال')}</th>
+              <th>{t('التاريخ')}</th>
+              <th>{t('العميل')}</th>
+              <th>{t('المبلغ')}</th>
+              <th>{t('الطريقة')}</th>
+              <th>{t('المصدر')}</th>
+              <th>{t('غير موزّع')}</th>
+              <th>{t('سجّله')}</th>
               <th />
             </tr>
           </thead>
@@ -255,7 +256,7 @@ function Payments({ setError }: { setError: (s: string) => void }) {
             {data?.items.length === 0 && (
               <tr>
                 <td colSpan={9} className="py-6 text-center text-brand-muted">
-                  لا توجد دفعات
+                  {t('لا توجد دفعات')}
                 </td>
               </tr>
             )}
@@ -293,24 +294,24 @@ function PaymentLine({
         {PAYMENT_METHOD_LABELS_AR[p.method]}
         {p.reference && <span className="text-xs text-brand-muted"> {p.reference}</span>}
         {p.chequeDueDate && (
-          <div className="text-xs text-brand-muted">استحقاق {p.chequeDueDate}</div>
+          <div className="text-xs text-brand-muted">{t('استحقاق {0}', p.chequeDueDate)}</div>
         )}
       </td>
-      <td>{p.source === 'driver' ? 'السائق' : 'المكتب'}</td>
+      <td>{p.source === 'driver' ? t('السائق') : t('المكتب')}</td>
       <td>{!cancelled && p.amount - p.allocated > 0 ? formatJod(p.amount - p.allocated) : '—'}</td>
       <td className="text-xs text-brand-muted">{p.receivedByName}</td>
       <td className="text-xs">
         {cancelled ? (
-          <Badge tone="red">ملغاة</Badge>
+          <Badge tone="red">{t('ملغاة')}</Badge>
         ) : can('payments.manage') && !cancelling ? (
           <button className="text-red-700 underline" onClick={() => setCancelling(true)}>
-            إلغاء
+            {t('إلغاء')}
           </button>
         ) : cancelling ? (
           <span className="flex items-center gap-1">
             <input
               className="h-8 w-32 rounded border border-brand-line bg-surface px-2"
-              placeholder="السبب"
+              placeholder={t('السبب')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
@@ -323,10 +324,10 @@ function PaymentLine({
                   body: JSON.stringify({ reason }),
                 })
                   .then(onChange)
-                  .catch((err) => setError(errorMessage(err, 'تعذّر الإلغاء')))
+                  .catch((err) => setError(errorMessage(err, t('تعذّر الإلغاء'))))
               }
             >
-              تأكيد
+              {t('تأكيد')}
             </button>
           </span>
         ) : null}
@@ -362,12 +363,12 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
   async function save(e: FormEvent) {
     e.preventDefault();
     const fils = jodToFils(amount);
-    if (!fils) return setError('اكتبي المبلغ بالدينار، مثل 25 أو 12.500');
+    if (!fils) return setError(t('اكتبي المبلغ بالدينار، مثل 25 أو 12.500'));
     const allocations = [];
     for (const [invoiceId, v] of Object.entries(manual)) {
       if (!v.trim()) continue;
       const a = jodToFils(v);
-      if (!a) return setError('مبلغ التوزيع غير صحيح');
+      if (!a) return setError(t('مبلغ التوزيع غير صحيح'));
       allocations.push({ invoiceId, amount: a });
     }
     setError('');
@@ -388,7 +389,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
       });
       onDone();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الحفظ'));
+      setError(errorMessage(err, t('تعذّر الحفظ')));
     } finally {
       setBusy(false);
     }
@@ -396,15 +397,15 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
 
   return (
     <form onSubmit={save} className="space-y-6">
-      <Card title="الدفعة">
+      <Card title={t('الدفعة')}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Select
-            label="العميل"
+            label={t('العميل')}
             required
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
           >
-            <option value="">— اختاري العميل —</option>
+            <option value="">{t('— اختاري العميل —')}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code} — {c.name}
@@ -412,7 +413,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
             ))}
           </Select>
           <Input
-            label="المبلغ (دينار)"
+            label={t('المبلغ (دينار)')}
             dir="ltr"
             required
             inputMode="decimal"
@@ -420,7 +421,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
             onChange={(e) => setAmount(e.target.value)}
           />
           <Select
-            label="الطريقة"
+            label={t('الطريقة')}
             value={method}
             onChange={(e) => setMethod(e.target.value as PaymentMethod)}
           >
@@ -431,7 +432,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
             ))}
           </Select>
           <Input
-            label="تاريخ الاستلام"
+            label={t('تاريخ الاستلام')}
             type="date"
             required
             value={receivedOn}
@@ -439,7 +440,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
           />
           {method !== 'cash' && (
             <Input
-              label={method === 'cheque' ? 'رقم الشيك' : 'رقم الحوالة'}
+              label={method === 'cheque' ? t('رقم الشيك') : t('رقم الحوالة')}
               required={method === 'cheque'}
               value={reference}
               onChange={(e) => setReference(e.target.value)}
@@ -447,30 +448,31 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
           )}
           {method === 'cheque' && (
             <Input
-              label="تاريخ استحقاق الشيك"
+              label={t('تاريخ استحقاق الشيك')}
               type="date"
               value={chequeDueDate}
               onChange={(e) => setChequeDueDate(e.target.value)}
             />
           )}
-          <Input label="ملاحظة" value={note} onChange={(e) => setNote(e.target.value)} />
+          <Input label={t('ملاحظة')} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </Card>
       {summary && (
-        <Card title={`الفواتير المفتوحة — الرصيد ${formatJod(summary.balance)}`}>
+        <Card title={t('الفواتير المفتوحة — الرصيد {0}', formatJod(summary.balance))}>
           <p className="mb-3 text-sm text-brand-muted">
-            اتركي الحقول فارغة ليُوزَّع المبلغ تلقائياً على الأقدم أولاً، أو اكتبي مبلغاً لفاتورة
-            معيّنة.
+            {t(
+              'اتركي الحقول فارغة ليُوزَّع المبلغ تلقائياً على الأقدم أولاً، أو اكتبي مبلغاً لفاتورة معيّنة.',
+            )}
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-line text-right text-brand-muted">
-                  <th className="py-2">الفاتورة</th>
-                  <th>التاريخ</th>
-                  <th>الاستحقاق</th>
-                  <th>المتبقي</th>
-                  <th className="w-32">توزيع يدوي</th>
+                  <th className="py-2">{t('الفاتورة')}</th>
+                  <th>{t('التاريخ')}</th>
+                  <th>{t('الاستحقاق')}</th>
+                  <th>{t('المتبقي')}</th>
+                  <th className="w-32">{t('توزيع يدوي')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -485,7 +487,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
                     <td>
                       <input
                         dir="ltr"
-                        aria-label={`توزيع على ${i.number}`}
+                        aria-label={t('توزيع على {0}', i.number)}
                         className="h-9 w-28 rounded-lg border border-brand-line bg-surface px-2"
                         value={manual[i.id] ?? ''}
                         onChange={(e) => setManual({ ...manual, [i.id]: e.target.value })}
@@ -496,7 +498,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
                 {summary.openInvoices.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-3 text-brand-muted">
-                      لا فواتير مفتوحة — الدفعة تبقى رصيداً دائناً للعميل
+                      {t('لا فواتير مفتوحة — الدفعة تبقى رصيداً دائناً للعميل')}
                     </td>
                   </tr>
                 )}
@@ -506,7 +508,7 @@ function NewPayment({ setError, onDone }: { setError: (s: string) => void; onDon
         </Card>
       )}
       <Button type="submit" disabled={busy || !customerId}>
-        {busy ? 'جارٍ الحفظ…' : 'حفظ الدفعة'}
+        {busy ? t('جارٍ الحفظ…') : t('حفظ الدفعة')}
       </Button>
     </form>
   );

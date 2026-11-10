@@ -15,13 +15,14 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input, Select } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { DAY_TONE, groupByLine, type ProductionDay, type Vehicle } from '@/lib/production';
+import { t } from '@/lib/i18n';
 
 type Tab = 'plan' | 'loading' | 'losses' | 'variances';
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'plan', label: 'الخطة والإنتاج' },
-  { key: 'loading', label: 'التحميل على السيارات' },
-  { key: 'losses', label: 'التالف والمرتجع' },
-  { key: 'variances', label: 'الفروقات وإغلاق اليوم' },
+  { key: 'plan', label: t('الخطة والإنتاج') },
+  { key: 'loading', label: t('التحميل على السيارات') },
+  { key: 'losses', label: t('التالف والمرتجع') },
+  { key: 'variances', label: t('الفروقات وإغلاق اليوم') },
 ];
 const num = (v: string) => Math.max(0, Math.trunc(Number(v.replace(/\D/g, '')) || 0));
 const cell = 'h-8 w-20 rounded-lg border border-brand-line px-2 text-center';
@@ -79,7 +80,7 @@ export default function ProductionPage() {
   }, [date, apply]);
 
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function run(fn: () => Promise<ProductionDay | null>, fallback: string) {
@@ -90,7 +91,7 @@ export default function ProductionPage() {
       return true;
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === 'OPEN_VARIANCES') {
-        setError('يوجد فروقات لم تُعتمد بعد — اعتمديها من الأسفل ثم أغلقي اليوم');
+        setError(t('يوجد فروقات لم تُعتمد بعد — اعتمديها من الأسفل ثم أغلقي اليوم'));
         setTab('variances');
       } else setError(errorMessage(err, fallback));
       return false;
@@ -102,7 +103,7 @@ export default function ProductionPage() {
   const generate = () =>
     run(
       () => api<ProductionDay>(`/api/production/days/${date}/generate`, { method: 'POST' }),
-      'تعذّر توليد الخطة',
+      t('تعذّر توليد الخطة'),
     );
 
   const savePlan = () => {
@@ -124,7 +125,7 @@ export default function ProductionPage() {
           method: 'PATCH',
           body: JSON.stringify(updates),
         }),
-      'تعذّر الحفظ',
+      t('تعذّر الحفظ'),
     );
   };
 
@@ -141,7 +142,7 @@ export default function ProductionPage() {
             method: 'PUT',
             body: JSON.stringify({ vehicleId: v.id, lines }),
           }),
-        'تعذّر حفظ التحميل',
+        t('تعذّر حفظ التحميل'),
       );
       if (!ok) return;
     }
@@ -155,7 +156,7 @@ export default function ProductionPage() {
           method: 'POST',
           body: JSON.stringify({ ...loss, quantity: num(loss.quantity), note: loss.note || null }),
         }),
-      'تعذّر الحفظ',
+      t('تعذّر الحفظ'),
     );
     if (ok) setLoss({ ...loss, quantity: '', note: '' });
   }
@@ -170,9 +171,11 @@ export default function ProductionPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">الإنتاج والمخزون</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('الإنتاج والمخزون')}</h1>
           <p className="text-sm text-brand-muted">
-            الخطة تُبنى من الطلبات: مبدئية قبل الإغلاق، ونهائية تلقائياً بعده من الطلبات المؤكدة.
+            {t(
+              'الخطة تُبنى من الطلبات: مبدئية قبل الإغلاق، ونهائية تلقائياً بعده من الطلبات المؤكدة.',
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -183,14 +186,14 @@ export default function ProductionPage() {
             onChange={(e) => setDate(e.target.value)}
           />
           <Link href="/production/history">
-            <Button variant="outline">السجل</Button>
+            <Button variant="outline">{t('السجل')}</Button>
           </Link>
           <Link href="/production/setup">
-            <Button variant="outline">الخطوط والسيارات</Button>
+            <Button variant="outline">{t('الخطوط والسيارات')}</Button>
           </Link>
           {day && (
             <Button variant="outline" onClick={() => window.print()}>
-              طباعة الكشف
+              {t('طباعة الكشف')}
             </Button>
           )}
         </div>
@@ -200,10 +203,10 @@ export default function ProductionPage() {
 
       {day === null && (
         <Card>
-          <p className="mb-3 text-sm">لم تُنشأ خطة إنتاج ليوم {date} بعد.</p>
+          <p className="mb-3 text-sm">{t('لم تُنشأ خطة إنتاج ليوم {0} بعد.', date)}</p>
           {canManage && (
             <Button disabled={busy} onClick={() => void generate()}>
-              توليد الخطة من الطلبات
+              {t('توليد الخطة من الطلبات')}
             </Button>
           )}
         </Card>
@@ -214,34 +217,34 @@ export default function ProductionPage() {
           <div className="flex flex-wrap items-center gap-3 print:hidden">
             <Badge tone={DAY_TONE[day.status]}>{PRODUCTION_DAY_STATUS_LABELS_AR[day.status]}</Badge>
             <span className="text-sm text-brand-muted">
-              آخر تحديث من الطلبات: {formatAmman(day.generatedAt)}
+              {t('آخر تحديث من الطلبات: {0}', formatAmman(day.generatedAt))}
             </span>
             {day.pendingOrders > 0 && (
               <span className="text-sm text-red-800">
-                {day.pendingOrders} طلب بانتظار موافقة الائتمان{' '}
-                {day.status === 'final' ? '(غير محسوب)' : '(محسوب مبدئياً)'}
+                {t('{0} طلب بانتظار موافقة الائتمان', day.pendingOrders)}{' '}
+                {day.status === 'final' ? t('(غير محسوب)') : t('(محسوب مبدئياً)')}
               </span>
             )}
             {editable && (
               <Button variant="outline" disabled={busy} onClick={() => void generate()}>
-                تحديث من الطلبات
+                {t('تحديث من الطلبات')}
               </Button>
             )}
           </div>
 
           <div className="flex flex-wrap gap-2 print:hidden">
-            {TABS.map((t) => (
+            {TABS.map((tr) => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={tr.key}
+                onClick={() => setTab(tr.key)}
                 className={`rounded-full px-4 py-2 text-sm font-bold ${
-                  tab === t.key
+                  tab === tr.key
                     ? 'bg-primary text-on-primary'
                     : 'border border-brand-line bg-surface text-brand-brown'
                 }`}
               >
-                {t.label}
-                {t.key === 'variances' && openCount > 0 && (
+                {tr.label}
+                {tr.key === 'variances' && openCount > 0 && (
                   <span className="mr-1 text-red-300">({openCount})</span>
                 )}
               </button>
@@ -249,16 +252,20 @@ export default function ProductionPage() {
           </div>
 
           <h2 className="hidden text-xl font-bold print:block">
-            كشف الإنتاج ليوم {day.deliveryDate} — {PRODUCTION_DAY_STATUS_LABELS_AR[day.status]}
+            {t(
+              'كشف الإنتاج ليوم {0} — {1}',
+              day.deliveryDate,
+              PRODUCTION_DAY_STATUS_LABELS_AR[day.status],
+            )}
           </h2>
 
           {(tab === 'plan' || closed) && (
             <Card
-              title="خطة الإنتاج"
+              title={t('خطة الإنتاج')}
               actions={
                 editable && (
                   <Button disabled={busy} onClick={savePlan} className="print:hidden">
-                    حفظ
+                    {t('حفظ')}
                   </Button>
                 )
               }
@@ -267,13 +274,13 @@ export default function ProductionPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-brand-line text-right text-brand-muted">
-                      <th className="py-2">الكود</th>
-                      <th>الصنف</th>
-                      <th>المطلوب</th>
-                      <th>إضافي</th>
-                      <th>المخطط</th>
-                      <th>المنتج فعلياً</th>
-                      <th>الفرق</th>
+                      <th className="py-2">{t('الكود')}</th>
+                      <th>{t('الصنف')}</th>
+                      <th>{t('المطلوب')}</th>
+                      <th>{t('إضافي')}</th>
+                      <th>{t('المخطط')}</th>
+                      <th>{t('المنتج فعلياً')}</th>
+                      <th>{t('الفرق')}</th>
                     </tr>
                   </thead>
                   {groups.map((g) => (
@@ -303,7 +310,7 @@ export default function ProductionPage() {
                                 <input
                                   dir="ltr"
                                   className={cell}
-                                  aria-label={`إضافي ${i.name}`}
+                                  aria-label={t('إضافي {0}', i.name)}
                                   value={d.extra}
                                   onChange={(e) =>
                                     setPlan({
@@ -322,7 +329,7 @@ export default function ProductionPage() {
                                 <input
                                   dir="ltr"
                                   className={cell}
-                                  aria-label={`المنتج ${i.name}`}
+                                  aria-label={t('المنتج {0}', i.name)}
                                   placeholder="—"
                                   value={d.produced}
                                   onChange={(e) =>
@@ -351,28 +358,28 @@ export default function ProductionPage() {
                 </table>
               </div>
               {day.items.length === 0 && (
-                <p className="py-4 text-sm text-brand-muted">لا توجد طلبات لهذا اليوم.</p>
+                <p className="py-4 text-sm text-brand-muted">{t('لا توجد طلبات لهذا اليوم.')}</p>
               )}
             </Card>
           )}
 
           {tab === 'loading' && !closed && (
             <Card
-              title="التحميل على السيارات"
+              title={t('التحميل على السيارات')}
               actions={
                 editable &&
                 activeVehicles.length > 0 && (
                   <Button disabled={busy} onClick={() => void saveLoads()}>
-                    حفظ التحميل
+                    {t('حفظ التحميل')}
                   </Button>
                 )
               }
             >
               {activeVehicles.length === 0 ? (
                 <p className="text-sm text-brand-muted">
-                  أضيفي السيارات أولاً من{' '}
+                  {t('أضيفي السيارات أولاً من')}{' '}
                   <Link href="/production/setup" className="underline">
-                    الخطوط والسيارات
+                    {t('الخطوط والسيارات')}
                   </Link>
                   .
                 </p>
@@ -381,8 +388,8 @@ export default function ProductionPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-brand-line text-right text-brand-muted">
-                        <th className="py-2">الصنف</th>
-                        <th>المطلوب</th>
+                        <th className="py-2">{t('الصنف')}</th>
+                        <th>{t('المطلوب')}</th>
                         {activeVehicles.map((v) => (
                           <th key={v.id}>
                             {v.name}
@@ -391,7 +398,7 @@ export default function ProductionPage() {
                             )}
                           </th>
                         ))}
-                        <th>المجموع المحمّل</th>
+                        <th>{t('المجموع المحمّل')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -435,16 +442,16 @@ export default function ProductionPage() {
           )}
 
           {tab === 'losses' && !closed && (
-            <Card title="التالف والمرتجع">
+            <Card title={t('التالف والمرتجع')}>
               {editable && (
                 <form onSubmit={addLoss} className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-6">
                   <Select
-                    label="الصنف"
+                    label={t('الصنف')}
                     required
                     value={loss.itemId}
                     onChange={(e) => setLoss({ ...loss, itemId: e.target.value })}
                   >
-                    <option value="">— اختر —</option>
+                    <option value="">{t('— اختر —')}</option>
                     {day.items.map((i) => (
                       <option key={i.itemId} value={i.itemId}>
                         {i.name}
@@ -452,15 +459,15 @@ export default function ProductionPage() {
                     ))}
                   </Select>
                   <Select
-                    label="النوع"
+                    label={t('النوع')}
                     value={loss.kind}
                     onChange={(e) => setLoss({ ...loss, kind: e.target.value as StockLossKind })}
                   >
-                    <option value="waste">تالف في المخبز</option>
-                    <option value="return">مرتجع من العميل</option>
+                    <option value="waste">{t('تالف في المخبز')}</option>
+                    <option value="return">{t('مرتجع من العميل')}</option>
                   </Select>
                   <Select
-                    label="السبب"
+                    label={t('السبب')}
                     value={loss.reason}
                     onChange={(e) =>
                       setLoss({ ...loss, reason: e.target.value as StockLossReason })
@@ -473,14 +480,14 @@ export default function ProductionPage() {
                     ))}
                   </Select>
                   <Input
-                    label="الكمية"
+                    label={t('الكمية')}
                     dir="ltr"
                     required
                     value={loss.quantity}
                     onChange={(e) => setLoss({ ...loss, quantity: e.target.value })}
                   />
                   <Input
-                    label="ملاحظة"
+                    label={t('ملاحظة')}
                     value={loss.note}
                     onChange={(e) => setLoss({ ...loss, note: e.target.value })}
                   />
@@ -490,7 +497,7 @@ export default function ProductionPage() {
                       variant="gold"
                       disabled={busy || !loss.itemId || !num(loss.quantity)}
                     >
-                      إضافة
+                      {t('إضافة')}
                     </Button>
                   </div>
                 </form>
@@ -499,7 +506,7 @@ export default function ProductionPage() {
                 {day.losses.map((l) => (
                   <li key={l.id} className="flex flex-wrap items-center gap-3 py-2">
                     <Badge tone={l.kind === 'waste' ? 'red' : 'gold'}>
-                      {l.kind === 'waste' ? 'تالف' : 'مرتجع'}
+                      {l.kind === 'waste' ? t('تالف') : t('مرتجع')}
                     </Badge>
                     <b>{l.itemName}</b>
                     <span>{l.quantity}</span>
@@ -519,17 +526,17 @@ export default function ProductionPage() {
                               api<ProductionDay>(`/api/production/days/${date}/losses/${l.id}`, {
                                 method: 'DELETE',
                               }),
-                            'تعذّر الحذف',
+                            t('تعذّر الحذف'),
                           )
                         }
                       >
-                        حذف
+                        {t('حذف')}
                       </button>
                     )}
                   </li>
                 ))}
                 {day.losses.length === 0 && (
-                  <li className="py-2 text-brand-muted">لا يوجد تالف أو مرتجع مسجّل</li>
+                  <li className="py-2 text-brand-muted">{t('لا يوجد تالف أو مرتجع مسجّل')}</li>
                 )}
               </ul>
             </Card>
@@ -537,13 +544,15 @@ export default function ProductionPage() {
 
           {(tab === 'variances' || closed) && (
             <Card
-              title={`تقرير الفروقات (السماحية ${day.toleranceBps / 100}%)`}
+              title={t('تقرير الفروقات (السماحية {0}%)', day.toleranceBps / 100)}
               actions={
                 editable && (
                   <Button
                     disabled={busy || day.status !== 'final'}
                     title={
-                      day.status !== 'final' ? 'يُغلق اليوم بعد اعتماد الخطة النهائية' : undefined
+                      day.status !== 'final'
+                        ? t('يُغلق اليوم بعد اعتماد الخطة النهائية')
+                        : undefined
                     }
                     onClick={() =>
                       void run(
@@ -551,12 +560,12 @@ export default function ProductionPage() {
                           api<ProductionDay>(`/api/production/days/${date}/close`, {
                             method: 'POST',
                           }),
-                        'تعذّر إغلاق اليوم',
+                        t('تعذّر إغلاق اليوم'),
                       )
                     }
                     className="print:hidden"
                   >
-                    إغلاق اليوم
+                    {t('إغلاق اليوم')}
                   </Button>
                 )
               }
@@ -565,15 +574,15 @@ export default function ProductionPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-brand-line text-right text-brand-muted">
-                      <th className="py-2">الصنف</th>
-                      <th>مطلوب</th>
-                      <th>مخطط</th>
-                      <th>منتج</th>
-                      <th>محمّل</th>
-                      <th>تالف</th>
-                      <th>مرتجع</th>
-                      <th>متبقٍ</th>
-                      <th>الملاحظة</th>
+                      <th className="py-2">{t('الصنف')}</th>
+                      <th>{t('مطلوب')}</th>
+                      <th>{t('مخطط')}</th>
+                      <th>{t('منتج')}</th>
+                      <th>{t('محمّل')}</th>
+                      <th>{t('تالف')}</th>
+                      <th>{t('مرتجع')}</th>
+                      <th>{t('متبقٍ')}</th>
+                      <th>{t('الملاحظة')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -594,13 +603,17 @@ export default function ProductionPage() {
                         </td>
                         <td className="min-w-72">
                           {i.reasons.length === 0 ? (
-                            <span className="text-green-800">مطابق ✓</span>
+                            <span className="text-green-800">{t('مطابق ✓')}</span>
                           ) : (
                             <div className="space-y-1">
-                              <div className="text-red-800">{i.reasons.join('، ')}</div>
+                              <div className="text-red-800">{i.reasons.join(t('، '))}</div>
                               {i.approval ? (
                                 <div className="text-xs text-green-800">
-                                  اعتُمد: {i.approval.note} — {i.approval.approvedByName}
+                                  {t(
+                                    'اعتُمد: {0} — {1}',
+                                    i.approval.note,
+                                    i.approval.approvedByName,
+                                  )}
                                 </div>
                               ) : (
                                 can('variances.approve') &&
@@ -608,7 +621,7 @@ export default function ProductionPage() {
                                   <div className="flex gap-1 print:hidden">
                                     <input
                                       className="h-8 flex-1 rounded-lg border border-brand-line px-2 text-xs"
-                                      placeholder="سبب الفرق"
+                                      placeholder={t('سبب الفرق')}
                                       value={approveNotes[i.itemId] ?? ''}
                                       onChange={(e) =>
                                         setApproveNotes({
@@ -635,11 +648,11 @@ export default function ProductionPage() {
                                                 }),
                                               },
                                             ),
-                                          'تعذّر الاعتماد',
+                                          t('تعذّر الاعتماد'),
                                         )
                                       }
                                     >
-                                      اعتماد
+                                      {t('اعتماد')}
                                     </Button>
                                   </div>
                                 )
@@ -653,8 +666,9 @@ export default function ProductionPage() {
                 </table>
               </div>
               <p className="mt-3 text-xs text-brand-muted">
-                المتبقي = المنتج − المحمّل − التالف. يُعتمد كل فرق خارج السماحية بسبب مكتوب قبل
-                إغلاق اليوم.
+                {t(
+                  'المتبقي = المنتج − المحمّل − التالف. يُعتمد كل فرق خارج السماحية بسبب مكتوب قبل إغلاق اليوم.',
+                )}
               </p>
             </Card>
           )}

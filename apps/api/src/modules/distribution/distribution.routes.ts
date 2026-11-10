@@ -6,6 +6,7 @@ import { AppError } from '../../lib/errors.js';
 import { fils, Id, isoDate, optionalText } from '../../lib/validation.js';
 import { sendPdf } from '../billing/billing.routes.js';
 import type { ConfirmInput, DistributionService } from './distribution.service.js';
+import { t } from '../../lib/i18n.js';
 
 const qty = z.number().int().min(0).max(1_000_000);
 const Route = z.object({
@@ -186,9 +187,9 @@ export function driverRouter(svc: DistributionService, authenticate: RequestHand
               ? {
                   status: 422,
                   code: 'VALIDATION',
-                  message: err.issues[0]?.message ?? 'بيانات غير صحيحة',
+                  message: err.issues[0]?.message ?? t('بيانات غير صحيحة'),
                 }
-              : { status: 500, code: 'ERROR', message: 'خطأ في الخادم' };
+              : { status: 500, code: 'ERROR', message: t('خطأ في الخادم') };
         results.push({ deliveryId: item.deliveryId, ok: false, error: e });
       }
     }

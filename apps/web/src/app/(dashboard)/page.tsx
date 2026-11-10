@@ -24,6 +24,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Badge, Card } from '@/components/ui';
 import { STATE_TONE, type ContractRow } from '@/lib/contracts';
+import { t } from '@/lib/i18n';
 
 type Kpis = {
   today: string;
@@ -50,7 +51,11 @@ type Kpis = {
   purchasing?: { open: number };
 };
 
-const PROD_LABEL = { preliminary: 'خطة مبدئية', final: 'خطة نهائية', closed: 'يوم مغلق' } as const;
+const PROD_LABEL = {
+  preliminary: t('خطة مبدئية'),
+  final: t('خطة نهائية'),
+  closed: t('يوم مغلق'),
+} as const;
 
 function Tile({
   icon: Icon,
@@ -99,15 +104,15 @@ export default function DashboardHome() {
   }, [can]);
 
   const today = ammanDate();
-  const max = Math.max(1, ...(k?.money?.trend.map((t) => t.sales) ?? [1]));
+  const max = Math.max(1, ...(k?.money?.trend.map((tr) => tr.sales) ?? [1]));
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-brown">أهلاً {user?.name}</h1>
+        <h1 className="text-2xl font-bold text-brand-brown">{t('أهلاً {0}', user?.name)}</h1>
         <p className="text-sm text-brand-muted">
-          يوم {today}
-          {k && ` — الطلبات المفتوحة لتسليم ${k.orderingFor}`}
+          {t('يوم {0}', today)}
+          {k && t(' — الطلبات المفتوحة لتسليم {0}', k.orderingFor)}
         </p>
       </div>
 
@@ -116,18 +121,22 @@ export default function DashboardHome() {
           {k.orders && (
             <Tile
               icon={ClipboardList}
-              label={`طلبات ${k.orderingFor}`}
+              label={t('طلبات {0}', k.orderingFor)}
               value={`${k.orders.placed} / ${k.orders.branches}`}
-              note={`${formatJod(k.orders.value)}${k.orders.pending ? ` — ${k.orders.pending} بانتظار موافقة` : ''}`}
+              note={`${formatJod(k.orders.value)}${k.orders.pending ? t(' — {0} بانتظار موافقة', k.orders.pending) : ''}`}
               href="/orders"
             />
           )}
           {k.deliveries && (
             <Tile
               icon={Truck}
-              label="توصيلات اليوم"
+              label={t('توصيلات اليوم')}
               value={`${k.deliveries.delivered} / ${k.deliveries.total}`}
-              note={`${k.deliveries.pending} بالطريق${k.deliveries.failed ? ` — ${k.deliveries.failed} لم تُسلَّم` : ''}`}
+              note={t(
+                '{0} بالطريق{1}',
+                k.deliveries.pending,
+                k.deliveries.failed ? t(' — {0} لم تُسلَّم', k.deliveries.failed) : '',
+              )}
               href="/deliveries"
             />
           )}
@@ -135,30 +144,32 @@ export default function DashboardHome() {
             <>
               <Tile
                 icon={Receipt}
-                label="مبيعات اليوم"
+                label={t('مبيعات اليوم')}
                 value={formatJod(k.money.salesToday)}
                 note={
-                  k.money.drafts ? `${k.money.drafts} فاتورة مسودة للاعتماد` : 'كل الفواتير معتمدة'
+                  k.money.drafts
+                    ? t('{0} فاتورة مسودة للاعتماد', k.money.drafts)
+                    : t('كل الفواتير معتمدة')
                 }
                 href="/invoices"
               />
               <Tile
                 icon={Wallet}
-                label="المقبوض اليوم"
+                label={t('المقبوض اليوم')}
                 value={formatJod(k.money.receivedToday)}
                 href="/payments"
               />
               <Tile
                 icon={Wallet}
-                label="إجمالي الذمم"
+                label={t('إجمالي الذمم')}
                 value={formatJod(k.money.receivables)}
                 href="/payments"
               />
               <Tile
                 icon={AlertTriangle}
-                label="المتأخر"
+                label={t('المتأخر')}
                 value={formatJod(k.money.overdue)}
-                note={`${k.money.overdueCustomers} عميل`}
+                note={t('{0} عميل', k.money.overdueCustomers)}
                 href="/payments"
                 tone={k.money.overdue ? 'text-red-800' : 'text-green-800'}
               />
@@ -167,16 +178,16 @@ export default function DashboardHome() {
           {k.production && (
             <Tile
               icon={Factory}
-              label="إنتاج اليوم"
-              value={k.production.status ? PROD_LABEL[k.production.status] : 'لا خطة بعد'}
-              note={k.production.items ? `${k.production.items} صنف` : undefined}
+              label={t('إنتاج اليوم')}
+              value={k.production.status ? PROD_LABEL[k.production.status] : t('لا خطة بعد')}
+              note={k.production.items ? t('{0} صنف', k.production.items) : undefined}
               href="/production"
             />
           )}
           {k.contracts && (
             <Tile
               icon={FileSignature}
-              label="عقود تنتهي خلال 30 يوم"
+              label={t('عقود تنتهي خلال 30 يوم')}
               value={k.contracts.expiring}
               href="/contracts"
               tone={k.contracts.expiring ? 'text-amber-900' : ''}
@@ -185,7 +196,7 @@ export default function DashboardHome() {
           {k.purchasing && (
             <Tile
               icon={ShoppingCart}
-              label="طلبات شراء مفتوحة"
+              label={t('طلبات شراء مفتوحة')}
               value={k.purchasing.open}
               href="/purchasing"
             />
@@ -194,25 +205,29 @@ export default function DashboardHome() {
       )}
 
       {k?.money && (
-        <Card title="المبيعات — آخر 14 يوم">
-          <div className="flex h-40 items-end gap-1.5" role="img" aria-label="رسم المبيعات اليومية">
-            {k.money.trend.map((t) => (
+        <Card title={t('المبيعات — آخر 14 يوم')}>
+          <div
+            className="flex h-40 items-end gap-1.5"
+            role="img"
+            aria-label={t('رسم المبيعات اليومية')}
+          >
+            {k.money.trend.map((tr) => (
               <div
-                key={t.day}
+                key={tr.day}
                 className="flex h-full flex-1 flex-col items-center justify-end gap-1"
               >
                 <span className="text-[10px] text-brand-muted tabular-nums">
-                  {t.sales ? filsToJodString(t.sales).replace(/\.\d+$/, '') : ''}
+                  {tr.sales ? filsToJodString(tr.sales).replace(/\.\d+$/, '') : ''}
                 </span>
                 <div
-                  title={`${t.day}: ${formatJod(t.sales)}`}
-                  className={`w-full rounded-t ${t.day === today ? 'bg-brand-gold' : 'bg-primary'}`}
+                  title={`${tr.day}: ${formatJod(tr.sales)}`}
+                  className={`w-full rounded-t ${tr.day === today ? 'bg-brand-gold' : 'bg-primary'}`}
                   style={{
-                    height: `${Math.max(2, (t.sales / max) * 100)}%`,
-                    opacity: t.sales ? 1 : 0.25,
+                    height: `${Math.max(2, (tr.sales / max) * 100)}%`,
+                    opacity: tr.sales ? 1 : 0.25,
                   }}
                 />
-                <span className="text-[10px] text-brand-muted">{t.day.slice(8)}</span>
+                <span className="text-[10px] text-brand-muted">{tr.day.slice(8)}</span>
               </div>
             ))}
           </div>
@@ -220,9 +235,9 @@ export default function DashboardHome() {
       )}
 
       {alerts && (
-        <Card title={`تنبيهات تجديد العقود (${alerts.length})`}>
+        <Card title={t('تنبيهات تجديد العقود ({0})', alerts.length)}>
           {alerts.length === 0 ? (
-            <p className="text-sm text-brand-muted">لا توجد عقود تحتاج إلى تجديد ✓</p>
+            <p className="text-sm text-brand-muted">{t('لا توجد عقود تحتاج إلى تجديد ✓')}</p>
           ) : (
             <ul className="divide-y divide-stone-100 text-sm">
               {alerts.map((c) => {
@@ -236,10 +251,10 @@ export default function DashboardHome() {
                     <Badge tone={STATE_TONE[c.state]}>{CONTRACT_STATE_LABELS_AR[c.state]}</Badge>
                     <span className={left < 0 ? 'text-red-700' : 'text-brand-muted'}>
                       {left < 0
-                        ? `انتهى منذ ${-left} يوم`
+                        ? t('انتهى منذ {0} يوم', -left)
                         : left === 0
-                          ? 'ينتهي اليوم'
-                          : `ينتهي بعد ${left} يوم (${c.endDate})`}
+                          ? t('ينتهي اليوم')
+                          : t('ينتهي بعد {0} يوم ({1})', left, c.endDate)}
                     </span>
                   </li>
                 );

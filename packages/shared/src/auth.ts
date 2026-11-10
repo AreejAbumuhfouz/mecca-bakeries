@@ -1,3 +1,4 @@
+import type { Locale } from './locales.js';
 import type { Permission } from './permissions.js';
 import type { Role } from './roles.js';
 
@@ -9,6 +10,8 @@ export type AuthUser = {
   /** Restaurant accounts only: the customer they order for. */
   customerId: string | null;
   permissions: Permission[];
+  /** Interface language. */
+  locale: Locale;
 };
 
 export type AuthTokens = {

@@ -6,6 +6,7 @@ import type { WhatsAppService } from '../whatsapp/whatsapp.service.js';
 import type { PushService } from '../notifications/push.js';
 import type { SettingsService } from '../settings/settings.service.js';
 import type { BillingService } from './billing.service.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Daily reminder of the unpaid balance: WhatsApp message with the statement PDF
@@ -56,8 +57,12 @@ export function createBalanceAlerts(deps: {
             : 'sent';
     }
     await push.toCustomer(customerId, {
-      title: 'رصيد حسابكم',
-      body: `المستحق ${filsToJodString(s.balance)} د.أ${s.overdue ? ` — متأخر ${filsToJodString(s.overdue)} د.أ` : ''}`,
+      title: t('رصيد حسابكم'),
+      body: t(
+        'المستحق {0} د.أ{1}',
+        filsToJodString(s.balance),
+        s.overdue ? t(' — متأخر {0} د.أ', filsToJodString(s.overdue)) : '',
+      ),
       data: { screen: 'account' },
     });
     return { whatsapp: wa, balance: s.balance, overdue: s.overdue };
@@ -71,8 +76,8 @@ export function createBalanceAlerts(deps: {
       if (!cfg.alertsEnabled) return { sent: 0, skipped: 'disabled' };
       const targets = await billing.alertTargets(cfg);
       let sent = 0;
-      for (const t of targets) {
-        await sendTo(t.customerId, null);
+      for (const tr of targets) {
+        await sendTo(tr.customerId, null);
         sent++;
       }
       return { sent };

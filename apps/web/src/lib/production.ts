@@ -1,4 +1,5 @@
 import type { ItemUnit, ProductionDayStatus, StockLossKind, StockLossReason } from '@mecca/shared';
+import { t } from '@/lib/i18n';
 
 export type DayItem = {
   itemId: string;
@@ -73,7 +74,7 @@ export const DAY_TONE: Record<ProductionDayStatus, 'gold' | 'green' | 'neutral'>
 export function groupByLine(items: DayItem[]) {
   const groups: { key: string; title: string; items: DayItem[] }[] = [];
   for (const i of items) {
-    const title = `${i.lineName ?? 'بدون خط إنتاج'} — ${i.sectionName}`;
+    const title = `${i.lineName ?? t('بدون خط إنتاج')} — ${i.sectionName}`;
     let g = groups.find((x) => x.key === title);
     if (!g) groups.push((g = { key: title, title, items: [] }));
     g.items.push(i);

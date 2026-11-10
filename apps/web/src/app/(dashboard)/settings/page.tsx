@@ -7,6 +7,7 @@ import { jodToFils } from '@/lib/billing';
 import { api, errorMessage, fetchAuthedBlob } from '@/lib/api';
 import { Button, Card, ErrorBox, Input } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
+import { t } from '@/lib/i18n';
 
 type Template = { name: string; label: string; body: string };
 type Run = {
@@ -18,10 +19,10 @@ type Run = {
 };
 
 const JOB_LABELS: Record<string, string> = {
-  reminder: 'تذكير',
-  drafts: 'مسودات',
-  cutoff: 'إغلاق',
-  balance_alerts: 'تذكير الذمم',
+  reminder: t('تذكير'),
+  drafts: t('مسودات'),
+  cutoff: t('إغلاق'),
+  balance_alerts: t('تذكير الذمم'),
 };
 
 /** Daily reminder of unpaid balances. */
@@ -38,7 +39,7 @@ function ReceivablesCard() {
   if (!r) return null;
   async function save() {
     const minAmount = jodToFils(min || '0');
-    if (minAmount === null) return setMsg('المبلغ غير صحيح');
+    if (minAmount === null) return setMsg(t('المبلغ غير صحيح'));
     try {
       setR(
         await api<ReceivablesSettings>('/api/settings/receivables', {
@@ -46,33 +47,33 @@ function ReceivablesCard() {
           body: JSON.stringify({ ...r, minAmount }),
         }),
       );
-      setMsg('تم الحفظ ✓');
+      setMsg(t('تم الحفظ ✓'));
     } catch (err) {
-      setMsg(errorMessage(err, 'تعذّر الحفظ'));
+      setMsg(errorMessage(err, t('تعذّر الحفظ')));
     }
   }
   return (
-    <Card title="تذكير الذمم اليومي">
+    <Card title={t('تذكير الذمم اليومي')}>
       <div className="space-y-3">
         <Toggle
-          label="إرسال كشف الحساب يومياً للعملاء (واتساب + التطبيق)"
+          label={t('إرسال كشف الحساب يومياً للعملاء (واتساب + التطبيق)')}
           checked={r.alertsEnabled}
           onChange={(v) => setR({ ...r, alertsEnabled: v })}
         />
         <Toggle
-          label="فقط لمن عليه مبلغ متأخر"
+          label={t('فقط لمن عليه مبلغ متأخر')}
           checked={r.onlyOverdue}
           onChange={(v) => setR({ ...r, onlyOverdue: v })}
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="وقت الإرسال"
+            label={t('وقت الإرسال')}
             type="time"
             value={r.alertTime}
             onChange={(e) => setR({ ...r, alertTime: e.target.value })}
           />
           <Input
-            label="أقل رصيد (دينار)"
+            label={t('أقل رصيد (دينار)')}
             dir="ltr"
             value={min}
             onChange={(e) => setMin(e.target.value)}
@@ -80,11 +81,13 @@ function ReceivablesCard() {
         </div>
         <div className="flex items-center gap-3">
           <Button type="button" onClick={() => void save()}>
-            حفظ
+            {t('حفظ')}
           </Button>
           <span className="text-sm text-brand-muted">{msg}</span>
         </div>
-        <p className="text-xs text-brand-muted">يمكن إيقافه لعميل معيّن من صفحة كشف حسابه.</p>
+        <p className="text-xs text-brand-muted">
+          {t('يمكن إيقافه لعميل معيّن من صفحة كشف حسابه.')}
+        </p>
       </div>
     </Card>
   );
@@ -125,7 +128,7 @@ export default function SettingsPage() {
   useEffect(() => {
     void api<OrderSettings>('/api/settings/orders')
       .then(setS)
-      .catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+      .catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
     void api<{ configured: boolean; templates: Template[] }>('/api/whatsapp/templates')
       .then(setTemplates)
       .catch(() => undefined);
@@ -149,7 +152,7 @@ export default function SettingsPage() {
       );
       setSaved(true);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الحفظ'));
+      setError(errorMessage(err, t('تعذّر الحفظ')));
     } finally {
       setBusy(false);
     }
@@ -160,65 +163,66 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-brown">الإعدادات</h1>
-        <p className="text-sm text-brand-muted">كل الأوقات بتوقيت عمّان.</p>
+        <h1 className="text-2xl font-bold text-brand-brown">{t('الإعدادات')}</h1>
+        <p className="text-sm text-brand-muted">{t('كل الأوقات بتوقيت عمّان.')}</p>
       </div>
       <ErrorBox message={error} />
       {saved && (
         <div className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-800">
-          تم حفظ الإعدادات ✓
+          {t('تم حفظ الإعدادات ✓')}
         </div>
       )}
 
       <form onSubmit={save} className="space-y-6">
-        <Card title="مواعيد الطلبات">
+        <Card title={t('مواعيد الطلبات')}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Input
-              label="إغلاق استقبال الطلبات"
+              label={t('إغلاق استقبال الطلبات')}
               type="time"
               value={s.cutoffTime}
               onChange={(e) => setS({ ...s, cutoffTime: e.target.value })}
             />
             <Input
-              label="إنشاء مسودات من طلب الأمس"
+              label={t('إنشاء مسودات من طلب الأمس')}
               type="time"
               value={s.draftTime}
               onChange={(e) => setS({ ...s, draftTime: e.target.value })}
             />
             <div className="space-y-2 self-end pb-2">
               <Toggle
-                label="إنشاء المسودات"
+                label={t('إنشاء المسودات')}
                 checked={s.draftsEnabled}
                 onChange={(v) => setS({ ...s, draftsEnabled: v })}
               />
               <Toggle
-                label="إرسال المسودة غير المؤكدة تلقائياً عند الإغلاق"
+                label={t('إرسال المسودة غير المؤكدة تلقائياً عند الإغلاق')}
                 checked={s.autoSubmitDrafts}
                 onChange={(v) => setS({ ...s, autoSubmitDrafts: v })}
               />
             </div>
           </div>
           <p className="mt-3 text-xs text-brand-muted">
-            الإغلاق قبل الظهر (مثل 03:00) يكون في يوم التسليم نفسه؛ بعد الظهر (مثل 22:00) يكون في
-            الليلة السابقة.
+            {t(
+              'الإغلاق قبل الظهر (مثل 03:00) يكون في يوم التسليم نفسه؛ بعد الظهر (مثل 22:00) يكون في الليلة السابقة.',
+            )}
           </p>
         </Card>
 
-        <Card title="التذكيرات">
+        <Card title={t('التذكيرات')}>
           <div className="mb-3">
             <Toggle
-              label="إرسال تذكيرات للفروع التي لم تطلب"
+              label={t('إرسال تذكيرات للفروع التي لم تطلب')}
               checked={s.remindersEnabled}
               onChange={(v) => setS({ ...s, remindersEnabled: v })}
             />
           </div>
           <div className="flex flex-wrap items-end gap-3">
-            {s.reminderTimes.map((t, i) => (
+            {s.reminderTimes.map((tr, i) => (
               <div key={i} className="flex items-end gap-1">
                 <Input
-                  label={`تذكير ${i + 1}`}
+                  label={t('تذكير {0}', i + 1)}
                   type="time"
-                  value={t}
+                  value={tr}
                   onChange={(e) =>
                     setS({
                       ...s,
@@ -233,7 +237,7 @@ export default function SettingsPage() {
                     setS({ ...s, reminderTimes: s.reminderTimes.filter((_, j) => j !== i) })
                   }
                 >
-                  حذف
+                  {t('حذف')}
                 </button>
               </div>
             ))}
@@ -243,21 +247,21 @@ export default function SettingsPage() {
                 variant="outline"
                 onClick={() => setS({ ...s, reminderTimes: [...s.reminderTimes, '20:00'] })}
               >
-                + وقت
+                {t('+ وقت')}
               </Button>
             )}
           </div>
         </Card>
 
-        <Card title="قنوات الإشعارات">
+        <Card title={t('قنوات الإشعارات')}>
           <div className="flex flex-wrap gap-6">
             <Toggle
-              label="رسائل واتساب"
+              label={t('رسائل واتساب')}
               checked={s.whatsappEnabled}
               onChange={(v) => setS({ ...s, whatsappEnabled: v })}
             />
             <Toggle
-              label="إشعارات التطبيق"
+              label={t('إشعارات التطبيق')}
               checked={s.pushEnabled}
               onChange={(v) => setS({ ...s, pushEnabled: v })}
             />
@@ -265,30 +269,30 @@ export default function SettingsPage() {
         </Card>
 
         <Button type="submit" disabled={busy}>
-          {busy ? 'جارٍ الحفظ…' : 'حفظ الإعدادات'}
+          {busy ? t('جارٍ الحفظ…') : t('حفظ الإعدادات')}
         </Button>
       </form>
 
       {templates && (
-        <Card title="قوالب رسائل واتساب">
+        <Card title={t('قوالب رسائل واتساب')}>
           <p className="mb-3 text-sm">
-            الحالة:{' '}
+            {t('الحالة:')}{' '}
             {templates.configured ? (
-              <b className="text-green-800">مربوط بحساب واتساب ✓</b>
+              <b className="text-green-800">{t('مربوط بحساب واتساب ✓')}</b>
             ) : (
-              <b className="text-red-800">غير مربوط بعد — الرسائل تُسجَّل فقط ولا تُرسل</b>
+              <b className="text-red-800">{t('غير مربوط بعد — الرسائل تُسجَّل فقط ولا تُرسل')}</b>
             )}
           </p>
           <p className="mb-3 text-xs text-brand-muted">
-            تُسجَّل هذه القوالب في WhatsApp Manager بنفس الاسم، اللغة العربية، الفئة Utility.
+            {t('تُسجَّل هذه القوالب في WhatsApp Manager بنفس الاسم، اللغة العربية، الفئة Utility.')}
           </p>
           <ul className="space-y-2 text-sm">
-            {templates.templates.map((t) => (
-              <li key={t.name} className="rounded-lg border border-brand-line p-3">
+            {templates.templates.map((tr) => (
+              <li key={tr.name} className="rounded-lg border border-brand-line p-3">
                 <div className="font-bold">
-                  {t.label} <span className="font-mono text-xs text-brand-muted">{t.name}</span>
+                  {tr.label} <span className="font-mono text-xs text-brand-muted">{tr.name}</span>
                 </div>
-                <div className="mt-1 text-brand-muted">{t.body}</div>
+                <div className="mt-1 text-brand-muted">{tr.body}</div>
               </li>
             ))}
           </ul>
@@ -297,9 +301,11 @@ export default function SettingsPage() {
 
       <ReceivablesCard />
 
-      <Card title="بياناتكم">
+      <Card title={t('بياناتكم')}>
         <p className="mb-3 text-sm text-brand-muted">
-          البيانات ملك مخابز مكة بالكامل. نزّلي نسخة كاملة منها (كل جدول في ورقة Excel) في أي وقت.
+          {t(
+            'البيانات ملك مخابز مكة بالكامل. نزّلي نسخة كاملة منها (كل جدول في ورقة Excel) في أي وقت.',
+          )}
         </p>
         <Button
           type="button"
@@ -313,14 +319,14 @@ export default function SettingsPage() {
             })
           }
         >
-          تنزيل كل البيانات (Excel)
+          {t('تنزيل كل البيانات (Excel)')}
         </Button>
         <Link href="/settings/import" className="mr-3 text-sm text-brand-brown underline">
-          نقل البيانات من Excel (العملاء، الأصناف، العقود، الأرصدة الافتتاحية)
+          {t('نقل البيانات من Excel (العملاء، الأصناف، العقود، الأرصدة الافتتاحية)')}
         </Link>
       </Card>
 
-      <Card title="آخر المهام المجدولة">
+      <Card title={t('آخر المهام المجدولة')}>
         <ul className="divide-y divide-stone-100 text-sm">
           {runs.map((r) => (
             <li key={`${r.job}-${r.runKey}`} className="flex flex-wrap gap-3 py-2">
@@ -332,7 +338,9 @@ export default function SettingsPage() {
               </span>
             </li>
           ))}
-          {runs.length === 0 && <li className="py-2 text-brand-muted">لم تعمل أي مهمة بعد</li>}
+          {runs.length === 0 && (
+            <li className="py-2 text-brand-muted">{t('لم تعمل أي مهمة بعد')}</li>
+          )}
         </ul>
       </Card>
     </div>

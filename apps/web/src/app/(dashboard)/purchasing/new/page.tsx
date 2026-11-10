@@ -7,6 +7,7 @@ import { api, errorMessage } from '@/lib/api';
 import { Button, Card, ErrorBox, Input, Select, Textarea } from '@/components/ui';
 import type { Supplier } from '@/lib/purchasing';
 import { emptyLine, PoLinesEditor, toPoLines, type LineDraft } from '../po-lines';
+import { t } from '@/lib/i18n';
 
 export default function NewPurchaseOrderPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function NewPurchaseOrderPage() {
   useEffect(() => {
     void api<Supplier[]>('/api/purchasing/suppliers?isActive=true')
       .then(setSuppliers)
-      .catch(() => setError('تعذّر تحميل الموردين'));
+      .catch(() => setError(t('تعذّر تحميل الموردين')));
   }, []);
 
   async function save(e: FormEvent) {
@@ -42,7 +43,7 @@ export default function NewPurchaseOrderPage() {
       });
       router.push(`/purchasing/${po.id}`);
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الحفظ'));
+      setError(errorMessage(err, t('تعذّر الحفظ')));
       setBusy(false);
     }
   }
@@ -51,20 +52,20 @@ export default function NewPurchaseOrderPage() {
     <form onSubmit={save} className="space-y-6">
       <div>
         <Link href="/purchasing" className="text-sm text-brand-muted underline">
-          ← طلبات الشراء
+          {t('← طلبات الشراء')}
         </Link>
-        <h1 className="mt-1 text-2xl font-bold text-brand-brown">طلب شراء جديد</h1>
+        <h1 className="mt-1 text-2xl font-bold text-brand-brown">{t('طلب شراء جديد')}</h1>
       </div>
       <ErrorBox message={error} />
       <Card>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Select
-            label="المورد"
+            label={t('المورد')}
             required
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
           >
-            <option value="">— اختر المورد —</option>
+            <option value="">{t('— اختر المورد —')}</option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -72,30 +73,30 @@ export default function NewPurchaseOrderPage() {
             ))}
           </Select>
           <Input
-            label="مطلوب بتاريخ"
+            label={t('مطلوب بتاريخ')}
             type="date"
             value={neededDate}
             onChange={(e) => setNeededDate(e.target.value)}
           />
           <div className="md:col-span-3">
             <Textarea
-              label="ملاحظات للمورد"
+              label={t('ملاحظات للمورد')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
         </div>
       </Card>
-      <Card title="البنود">
+      <Card title={t('البنود')}>
         <PoLinesEditor lines={lines} setLines={setLines} />
       </Card>
       <div className="flex gap-2">
         <Button type="submit" disabled={busy || !supplierId}>
-          {busy ? 'جارٍ الحفظ…' : 'حفظ كمسودة'}
+          {busy ? t('جارٍ الحفظ…') : t('حفظ كمسودة')}
         </Button>
         <Link href="/purchasing">
           <Button type="button" variant="outline">
-            إلغاء
+            {t('إلغاء')}
           </Button>
         </Link>
       </div>

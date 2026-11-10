@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { Badge, Button, Card, ErrorBox, Input } from '@/components/ui';
 import { formatAmman } from '@/lib/orders';
 import { PO_TONE, type PoRow, type Supplier } from '@/lib/purchasing';
+import { t } from '@/lib/i18n';
 
 const emptySupplier = { name: '', contactName: '', phone: '', whatsappPhone: '', address: '' };
 
@@ -36,7 +37,7 @@ export default function PurchasingPage() {
   }, [status]);
 
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر التحميل')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر التحميل'))));
   }, [load]);
 
   async function saveSupplier(e: FormEvent) {
@@ -54,7 +55,7 @@ export default function PurchasingPage() {
       setForm(emptySupplier);
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر حفظ المورد'));
+      setError(errorMessage(err, t('تعذّر حفظ المورد')));
     }
   }
 
@@ -65,26 +66,28 @@ export default function PurchasingPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">طلبات الشراء</h1>
-          <p className="text-sm text-brand-muted">طلب الشراء يُرسل للمورد ملف PDF على واتساب.</p>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('طلبات الشراء')}</h1>
+          <p className="text-sm text-brand-muted">
+            {t('طلب الشراء يُرسل للمورد ملف PDF على واتساب.')}
+          </p>
         </div>
         {canManage && (
           <Link href="/purchasing/new">
-            <Button>+ طلب شراء</Button>
+            <Button>{t('+ طلب شراء')}</Button>
           </Link>
         )}
       </div>
       <ErrorBox message={error} />
 
       <Card
-        title={`الطلبات (${orders.length})`}
+        title={t('الطلبات ({0})', orders.length)}
         actions={
           <select
             className="rounded-lg border border-brand-line bg-surface px-3 py-2 text-sm"
             value={status}
             onChange={(e) => setStatus(e.target.value as '' | PurchaseOrderStatus)}
           >
-            <option value="">كل الحالات</option>
+            <option value="">{t('كل الحالات')}</option>
             {PURCHASE_ORDER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {PURCHASE_ORDER_STATUS_LABELS_AR[s]}
@@ -97,12 +100,12 @@ export default function PurchasingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-line text-right text-brand-muted">
-                <th className="py-2">الرقم</th>
-                <th>المورد</th>
-                <th>البنود</th>
-                <th>مطلوب بتاريخ</th>
-                <th>أُنشئ</th>
-                <th>الحالة</th>
+                <th className="py-2">{t('الرقم')}</th>
+                <th>{t('المورد')}</th>
+                <th>{t('البنود')}</th>
+                <th>{t('مطلوب بتاريخ')}</th>
+                <th>{t('أُنشئ')}</th>
+                <th>{t('الحالة')}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,7 +130,7 @@ export default function PurchasingPage() {
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-6 text-center text-brand-muted">
-                    لا توجد طلبات شراء
+                    {t('لا توجد طلبات شراء')}
                   </td>
                 </tr>
               )}
@@ -137,7 +140,7 @@ export default function PurchasingPage() {
       </Card>
 
       <Card
-        title={`الموردون (${suppliers.length})`}
+        title={t('الموردون ({0})', suppliers.length)}
         actions={
           canManage &&
           editing === null && (
@@ -148,7 +151,7 @@ export default function PurchasingPage() {
                 setEditing('new');
               }}
             >
-              + مورد
+              {t('+ مورد')}
             </Button>
           )
         }
@@ -159,25 +162,29 @@ export default function PurchasingPage() {
             className="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-brand-line bg-brand-cream/40 p-4 md:grid-cols-5"
           >
             <Input
-              label="اسم المورد"
+              label={t('اسم المورد')}
               required
               minLength={2}
               value={form.name}
               onChange={set('name')}
             />
-            <Input label="الشخص المسؤول" value={form.contactName} onChange={set('contactName')} />
-            <Input label="الهاتف" dir="ltr" value={form.phone} onChange={set('phone')} />
             <Input
-              label="رقم واتساب (للطلبات)"
+              label={t('الشخص المسؤول')}
+              value={form.contactName}
+              onChange={set('contactName')}
+            />
+            <Input label={t('الهاتف')} dir="ltr" value={form.phone} onChange={set('phone')} />
+            <Input
+              label={t('رقم واتساب (للطلبات)')}
               dir="ltr"
               value={form.whatsappPhone}
               onChange={set('whatsappPhone')}
             />
-            <Input label="العنوان" value={form.address} onChange={set('address')} />
+            <Input label={t('العنوان')} value={form.address} onChange={set('address')} />
             <div className="flex gap-2 md:col-span-5">
-              <Button type="submit">حفظ</Button>
+              <Button type="submit">{t('حفظ')}</Button>
               <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </form>
@@ -188,10 +195,10 @@ export default function PurchasingPage() {
               <b>{s.name}</b>
               {s.contactName && <span>{s.contactName}</span>}
               <span dir="ltr" className="font-mono text-brand-muted">
-                {s.whatsappPhone ?? s.phone ?? 'بدون رقم'}
+                {s.whatsappPhone ?? s.phone ?? t('بدون رقم')}
               </span>
-              <span className="text-brand-muted">{s.orderCount} طلب</span>
-              {!s.isActive && <Badge tone="red">موقوف</Badge>}
+              <span className="text-brand-muted">{t('{0} طلب', s.orderCount)}</span>
+              {!s.isActive && <Badge tone="red">{t('موقوف')}</Badge>}
               {canManage && (
                 <span className="mr-auto flex gap-3 text-xs">
                   <button
@@ -207,7 +214,7 @@ export default function PurchasingPage() {
                       setEditing(s.id);
                     }}
                   >
-                    تعديل
+                    {t('تعديل')}
                   </button>
                   <button
                     className="text-brand-brown underline"
@@ -217,16 +224,18 @@ export default function PurchasingPage() {
                         body: JSON.stringify({ isActive: !s.isActive }),
                       })
                         .then(load)
-                        .catch((err) => setError(errorMessage(err, 'تعذّر التحديث')))
+                        .catch((err) => setError(errorMessage(err, t('تعذّر التحديث'))))
                     }
                   >
-                    {s.isActive ? 'إيقاف' : 'تفعيل'}
+                    {s.isActive ? t('إيقاف') : t('تفعيل')}
                   </button>
                 </span>
               )}
             </li>
           ))}
-          {suppliers.length === 0 && <li className="py-2 text-brand-muted">لا يوجد موردون بعد</li>}
+          {suppliers.length === 0 && (
+            <li className="py-2 text-brand-muted">{t('لا يوجد موردون بعد')}</li>
+          )}
         </ul>
       </Card>
     </div>

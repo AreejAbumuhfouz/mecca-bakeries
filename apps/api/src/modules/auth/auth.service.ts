@@ -3,6 +3,7 @@ import {
   effectivePermissions,
   isPermission,
   type AuthUser,
+  type Locale,
   type LoginResult,
   type PermissionOverride,
 } from '@mecca/shared';
@@ -15,6 +16,7 @@ import type { Mailer } from '../../lib/mailer.js';
 import { writeAudit, type AuditContext } from '../audit/audit.service.js';
 import type { GoogleVerifier } from './google.js';
 import type { TokenService } from './tokens.js';
+import { t } from '../../lib/i18n.js';
 
 export type AuthDeps = {
   db: Db;
@@ -39,7 +41,7 @@ type ClientInfo = { ip?: string | null; userAgent?: string | null };
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const minutes = (n: number) => n * 60_000;
 
-const invalidCode = () => new AppError(401, 'INVALID_CODE', 'الرمز غير صحيح أو منتهي الصلاحية');
+const invalidCode = () => new AppError(401, 'INVALID_CODE', t('الرمز غير صحيح أو منتهي الصلاحية'));
 
 export function createAuthService(deps: AuthDeps) {
   const { db, env, mailer, tokens } = deps;
@@ -65,12 +67,13 @@ export function createAuthService(deps: AuthDeps) {
       role: user.role,
       customerId: user.customerId,
       permissions: [...effectivePermissions(user.role, overrides)].sort(),
+      locale: user.locale,
     };
   }
 
   async function issueSession(userId: string, client: ClientInfo): Promise<LoginResult> {
     const user = await loadAuthUser(userId);
-    if (!user) throw new AppError(403, 'ACCOUNT_DISABLED', 'الحساب غير مفعّل');
+    if (!user) throw new AppError(403, 'ACCOUNT_DISABLED', t('الحساب غير مفعّل'));
     const refreshToken = generateToken();
     await db.insert(sessions).values({
       userId,
@@ -87,6 +90,11 @@ export function createAuthService(deps: AuthDeps) {
   return {
     loadAuthUser,
 
+    /** Saves the user's interface language. */
+    async setLocale(userId: string, locale: Locale) {
+      await db.update(users).set({ locale, updatedAt: now() }).where(eq(users.id, userId));
+    },
+
     /** Sends a login code. Always succeeds from the caller's point of view, so emails can't be enumerated. */
     async requestOtp(rawEmail: string) {
       const email = normalizeEmail(rawEmail);
@@ -96,7 +104,7 @@ export function createAuthService(deps: AuthDeps) {
         .from(otpCodes)
         .where(and(eq(otpCodes.email, email), gt(otpCodes.createdAt, windowStart)));
       if ((recent?.n ?? 0) >= env.OTP_MAX_PER_WINDOW) {
-        throw new AppError(429, 'TOO_MANY_REQUESTS', 'طلبات كثيرة، حاول مرة أخرى بعد قليل');
+        throw new AppError(429, 'TOO_MANY_REQUESTS', t('طلبات كثيرة، حاول مرة أخرى بعد قليل'));
       }
       const user = await db.query.users.findFirst({ where: eq(users.email, email) });
       if (!user || !user.isActive) return; // silently ignore unknown or disabled accounts
@@ -116,8 +124,12 @@ export function createAuthService(deps: AuthDeps) {
       if (review) return;
       await mailer.send({
         to: email,
-        subject: 'رمز الدخول — مخابز مكة',
-        text: `رمز الدخول الخاص بك: ${code}\nصالح لمدة ${env.OTP_TTL_MIN} دقائق. لا تشاركه مع أحد.`,
+        subject: t('رمز الدخول — مخابز مكة'),
+        text: t(
+          'رمز الدخول الخاص بك: {0}\nصالح لمدة {1} دقائق. لا تشاركه مع أحد.',
+          code,
+          env.OTP_TTL_MIN,
+        ),
       });
     },
 
@@ -155,15 +167,15 @@ export function createAuthService(deps: AuthDeps) {
 
     async loginWithGoogle(idToken: string, client: ClientInfo): Promise<LoginResult> {
       if (!deps.google)
-        throw new AppError(400, 'GOOGLE_DISABLED', 'تسجيل الدخول عبر Google غير مفعّل');
+        throw new AppError(400, 'GOOGLE_DISABLED', t('تسجيل الدخول عبر Google غير مفعّل'));
       const identity = await deps.google(idToken).catch(() => {
-        throw new AppError(401, 'INVALID_GOOGLE_TOKEN', 'تعذّر التحقق من حساب Google');
+        throw new AppError(401, 'INVALID_GOOGLE_TOKEN', t('تعذّر التحقق من حساب Google'));
       });
       if (!identity.emailVerified)
-        throw new AppError(401, 'EMAIL_NOT_VERIFIED', 'البريد غير مؤكد لدى Google');
+        throw new AppError(401, 'EMAIL_NOT_VERIFIED', t('البريد غير مؤكد لدى Google'));
       const user = await db.query.users.findFirst({ where: eq(users.email, identity.email) });
       if (!user || !user.isActive)
-        throw new AppError(403, 'NO_ACCOUNT', 'لا يوجد حساب مفعّل بهذا البريد');
+        throw new AppError(403, 'NO_ACCOUNT', t('لا يوجد حساب مفعّل بهذا البريد'));
       const result = await issueSession(user.id, client);
       await writeAudit(
         db,
@@ -180,7 +192,7 @@ export function createAuthService(deps: AuthDeps) {
         where: eq(sessions.tokenHash, tokenHash),
       });
       if (!session || session.revokedAt || session.expiresAt <= now()) {
-        throw new AppError(401, 'INVALID_REFRESH', 'انتهت الجلسة، يرجى تسجيل الدخول');
+        throw new AppError(401, 'INVALID_REFRESH', t('انتهت الجلسة، يرجى تسجيل الدخول'));
       }
       await db.update(sessions).set({ revokedAt: now() }).where(eq(sessions.id, session.id));
       return issueSession(session.userId, client);

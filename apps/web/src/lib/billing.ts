@@ -7,6 +7,7 @@ import type {
   PaymentSource,
   TripStatus,
 } from '@mecca/shared';
+import { t } from '@/lib/i18n';
 
 export type DayDelivery = {
   id: string;
@@ -244,7 +245,7 @@ export const TRIP_TONE: Record<TripStatus, 'neutral' | 'gold' | 'green'> = {
 
 /** "12.5" → 12500 fils, or null. */
 export function jodToFils(input: string): number | null {
-  const v = input.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).trim();
+  const v = input.replace(/[٠-٩]/g, (d) => String(t('٠١٢٣٤٥٦٧٨٩').indexOf(d))).trim();
   if (!/^\d+(\.\d{1,3})?$/.test(v)) return null;
   return Math.round(Number(v) * 1000);
 }

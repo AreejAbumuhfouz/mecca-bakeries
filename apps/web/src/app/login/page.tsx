@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { ApiRequestError } from '@/lib/api';
 import { Button, Input } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 export default function LoginPage() {
   const { user, loading, requestCode, verifyCode } = useAuth();
@@ -29,7 +30,7 @@ export default function LoginPage() {
     try {
       await fn();
     } catch (e) {
-      setError(e instanceof ApiRequestError ? e.message : 'حدث خطأ، حاول مرة أخرى');
+      setError(e instanceof ApiRequestError ? e.message : t('حدث خطأ، حاول مرة أخرى'));
     } finally {
       setBusy(false);
     }
@@ -56,21 +57,21 @@ export default function LoginPage() {
       <button
         onClick={toggle}
         className="absolute top-4 left-4 rounded-lg border border-brand-line bg-surface p-2 text-brand-brown"
-        aria-label={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+        aria-label={theme === 'dark' ? t('الوضع الفاتح') : t('الوضع الداكن')}
       >
         {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
       </button>
       <div className="w-full max-w-sm rounded-2xl border border-brand-line bg-surface p-8 shadow-sm">
         <div className="mx-auto w-fit rounded-xl bg-white p-2">
-          <Image src="/logo.png" alt="مخابز مكة" width={120} height={101} priority />
+          <Image src="/logo.png" alt={t('مخابز مكة')} width={120} height={101} priority />
         </div>
-        <h1 className="mt-4 text-center text-xl font-bold text-brand-brown">تسجيل الدخول</h1>
-        <p className="mt-1 text-center text-sm text-brand-muted">لوحة تحكم مخابز مكة</p>
+        <h1 className="mt-4 text-center text-xl font-bold text-brand-brown">{t('تسجيل الدخول')}</h1>
+        <p className="mt-1 text-center text-sm text-brand-muted">{t('لوحة تحكم مخابز مكة')}</p>
 
         {step === 'email' ? (
           <form onSubmit={onEmail} className="mt-6 space-y-4">
             <Input
-              label="البريد الإلكتروني"
+              label={t('البريد الإلكتروني')}
               type="email"
               dir="ltr"
               autoComplete="email"
@@ -81,16 +82,16 @@ export default function LoginPage() {
             />
             {error && <p className="text-sm text-red-700">{error}</p>}
             <Button type="submit" disabled={busy || !email} className="w-full">
-              {busy ? 'جارٍ الإرسال…' : 'إرسال رمز الدخول'}
+              {busy ? t('جارٍ الإرسال…') : t('إرسال رمز الدخول')}
             </Button>
           </form>
         ) : (
           <form onSubmit={onCode} className="mt-6 space-y-4">
             <p className="text-sm text-brand-muted">
-              أرسلنا رمزاً من 6 أرقام إلى <b dir="ltr">{email}</b>
+              {t('أرسلنا رمزاً من 6 أرقام إلى')} <b dir="ltr">{email}</b>
             </p>
             <Input
-              label="رمز الدخول"
+              label={t('رمز الدخول')}
               inputMode="numeric"
               autoComplete="one-time-code"
               dir="ltr"
@@ -102,7 +103,7 @@ export default function LoginPage() {
             />
             {error && <p className="text-sm text-red-700">{error}</p>}
             <Button type="submit" disabled={busy || code.length !== 6} className="w-full">
-              {busy ? 'جارٍ التحقق…' : 'دخول'}
+              {busy ? t('جارٍ التحقق…') : t('دخول')}
             </Button>
             <button
               type="button"
@@ -113,13 +114,13 @@ export default function LoginPage() {
                 setError('');
               }}
             >
-              تغيير البريد أو إعادة الإرسال
+              {t('تغيير البريد أو إعادة الإرسال')}
             </button>
           </form>
         )}
       </div>
       <a href="/privacy" className="absolute bottom-4 text-xs text-brand-muted underline">
-        سياسة الخصوصية
+        {t('سياسة الخصوصية')}
       </a>
     </main>
   );

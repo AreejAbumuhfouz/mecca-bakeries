@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api, errorMessage, fileUrl } from '@/lib/api';
 import { Badge, Button, Card, ErrorBox, Input, Textarea } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
+import { t } from '@/lib/i18n';
 
 type TradeName = {
   id: string;
@@ -44,16 +45,16 @@ const empty: Form = {
   invoiceFooter: '',
 };
 
-const toForm = (t: TradeName): Form => ({
-  name: t.name,
-  nameEn: t.nameEn ?? '',
-  logoFileId: t.logoFileId,
-  phone: t.phone ?? '',
-  email: t.email ?? '',
-  address: t.address ?? '',
-  invoicePrefix: t.invoicePrefix,
-  nextInvoiceNumber: String(t.nextInvoiceNumber),
-  invoiceFooter: t.invoiceFooter ?? '',
+const toForm = (tr: TradeName): Form => ({
+  name: tr.name,
+  nameEn: tr.nameEn ?? '',
+  logoFileId: tr.logoFileId,
+  phone: tr.phone ?? '',
+  email: tr.email ?? '',
+  address: tr.address ?? '',
+  invoicePrefix: tr.invoicePrefix,
+  nextInvoiceNumber: String(tr.nextInvoiceNumber),
+  invoiceFooter: tr.invoiceFooter ?? '',
 });
 
 const invoiceExample = (prefix: string, n: string) =>
@@ -69,7 +70,7 @@ export default function TradeNamesPage() {
 
   const load = useCallback(async () => setRows(await api<TradeName[]>('/api/trade-names')), []);
   useEffect(() => {
-    void load().catch((err) => setError(errorMessage(err, 'تعذّر تحميل الأسماء التجارية')));
+    void load().catch((err) => setError(errorMessage(err, t('تعذّر تحميل الأسماء التجارية'))));
   }, [load]);
 
   const set = (key: keyof Form) => (e: { target: { value: string } }) =>
@@ -89,22 +90,22 @@ export default function TradeNamesPage() {
       setEditing(null);
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر الحفظ'));
+      setError(errorMessage(err, t('تعذّر الحفظ')));
     } finally {
       setBusy(false);
     }
   }
 
-  async function toggle(t: TradeName) {
+  async function toggle(tr: TradeName) {
     setError('');
     try {
-      await api(`/api/trade-names/${t.id}`, {
+      await api(`/api/trade-names/${tr.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ isActive: !t.isActive }),
+        body: JSON.stringify({ isActive: !tr.isActive }),
       });
       await load();
     } catch (err) {
-      setError(errorMessage(err, 'تعذّر التحديث'));
+      setError(errorMessage(err, t('تعذّر التحديث')));
     }
   }
 
@@ -112,9 +113,9 @@ export default function TradeNamesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">الأسماء التجارية</h1>
+          <h1 className="text-2xl font-bold text-brand-brown">{t('الأسماء التجارية')}</h1>
           <p className="text-sm text-brand-muted">
-            لكل اسم تجاري شعاره وبياناته وتسلسل فواتير مستقل. يُربط كل عميل باسم تجاري واحد.
+            {t('لكل اسم تجاري شعاره وبياناته وتسلسل فواتير مستقل. يُربط كل عميل باسم تجاري واحد.')}
           </p>
         </div>
         {editing === null && (
@@ -124,7 +125,7 @@ export default function TradeNamesPage() {
               setEditing('new');
             }}
           >
-            + اسم تجاري جديد
+            {t('+ اسم تجاري جديد')}
           </Button>
         )}
       </div>
@@ -132,48 +133,48 @@ export default function TradeNamesPage() {
       <ErrorBox message={error} />
 
       {editing !== null && (
-        <Card title={editing === 'new' ? 'اسم تجاري جديد' : 'تعديل الاسم التجاري'}>
+        <Card title={editing === 'new' ? t('اسم تجاري جديد') : t('تعديل الاسم التجاري')}>
           <form onSubmit={save} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Input
-                label="الاسم"
+                label={t('الاسم')}
                 required
                 minLength={2}
                 value={form.name}
                 onChange={set('name')}
               />
               <Input
-                label="الاسم بالإنجليزية"
+                label={t('الاسم بالإنجليزية')}
                 dir="ltr"
                 value={form.nameEn}
                 onChange={set('nameEn')}
               />
               <ImageUpload
-                label="الشعار"
+                label={t('الشعار')}
                 value={form.logoFileId}
                 onChange={(logoFileId) => setForm({ ...form, logoFileId })}
               />
-              <Input label="الهاتف" dir="ltr" value={form.phone} onChange={set('phone')} />
+              <Input label={t('الهاتف')} dir="ltr" value={form.phone} onChange={set('phone')} />
               <Input
-                label="البريد الإلكتروني"
+                label={t('البريد الإلكتروني')}
                 type="email"
                 dir="ltr"
                 value={form.email}
                 onChange={set('email')}
               />
-              <Input label="العنوان" value={form.address} onChange={set('address')} />
+              <Input label={t('العنوان')} value={form.address} onChange={set('address')} />
               <Input
-                label="بادئة رقم الفاتورة"
+                label={t('بادئة رقم الفاتورة')}
                 dir="ltr"
                 required
                 maxLength={6}
                 pattern="[A-Za-z]{1,6}"
-                title="من 1 إلى 6 أحرف إنجليزية"
+                title={t('من 1 إلى 6 أحرف إنجليزية')}
                 value={form.invoicePrefix}
                 onChange={set('invoicePrefix')}
               />
               <Input
-                label="رقم الفاتورة التالي"
+                label={t('رقم الفاتورة التالي')}
                 type="number"
                 min={1}
                 dir="ltr"
@@ -181,14 +182,14 @@ export default function TradeNamesPage() {
                 onChange={set('nextInvoiceNumber')}
               />
               <div className="self-end pb-2 text-sm text-brand-muted">
-                أول فاتورة ستكون:{' '}
+                {t('أول فاتورة ستكون:')}{' '}
                 <span className="font-mono font-bold text-brand-brown" dir="ltr">
                   {invoiceExample(form.invoicePrefix, form.nextInvoiceNumber)}
                 </span>
               </div>
               <div className="md:col-span-3">
                 <Textarea
-                  label="نص أسفل الفاتورة"
+                  label={t('نص أسفل الفاتورة')}
                   value={form.invoiceFooter}
                   onChange={set('invoiceFooter')}
                 />
@@ -196,10 +197,10 @@ export default function TradeNamesPage() {
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={busy}>
-                {busy ? 'جارٍ الحفظ…' : 'حفظ'}
+                {busy ? t('جارٍ الحفظ…') : t('حفظ')}
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
             </div>
           </form>
@@ -207,40 +208,44 @@ export default function TradeNamesPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {rows?.map((t) => (
-          <Card key={t.id}>
+        {rows?.map((tr) => (
+          <Card key={tr.id}>
             <div className="flex items-start gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-brand-line bg-white">
-                {t.logoFileId ? (
+                {tr.logoFileId ? (
                   <img
-                    src={fileUrl(t.logoFileId)}
+                    src={fileUrl(tr.logoFileId)}
                     alt=""
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <span className="text-xs text-brand-muted">بدون شعار</span>
+                  <span className="text-xs text-brand-muted">{t('بدون شعار')}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1 space-y-1 text-sm">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-brand-brown">{t.name}</h3>
-                  {t.isActive ? <Badge tone="green">فعّال</Badge> : <Badge tone="red">موقوف</Badge>}
+                  <h3 className="text-lg font-bold text-brand-brown">{tr.name}</h3>
+                  {tr.isActive ? (
+                    <Badge tone="green">{t('فعّال')}</Badge>
+                  ) : (
+                    <Badge tone="red">{t('موقوف')}</Badge>
+                  )}
                 </div>
-                {t.nameEn && (
+                {tr.nameEn && (
                   <div dir="ltr" className="text-right text-brand-muted">
-                    {t.nameEn}
+                    {tr.nameEn}
                   </div>
                 )}
                 <div>
-                  الفاتورة التالية:{' '}
+                  {t('الفاتورة التالية:')}{' '}
                   <span className="font-mono font-bold" dir="ltr">
-                    {invoiceExample(t.invoicePrefix, String(t.nextInvoiceNumber))}
+                    {invoiceExample(tr.invoicePrefix, String(tr.nextInvoiceNumber))}
                   </span>
                 </div>
-                <div>العملاء المرتبطون: {t.customerCount}</div>
-                {(t.phone || t.address) && (
+                <div>{t('العملاء المرتبطون: {0}', tr.customerCount)}</div>
+                {(tr.phone || tr.address) && (
                   <div className="text-brand-muted">
-                    {[t.phone, t.address].filter(Boolean).join(' — ')}
+                    {[tr.phone, tr.address].filter(Boolean).join(' — ')}
                   </div>
                 )}
               </div>
@@ -249,19 +254,21 @@ export default function TradeNamesPage() {
               <button
                 className="text-brand-brown underline"
                 onClick={() => {
-                  setForm(toForm(t));
-                  setEditing(t.id);
+                  setForm(toForm(tr));
+                  setEditing(tr.id);
                 }}
               >
-                تعديل
+                {t('تعديل')}
               </button>
-              <button className="text-brand-brown underline" onClick={() => void toggle(t)}>
-                {t.isActive ? 'إيقاف' : 'تفعيل'}
+              <button className="text-brand-brown underline" onClick={() => void toggle(tr)}>
+                {tr.isActive ? t('إيقاف') : t('تفعيل')}
               </button>
             </div>
           </Card>
         ))}
-        {rows && rows.length === 0 && <p className="text-brand-muted">لا توجد أسماء تجارية بعد.</p>}
+        {rows && rows.length === 0 && (
+          <p className="text-brand-muted">{t('لا توجد أسماء تجارية بعد.')}</p>
+        )}
       </div>
     </div>
   );
